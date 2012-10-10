@@ -17,10 +17,19 @@ describe TorqueStats::JobRecord do
     @record.each_job do |job|
       job.user_name.should eql "blm768"
       job.group_name.should eql "test"
-      job.start_time.should eql Time.at(1349679637)
+      job.start_time.should eql Time.at(1349679573)
+      job.wall_time.should eql 67
+      job.cpu_time.should eql 63
+      job.physical_memory.should eql 139776
+      job.virtual_memory.should eql 173444
+      job.memory.should eql job.physical_memory + job.virtual_memory
       job.exit_code.should eql 0
       n += 1
     end
     n.should eql 1
+  end
+  
+  it "Correctly parses times" do
+    @record.send(:parse_time, "01:02:03").should eql 3723
   end
 end
