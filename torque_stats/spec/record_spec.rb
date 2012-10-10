@@ -15,14 +15,12 @@ describe TorqueStats::JobRecord do
   it "Correctly reads data" do
     n = 0
     @record.each_job do |job|
-      puts "#{job.user_name} (#{job.group_name})"
-      puts job.start_time
-      puts job.wall_time
-      puts job.cpu_time
-      puts job.memory
-      puts job.exit_code
+      job.user_name.should eql "blm768"
+      job.group_name.should eql "test"
+      job.start_time.should eql Time.at(1349679637)
+      job.exit_code.should eql 0
       n += 1
-      break unless n < 5
     end
+    n.should eql 1
   end
 end
