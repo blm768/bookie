@@ -4,9 +4,9 @@ require File.expand_path('../lib/bookie/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Common code for Bookie client/server}
+  gem.summary       = %q{Common code for Bookie client/server}
+  gem.homepage      = "https://github.com/blm768/bookie/"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
