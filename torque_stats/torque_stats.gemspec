@@ -9,8 +9,8 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
   gem.description   = %q{A library useful for extracting data from TORQUE accounting logs}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.summary       = %q{A library useful for extracting data from TORQUE accounting logs}
+  gem.homepage      = "https://github.com/blm768/bookie"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

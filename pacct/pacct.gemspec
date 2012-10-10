@@ -9,8 +9,9 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
   gem.description   = %q{A C extension library for parsing accounting files in the format of /var/account/pacct}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.summary       = %q{A C extension library for parsing accounting files in the format of /var/account/pacct}
+  gem.homepage      = "https://github.com/blm768/bookie"
+  gem.extensions    = ["ext/pacct/extconf.rb"]
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
