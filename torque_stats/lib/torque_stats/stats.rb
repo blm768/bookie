@@ -28,8 +28,8 @@ module TorqueStats
         index = line.index(';')
         next unless index
         
-        event_type = line[index + 1]
-        next unless event_type = 'e'
+        event_type = line[index + 1 .. index + 1]
+        next unless event_type == 'E'
         
         index = line.index(';', index + 3) + 1
         fields = line[index .. -1].split(' ')
@@ -43,6 +43,16 @@ module TorqueStats
               job.user_name = value
             when "group"
               job.group_name = value
+            when "start"
+              job.start_time = Time.at(Integer(value))
+            when "resources_used.walltime"
+              job.wall_time = parse_time(value)
+            when "resources_used.cput"
+              job.cpu_time = parse_time(value)
+            when "resources_used.mem"
+              job.physical_memory = Integer(value[0 ... -2])
+            when "resources_used.vmem"
+              job.virtual_memory = Integer(value[0 ... -2])
             when "Exit_status"
               job.exit_code = Integer(value)
           end
@@ -51,6 +61,12 @@ module TorqueStats
         yield job
       end
     end
+    
+    def parse_time(str)
+      hours, minutes, seconds = *str.split(':').map!{ |s| Integer(s) }
+      return hours * 3600 + minutes * 60 + seconds
+    end
+    protected :parse_time
   end
   
   class << self; attr_accessor :torque_root end
