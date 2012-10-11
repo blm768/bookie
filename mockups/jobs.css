@@ -20,22 +20,16 @@ td, th {
   padding-left: 0.5em;
   padding-right: 0.5em;
 }
-tr:nth-child(even) {
-  background: #DDDDDD;
-}
-tr:nth-child(odd) {
-  background: #FFFFFF;
-}
 
 table#summary th {
   width: 20%;
 }
-table#summary tr {
-  background: #FFFFFF;
-}
 
-table#details {
-  display: none;
+table#details tr:nth-child(even) {
+  background: #DDDDDD;
+}
+table#details tr:nth-child(odd) {
+  background: #FFFFFF;
 }
 
 div#controls {
