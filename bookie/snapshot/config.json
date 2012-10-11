@@ -1,0 +1,7 @@
+{
+  "Server"        : "localhost",
+  "Port"          : 8080,
+  "Username"      : "blm768",
+  "Password"      : "test",
+  "Excluded users": ["root"]
+}
