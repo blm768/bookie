@@ -8,11 +8,11 @@ describe TorqueStats::JobRecord do
     @record = TorqueStats::JobRecord.new(Date.new(2012, 10, 8))
   end
   
-  it "Reads the correct file" do
+  it "reads the correct file" do
     @record.filename.should eql File.join(TorqueStats::torque_root, 'server_priv/accounting/20121008')
   end
   
-  it "Correctly reads data" do
+  it "correctly reads data" do
     n = 0
     @record.each_job do |job|
       job.user_name.should eql "blm768"
@@ -29,7 +29,7 @@ describe TorqueStats::JobRecord do
     n.should eql 1
   end
   
-  it "Correctly parses times" do
+  it "correctly parses times" do
     @record.send(:parse_time, "01:02:03").should eql 3723
   end
 end

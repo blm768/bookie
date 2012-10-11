@@ -1,8 +1,19 @@
-table {
+div#tables {
   float: left;
   width: 75%;
   margin-right: 2%;
+}
+
+table {
+  width: 100%;
   border-collapse: collapse;
+  margin-bottom: 1.5ex;
+}
+table caption {
+  margin-bottom: 0.5ex;
+  text-align: left;
+  font-size: x-large;
+  font-weight: bold;
 }
 td, th {
   border: 1px solid;
@@ -15,6 +26,18 @@ tr:nth-child(even) {
 tr:nth-child(odd) {
   background: #FFFFFF;
 }
+
+table#summary th {
+  width: 20%;
+}
+table#summary tr {
+  background: #FFFFFF;
+}
+
+table#details {
+  display: none;
+}
+
 div#controls {
   width: 23%;
   float: left;
@@ -29,20 +52,7 @@ div#controls label {
 div#controls select {
   width: 30%;
 }
+
 div#controls input[type=submit] {
   width: 20%;
-}
-table#summary {
-  clear: both;
-}
-table#summary caption {
-  text-align: left;
-  font-size: x-large;
-  font-weight: bold;
-}
-table#summary th {
-  width: 20%;
-}
-table#summary tr {
-  background: #FFFFFF;
 }
