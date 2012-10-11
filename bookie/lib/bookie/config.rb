@@ -1,4 +1,9 @@
+require 'bookie'
+
+require 'json'
+
 module Bookie
+  #Holds database configuration, etc. for Bookie components
   class Config
     #The database server's hostname
     attr_accessor :server
@@ -19,20 +24,32 @@ module Bookie
     #Defaults to an empty set
     attr_accessor :excluded_users
     
+    #==Parameters
+    #* filename: the name of the JSON file from which to load the configuration settings
     def initialize(filename)
       file = File.open(filename)
-      data = json.parse(file.read)
+      data = JSON::parse(file.read)
       file.close
       
-      @server = data['Server'] || raise "No database server specified"
+      @server = data['Server']
+      raise "No database server specified" unless @server
+      verify_type(@server, 'Server', String)
       @port = data['Port']
+      verify_type(@port, 'Port', Fixnum) unless @port == nil
+      
       @username = data['Username'] || "root"
+      verify_type(@username, 'Username', String)
       @password = data['Password'] || ""
+      verify_type(@password, 'Password', String)
       
-      excluded_users_array = config['Excluded users'] || []
-      raise TypeError("Invalid data type for JSON field 'Excluded users'") unless excluded_users_array.class == Array
-      
+      excluded_users_array = data['Excluded users'] || []
+      verify_type(excluded_users_array, 'Excluded users', Array)
       @excluded_users = Set.new(excluded_users_array)
+    end
+    
+    #Verifies that a field is of the correct type, raising an error if the type does not match
+    def verify_type(value, name, type)
+      raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class == type
     end
   end
 end
