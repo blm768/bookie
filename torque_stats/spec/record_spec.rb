@@ -2,6 +2,7 @@ require 'spec_helper'
 
 require 'date'
 
+#To do: check failure cases (invalid records?)
 describe TorqueStats::JobRecord do
   before(:each) do
     TorqueStats::torque_root = 'snapshot'
@@ -10,6 +11,10 @@ describe TorqueStats::JobRecord do
   
   it "reads the correct file" do
     @record.filename.should eql File.join(TorqueStats::torque_root, 'server_priv/accounting/20121008')
+  end
+  
+  it "throws an error if the file does not exist" do
+    expect { TorqueStats::JobRecord.new(Date.new(2000, 1, 1)) }.to raise_error
   end
   
   it "correctly reads data" do
