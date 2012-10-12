@@ -10,7 +10,7 @@ Gem::Specification.new do |gem|
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
+  gem.test_files    = gem.files.grep(%r{^(spec|snapshot)/})
   gem.name          = "bookie-torque_client"
   gem.require_paths = ["lib"]
   gem.version       = Bookie::TorqueClient::VERSION
