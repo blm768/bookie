@@ -14,8 +14,9 @@
 //To do:
 //Verify that allocations succeed?
 
-//The modules and classes that this extension defines
-VALUE mPacct, cFile, cEntry;
+VALUE mPacct;
+VALUE cFile;
+VALUE cEntry;
 
 //Ruby's Time class
 VALUE cTime;
@@ -61,6 +62,12 @@ static VALUE pacct_file_free(void* p) {
   return Qnil;
 }
 
+/*
+ *call-seq:
+ *  new(filename)
+ *
+ *Creates a new Pacct::File using the given accounting file
+ */
 static VALUE pacct_file_new(VALUE class, VALUE filename) {
   VALUE file;
   PacctFile* ptr;// = ALLOC(PacctFile);
@@ -111,7 +118,12 @@ static VALUE pacct_entry_new(PacctFile* file) {
   return entry;
 }
 
-//Method of Pacct::File
+/*
+ *call-seq:
+ *  each_entry {|entry| ...}
+ *
+ *Yields each entry in the file to the given block
+ */
 static VALUE each_entry(VALUE self) {
   PacctFile* file;
   long i;
@@ -129,6 +141,9 @@ static VALUE each_entry(VALUE self) {
 }
 
 //Methods of Pacct::Entry
+/*
+ *Returns the ID of the user who executed the command
+ */
 static VALUE get_user_id(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -136,6 +151,9 @@ static VALUE get_user_id(VALUE self) {
   return INT2NUM(data->ac_uid);
 }
 
+/*
+ *Returns the name of the user who executed the command
+ */
 static VALUE get_user_name(VALUE self) {
   struct acct_v3* data;
   struct passwd* pw_data;
@@ -153,6 +171,9 @@ static VALUE get_user_name(VALUE self) {
   return rb_str_new2(pw_data->pw_name);
 }
 
+/*
+ *Returns the group ID of the user who executed the command
+ */
 static VALUE get_group_id(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -160,6 +181,9 @@ static VALUE get_group_id(VALUE self) {
   return INT2NUM(data->ac_gid);
 }
 
+/*
+ *Returns the group name of the user who executed the command
+ */
 static VALUE get_group_name(VALUE self) {
   struct acct_v3* data;
   struct group* group_data;
@@ -177,6 +201,9 @@ static VALUE get_group_name(VALUE self) {
   return rb_str_new2(group_data->gr_name);
 }
 
+/*
+ *Returns the task's total user CPU time in seconds
+ */
 static VALUE get_user_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -184,6 +211,9 @@ static VALUE get_user_time(VALUE self) {
   return INT2NUM(comp_t_to_long(data->ac_utime) / ticksPerSecond);
 }
 
+/*
+ *Returns the task's total system CPU time in seconds
+ */
 static VALUE get_system_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -191,6 +221,9 @@ static VALUE get_system_time(VALUE self) {
   return INT2NUM(comp_t_to_long(data->ac_stime) / ticksPerSecond);
 }
 
+/*
+ *Returns the task's total CPU time in seconds
+ */
 static VALUE get_cpu_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -198,6 +231,9 @@ static VALUE get_cpu_time(VALUE self) {
   return INT2NUM((comp_t_to_long(data->ac_utime) + comp_t_to_long(data->ac_stime)) / ticksPerSecond);
 }
 
+/*
+ *Returns the task's total wall time in seconds
+ */
 static VALUE get_wall_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -205,6 +241,9 @@ static VALUE get_wall_time(VALUE self) {
   return rb_float_new(data->ac_etime);
 }
 
+/*
+ *Returns the task's start time
+ */
 static VALUE get_start_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -212,6 +251,9 @@ static VALUE get_start_time(VALUE self) {
   return rb_funcall(cTime, id_at, 1, INT2NUM(data->ac_btime));
 }
 
+/*
+ *Returns the task's average memory usage in kilobytes
+ */
 static VALUE get_average_mem_usage(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -220,6 +262,9 @@ static VALUE get_average_mem_usage(VALUE self) {
   return INT2NUM(comp_t_to_long(data->ac_mem) * 1024 / pageSize);
 }
 
+/*
+ *Returns the first 16 characters of the command name
+ */
 static VALUE get_command_name(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -227,6 +272,9 @@ static VALUE get_command_name(VALUE self) {
   return rb_str_new2(data->ac_comm);
 }
 
+/*
+ *Returns the command's exit code
+ */
 static VALUE get_exit_code(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
@@ -247,11 +295,20 @@ void Init_pacct_c() {
 
   //Define Ruby modules/objects/methods.
   mPacct = rb_define_module("Pacct");
+  /*
+   *Represents an accounting file in acct(5) format
+   */
   cFile = rb_define_class_under(mPacct, "File", rb_cObject);
+  /*
+   *Document-class: Pacct::Entry
+   *
+   *Represents an entry in a Pacct::File
+   */
+  cEntry = rb_define_class_under(mPacct, "Entry", rb_cObject);
   rb_define_singleton_method(cFile, "new", pacct_file_new, 1);
   rb_define_method(cFile, "initialize", pacct_file_init, 1);
   rb_define_method(cFile, "each_entry", each_entry, 0);
-  cEntry = rb_define_class_under(mPacct, "Entry", rb_cObject);
+  
   rb_define_method(cEntry, "user_id", get_user_id, 0);
   rb_define_method(cEntry, "user_name", get_user_name, 0);
   rb_define_method(cEntry, "group_id", get_group_id, 0);

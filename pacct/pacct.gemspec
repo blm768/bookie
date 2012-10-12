@@ -8,8 +8,8 @@ Gem::Specification.new do |gem|
   gem.version       = Pacct::VERSION
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
-  gem.description   = %q{A C extension library for parsing accounting files in the format of /var/account/pacct}
-  gem.summary       = %q{A C extension library for parsing accounting files in the format of /var/account/pacct}
+  gem.description   = %q{A C extension library for parsing accounting files in acct(5) format}
+  gem.summary       = %q{A C extension library for parsing accounting files in acct(5) format}
   gem.homepage      = "https://github.com/blm768/bookie"
   gem.extensions    = ["ext/pacct/extconf.rb"]
 
