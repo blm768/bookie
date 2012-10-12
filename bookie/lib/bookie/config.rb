@@ -5,6 +5,10 @@ require 'json'
 module Bookie
   #Holds database configuration, etc. for Bookie components
   class Config
+    #The database type
+    #
+    #Corresponds to ActiveRecord database adapter name; defaults to 'mysql'
+    attr_accessor :db_type
     #The database server's hostname
     attr_accessor :server
     #The database server's port
@@ -30,6 +34,9 @@ module Bookie
       file = File.open(filename)
       data = JSON::parse(file.read)
       file.close
+      
+      @db_type = data['Database type'] || 'mysql'
+      verify_type(@db_type, 'Database type', String)
       
       @server = data['Server']
       raise "No database server specified" unless @server

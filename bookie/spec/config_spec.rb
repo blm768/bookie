@@ -4,6 +4,7 @@ describe Bookie::Config do
   it "loads correct data" do
     config = Bookie::Config.new('snapshot/config.json')
     
+    config.db_type.should eql "sqlite3"
     config.server.should eql "localhost"
     config.port.should eql 8080
     config.username.should eql "blm768"
@@ -19,6 +20,8 @@ describe Bookie::Config do
   
   it "sets correct defaults" do
     dconfig = Bookie::Config.new('snapshot/default.json')
+    
+    dconfig.db_type.should eql "mysql"
     dconfig.port.should eql nil
     dconfig.username.should eql "root"
     dconfig.password.should eql ""

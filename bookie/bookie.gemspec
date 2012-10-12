@@ -14,4 +14,9 @@ Gem::Specification.new do |gem|
   gem.name          = "bookie"
   gem.require_paths = ["lib"]
   gem.version       = Bookie::VERSION
+  
+  gem.add_dependency('json')
+  gem.add_dependency('activerecord')
+  gem.add_dependency('torque_stats')
+  gem.add_development_dependency('rspec')
 end

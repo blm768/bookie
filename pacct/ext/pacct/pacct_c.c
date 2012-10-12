@@ -134,9 +134,17 @@ static VALUE get_user_id(VALUE self) {
 
 static VALUE get_user_name(VALUE self) {
   struct acct_v3* data;
+  struct passwd* pw_data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return rb_str_new2(getpwuid(data->ac_uid)->pw_name);
+  pw_data = getpwuid(data->ac_uid);
+  if(!pw_data) {
+    char buf[512];
+    snprintf(buf, 512, "Unable to obtain user name for ID %u", data->ac_uid);
+    rb_raise(rb_eSystemCallError, buf);
+  }
+  
+  return rb_str_new2(pw_data->pw_name);
 }
 
 static VALUE get_group_id(VALUE self) {
@@ -148,9 +156,17 @@ static VALUE get_group_id(VALUE self) {
 
 static VALUE get_group_name(VALUE self) {
   struct acct_v3* data;
+  struct group* group_data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return rb_str_new2(getgrgid(data->ac_gid)->gr_name);
+  group_data = getgrgid(data->ac_gid);
+  if(!group_data) {
+    char buf[512];
+    snprintf(buf, 512, "Unable to obtain group name for ID %u", data->ac_gid);
+    rb_raise(rb_eSystemCallError, buf);
+  }
+  
+  return rb_str_new2(group_data->gr_name);
 }
 
 static VALUE get_user_time(VALUE self) {

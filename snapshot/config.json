@@ -1,4 +1,5 @@
 {
+  "Database type" : "sqlite3",
   "Server"        : "localhost",
   "Port"          : 8080,
   "Username"      : "blm768",

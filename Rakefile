@@ -19,3 +19,11 @@ task :spec do
     puts `rake`
   end
 end
+
+desc "Synchronize snapshot files from the master snapshot directory"
+task :sync_snapshots do
+  Dir.glob('*/snapshot/**/*').each do |entry|
+    next unless File.file?(entry)
+    FileUtils.copy(entry.sub(/^.*\/snapshot/, "snapshot"), entry)
+  end
+end
