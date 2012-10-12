@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,9 +19,12 @@ VALUE mPacct, cFile, cEntry;
 
 //Ruby's Time class
 VALUE cTime;
+//Ruby's SystemCallError class
+VALUE cSystemCallError;
 
 //Identifiers
 ID id_at;
+ID id_new;
 
 //System parameters
 int pageSize;
@@ -137,11 +141,13 @@ static VALUE get_user_name(VALUE self) {
   struct passwd* pw_data;
   Data_Get_Struct(self, struct acct_v3, data);
   
+  errno = 0;
   pw_data = getpwuid(data->ac_uid);
   if(!pw_data) {
     char buf[512];
     snprintf(buf, 512, "Unable to obtain user name for ID %u", data->ac_uid);
-    rb_raise(rb_eSystemCallError, buf);
+    VALUE err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    rb_exc_raise(err);
   }
   
   return rb_str_new2(pw_data->pw_name);
@@ -159,11 +165,13 @@ static VALUE get_group_name(VALUE self) {
   struct group* group_data;
   Data_Get_Struct(self, struct acct_v3, data);
   
+  errno = 0;
   group_data = getgrgid(data->ac_gid);
   if(!group_data) {
     char buf[512];
     snprintf(buf, 512, "Unable to obtain group name for ID %u", data->ac_gid);
-    rb_raise(rb_eSystemCallError, buf);
+    VALUE err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    rb_exc_raise(err);
   }
   
   return rb_str_new2(group_data->gr_name);
@@ -194,7 +202,7 @@ static VALUE get_wall_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return INT2NUM(comp_t_to_long(data->ac_etime) / ticksPerSecond);
+  return rb_float_new(data->ac_etime);
 }
 
 static VALUE get_start_time(VALUE self) {
@@ -233,7 +241,9 @@ void Init_pacct_c() {
 
   //Get Ruby objects.
   cTime = rb_eval_string("Time");
+  cSystemCallError = rb_eval_string("SystemCallError");
   id_at = rb_intern("at");
+  id_new = rb_intern("new");
 
   //Define Ruby modules/objects/methods.
   mPacct = rb_define_module("Pacct");
