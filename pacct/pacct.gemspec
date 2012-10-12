@@ -12,9 +12,13 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{A C extension library for parsing accounting files in acct(5) format}
   gem.homepage      = "https://github.com/blm768/bookie"
   gem.extensions    = ["ext/pacct/extconf.rb"]
-
+  #To do: ignore 
+  gem.platform      = Gem::Platform::CURRENT
+  
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  gem.test_files    = gem.files.grep(%r{^(spec|snapshot)/})
+  gem.test_files    = gem.files.grep(%r{^(spec)/})
   gem.require_paths = ["lib"]
+  
+  gem.add_development_dependency('rspec')
 end
