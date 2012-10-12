@@ -1,27 +1,41 @@
 module TorqueStats
+  #Represents a completed job
   class Job
+    #The name of the user who created the job
     attr_accessor :user_name
+    #The group name of the user who created the job
     attr_accessor :group_name
+    #The job's start time
     attr_accessor :start_time
+    #The job's total wall time
     attr_accessor :wall_time
+    #The job's total CPU time
     attr_accessor :cpu_time
+    #The job's maximum physical memory usage in kilobytes
     attr_accessor :physical_memory
+    #The job's maximum virtual memory usage in kilobytes
     attr_accessor :virtual_memory
+    #The job's exit code
     attr_accessor :exit_code
     
+    #Returns the job's total maximum memory usage in kilobytes
     def memory
       physical_memory + virtual_memory
     end
   end
   
+  #Represents a job record file
   class JobRecord
+    #The name of the accounting file opened
     attr_reader :filename
   
+    #Creates a JobRecord using the TORQUE record file for the given date
     def initialize(date)
       @filename = File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
       @file = File.open(filename)
     end
     
+    #Yields each completed job to the given block
     def each_job
       @file.rewind
       @file.each_line do |line|
@@ -62,6 +76,7 @@ module TorqueStats
       end
     end
     
+    #Parses a time in HH:MM:SS format, returning seconds
     def parse_time(str)
       hours, minutes, seconds = *str.split(':').map!{ |s| Integer(s) }
       return hours * 3600 + minutes * 60 + seconds
@@ -69,6 +84,9 @@ module TorqueStats
     protected :parse_time
   end
   
-  class << self; attr_accessor :torque_root end
+  class << self;
+    #The TORQUE root directory (usually the value of the environment variable TORQUEROOT)
+    attr_accessor :torque_root
+  end
   torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
 end

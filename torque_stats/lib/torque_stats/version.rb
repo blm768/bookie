@@ -1,3 +1,4 @@
 module TorqueStats
-  VERSION = "0.0.1"
+  #The library version
+  VERSION = "0.8.0"
 end
