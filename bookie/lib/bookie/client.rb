@@ -36,7 +36,8 @@ module Bookie
         :database => @config.database,
         :username => @config.username,
         :password => @config.password,
-        :host     => @config.host)
+        :host     => @config.host,
+        :port     => @config.port)
     end
   end
 end

@@ -4,6 +4,19 @@ require 'json'
 
 module Bookie
   #Holds database configuration, etc. for Bookie components
+  #
+  #==Configuration format
+  #The configuration file is a JSON file with the following fields:
+  #* "Database type": the type of database to be used
+  #  - Defaults to "mysql"
+  #  - Corresponds to ActiveRecord database adapter name
+  #* "Server": the hostname of the server (mandatory)
+  #* "Port": the port on which to connect to the server (optional)
+  #* "Username": the username for the database
+  #  - Defaults to "root"
+  #* "Password": the password for the database
+  #  - Defaults to ""
+  #* "Excluded users": an array of usernames to be excluded from the database (optional)
   class Config
     #The database type
     #
