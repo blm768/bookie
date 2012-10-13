@@ -1,6 +1,7 @@
 require 'bookie'
 
 require 'active_record'
+require 'logger'
 
 module Bookie
   #Abstract class defining the interface for a Bookie client
@@ -31,6 +32,8 @@ module Bookie
   
     #Connects to the database specified in the configuration file
     def connect()
+      ActiveRecord.colorize_logging = false
+      ActiveRecord::Base.logger = Logger.new(STDERR)
       ActiveRecord::Base.establish_connection(
         :adapter  => @config.db_type,
         :database => @config.database,
