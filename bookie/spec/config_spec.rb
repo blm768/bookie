@@ -2,11 +2,12 @@ require 'spec_helper'
 
 describe Bookie::Config do
   it "loads correct data" do
-    config = Bookie::Config.new('snapshot/config.json')
+    config = Bookie::Config.new('snapshot/test_config.json')
     
     config.db_type.should eql "sqlite3"
     config.server.should eql "localhost"
     config.port.should eql 8080
+    config.database.should eql "bookie_test"
     config.username.should eql "blm768"
     config.password.should eql "test"
     config.excluded_users.should eql Set.new(["root"])
@@ -21,8 +22,9 @@ describe Bookie::Config do
   it "sets correct defaults" do
     dconfig = Bookie::Config.new('snapshot/default.json')
     
-    dconfig.db_type.should eql "mysql"
+    dconfig.db_type.should eql "mysql2"
     dconfig.port.should eql nil
+    dconfig.database.should eql "bookie"
     dconfig.username.should eql "root"
     dconfig.password.should eql ""
     dconfig.excluded_users.should eql Set.new([])

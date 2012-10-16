@@ -88,5 +88,5 @@ module TorqueStats
     #The TORQUE root directory (usually the value of the environment variable TORQUEROOT)
     attr_accessor :torque_root
   end
-  torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
+  @torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
 end

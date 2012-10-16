@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+#For development
+$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+
+require 'bookie-linux_client'
+
+#config = Bookie::Config.new('/etc/bookie/config.json')
+config = Bookie::Config.new('snapshot/config.json')
+
+#For development
+config.excluded_users = Set.new([])
+
+client = Bookie::LinuxClient::Client.new(config)
+
+client.connect
+
+client.send_data

@@ -1,6 +1,7 @@
 require 'bookie'
 
 require 'json'
+require 'set'
 
 module Bookie
   #Holds database configuration, etc. for Bookie components
@@ -8,10 +9,12 @@ module Bookie
   #==Configuration format
   #The configuration file is a JSON file with the following fields:
   #* "Database type": the type of database to be used
-  #  - Defaults to "mysql"
+  #  - Defaults to "mysql2"
   #  - Corresponds to ActiveRecord database adapter name
   #* "Server": the hostname of the server (mandatory)
   #* "Port": the port on which to connect to the server (optional)
+  #* "Database": the name of the database to use
+  #  - Defaults to "bookie"
   #* "Username": the username for the database
   #  - Defaults to "root"
   #* "Password": the password for the database
@@ -20,7 +23,7 @@ module Bookie
   class Config
     #The database type
     #
-    #Corresponds to ActiveRecord database adapter name; defaults to 'mysql'
+    #Corresponds to ActiveRecord database adapter name
     attr_accessor :db_type
     #The database server's hostname
     attr_accessor :server
@@ -28,17 +31,13 @@ module Bookie
     #
     #If nil, use the default port.
     attr_accessor :port
+    #The name of the database to use
+    attr_accessor :database
     #The username for the database
-    #
-    #Defaults to "root"
     attr_accessor :username
     #The password for the database
-    #
-    #Defaults to ""
     attr_accessor :password
     #A set containing the names of users to be excluded
-    #
-    #Defaults to an empty set
     attr_accessor :excluded_users
     
     #==Parameters
@@ -48,7 +47,7 @@ module Bookie
       data = JSON::parse(file.read)
       file.close
       
-      @db_type = data['Database type'] || 'mysql'
+      @db_type = data['Database type'] || 'mysql2'
       verify_type(@db_type, 'Database type', String)
       
       @server = data['Server']
@@ -57,6 +56,8 @@ module Bookie
       @port = data['Port']
       verify_type(@port, 'Port', Fixnum) unless @port == nil
       
+      @database = data['Database'] || "bookie"
+      verify_type(@database, 'Database', String)
       @username = data['Username'] || "root"
       verify_type(@username, 'Username', String)
       @password = data['Password'] || ""

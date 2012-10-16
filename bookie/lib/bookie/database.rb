@@ -8,8 +8,9 @@ module Bookie
     #ActiveRecord structure for a completed job
     class Job < ActiveRecord::Base
       #To do: integrate with time fields?
-      has_one :date
+      #has_one :date
       has_one :user
+      has_one :start_time
       has_one :wall_time
       has_one :cpu_time
       has_one :memory_usage
