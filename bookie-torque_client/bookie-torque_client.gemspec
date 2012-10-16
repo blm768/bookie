@@ -17,4 +17,6 @@ Gem::Specification.new do |gem|
   
   gem.add_dependency('bookie')
   gem.add_dependency('torque_stats')
+  
+  gem.add_development_dependency('rspec')
 end
