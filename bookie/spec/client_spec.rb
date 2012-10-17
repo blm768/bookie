@@ -51,6 +51,7 @@ describe Bookie::Client do
     server.expects(:"save!").returns(true)
     Bookie::Database::Server.expects(:new).returns(server)
     group = mock()
+    group.expects(:id).returns(nil)
     group.expects(:"name=").with("root").returns(nil)
     group.expects(:"save!").returns(true)
     Bookie::Database::Group.expects(:new).returns(group)
@@ -59,7 +60,13 @@ describe Bookie::Client do
     user.expects(:"group=").with(group).returns(nil)
     user.expects(:"save!").returns(true)
     Bookie::Database::User.expects(:new).returns(user)
+    db_job = mock()
+    db_job.expects(:"server=").with(server).returns(nil)
+    db_job.expects(:"user=").with(user).returns(nil)
+    db_job.expects(:"save!").returns(true)
     @client.expects(:each_job).yields(@job)
+    @client.expects(:filter_job).returns(true)
+    @client.expects(:to_database_job).returns(db_job)
     @client.send_data(Date.today)
   end
   

@@ -8,11 +8,11 @@
     </tr>
     <tr>
       <th>Total wall time</th>
-      <td></td>
+      <td><%= total_wall_time %> seconds</td>
     </tr>
     <tr>
       <th>Total CPU time</th>
-      <td></td>
+      <td><%= total_cpu_time %> seconds</td>
     </tr>
   </table>
   <table id="details">
@@ -29,13 +29,13 @@
     </tr>
     <% @jobs.each do |job| %>
       <tr>
-        <td><%= job.start_time.date %></td>
+        <td><%= (job.start_time + job.wall_time).to_date %></td>
         <td><%= job.server.name %></td>
         <td><%= job.user.name %></td>
         <td><%= job.user.group.name %></td>
-        <td><%= job.start_time %></td>
-        <td><%= job.wall_time %></td>
-        <td><%= job.cpu_time %></td>
+        <td><%= job.start_time.strftime('%I:%M:%S %p') %></td>
+        <td><%= job.wall_time %> sec</td>
+        <td><%= job.cpu_time %> sec</td>
         <td><%= job.memory %>kb</td>
       </tr>
     <% end %>
