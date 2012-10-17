@@ -44,8 +44,7 @@ module Bookie
         db_job = to_database_job(job)
         db_job.server = server
         db_job.user = user
-        db_job.memory = job.memory
-        puts db_job.save!
+        db_job.save!
       end
     end
     
@@ -68,7 +67,7 @@ module Bookie
       db_job.start_time = job.start_time
       db_job.wall_time = job.wall_time
       db_job.cpu_time = job.cpu_time
-      #db_job.
+      db_job.memory = job.memory
       return db_job
     end
   

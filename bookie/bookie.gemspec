@@ -18,5 +18,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency('json')
   gem.add_dependency('activerecord')
   gem.add_dependency('torque_stats')
+  gem.add_development_dependency('mocha')
   gem.add_development_dependency('rspec')
 end

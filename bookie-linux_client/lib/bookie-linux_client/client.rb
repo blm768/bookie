@@ -12,7 +12,6 @@ module Bookie
       def each_job(date)
         file = Pacct::File.new('snapshot/pacct')
         file.each_entry do |job|
-          puts job.user_name
           yield job
         end
       end

@@ -1,0 +1,76 @@
+<h1>Jobs</h1>
+<div id="tables">
+  <table id="summary">
+    <caption>Summary</caption>
+    <tr>
+      <th>Number of jobs</th>
+      <td><%= @jobs.length %></td>
+    </tr>
+    <tr>
+      <th>Total wall time</th>
+      <td></td>
+    </tr>
+    <tr>
+      <th>Total CPU time</th>
+      <td></td>
+    </tr>
+  </table>
+  <table id="details">
+    <caption>Details</caption>
+    <tr>
+      <th>Date</th>
+      <th>Machine</th>
+      <th>User</th>
+      <th>Group</th>
+      <th>Start time</th>
+      <th>Wall time</th>
+      <th>CPU time</th>
+      <th>Memory</th>
+    </tr>
+    <% @jobs.each do |job| %>
+      <tr>
+        <td><%= job.start_time.date %></td>
+        <td><%= job.server.name %></td>
+        <td><%= job.user.name %></td>
+        <td><%= job.user.group.name %></td>
+        <td><%= job.start_time %></td>
+        <td><%= job.wall_time %></td>
+        <td><%= job.cpu_time %></td>
+        <td><%= job.memory %>kb</td>
+      </tr>
+    <% end %>
+  </table>
+</div>
+<div id="controls">
+  <h2>Filters</h2>
+  <form>
+    <label for="filter_type">Filter by:</label>
+    <select id="filter_type">
+      <option value="days">Date</option>
+      <option value="servers">Server</option>
+      <option value="users">User</option>
+      <option value="groups">Group</option>
+    </select>
+    <input type="text" id="filter_value" />
+    <span id="date_filter_extras">
+      <label for="date_granularity">Granularity:</label>
+      <select id="date_granularity">
+         <option value="years">Years</option>
+         <option value="months">Months</option>
+         <option value="days">Days</option>
+      </select>
+    </div>
+    <input type="submit" value="Filter" />
+  </form>
+  <form>
+    <label for="sort_type">Sort by:</label>
+    <select id="sort_type">
+      <option value="datetime">Date</option>
+      <option value="server">Server</option>
+      <option value="user">User</option>
+      <option value="group">Group</option>
+      <option value="wall_time">Wall time</option>
+    </select>
+    <input type="submit" value="Sort" />
+  </form>
+</div>
