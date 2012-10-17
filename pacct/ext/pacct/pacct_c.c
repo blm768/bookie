@@ -318,7 +318,7 @@ void Init_pacct_c() {
   rb_define_method(cEntry, "cpu_time", get_cpu_time, 0);
   rb_define_method(cEntry, "wall_time", get_wall_time, 0);
   rb_define_method(cEntry, "start_time", get_start_time, 0);
-  rb_define_method(cEntry, "average_mem_usage", get_average_mem_usage, 0);
+  rb_define_method(cEntry, "memory", get_average_mem_usage, 0);
   rb_define_method(cEntry, "exit_code", get_exit_code, 0);
   rb_define_method(cEntry, "command_name", get_command_name, 0);
 }

@@ -22,15 +22,30 @@ module Bookie
       server = Bookie::Database::Server.where(:name => hostname).first
       unless server
         puts "Creating server"
-        server = Bookie::Database::Server.create
+        server = Bookie::Database::Server.new
         server.name = hostname
-        server.save
+        server.save!
       end
       each_job(date) do |job|
+        group = Bookie::Database::Group.where(:name => job.group_name).first
+        unless group
+          group = Bookie::Database::Group.new
+          group.name = job.group_name
+          group.save!
+        end
+        user = Bookie::Database::User.where(:name => job.user_name, :group_id => group.id).first
+        unless user
+          user = Bookie::Database::User.new
+          user.name = job.user_name
+          user.group = group
+          user.save!
+        end
         next unless filter_job(job)
         db_job = to_database_job(job)
         db_job.server = server
-        db_job.save
+        db_job.user = user
+        db_job.memory = job.memory
+        puts db_job.save!
       end
     end
     
@@ -49,7 +64,7 @@ module Bookie
     
     #Converts the client's internal job type to a Bookie::Database::Job
     def to_database_job(job)
-      db_job = Bookie::Database::Job.create
+      db_job = Bookie::Database::Job.new
       db_job.start_time = job.start_time
       db_job.wall_time = job.wall_time
       db_job.cpu_time = job.cpu_time

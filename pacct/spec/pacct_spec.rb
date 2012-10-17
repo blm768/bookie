@@ -15,7 +15,7 @@ describe Pacct::File do
       entry.user_time.should eql 0
       entry.system_time.should eql 0
       entry.cpu_time.should eql 0
-      entry.average_mem_usage.should eql 979
+      entry.memory.should eql 979
       entry.exit_code.should eql 0
       n += 1
     end
@@ -29,6 +29,8 @@ describe Pacct::File do
   it "throws an error when encountering unknown user/group IDs" do
     file = Pacct::File.new('snapshot/pacct_invalid_ids')
     file.each_entry do |entry|
+      #This assumes that these users and groups don't actually exist.
+      #If, for some odd reason, they _do_ exist, this test will fail.
       expect { entry.user_name }.to(
         raise_error(Errno::NOERROR.new('Unable to obtain user name for ID 4294967295').to_s))
       expect { entry.group_name }.to(
