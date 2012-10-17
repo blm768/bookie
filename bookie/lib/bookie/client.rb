@@ -26,8 +26,11 @@ module Bookie
         server.name = hostname
         server.save
       end
-      each_job(date) do
-        
+      each_job(date) do |job|
+        next unless filter_job(job)
+        db_job = to_database_job(job)
+        db_job.server = server
+        db_job.save
       end
     end
     
@@ -46,7 +49,12 @@ module Bookie
     
     #Converts the client's internal job type to a Bookie::Database::Job
     def to_database_job(job)
-      
+      db_job = Bookie::Database::Job.create
+      db_job.start_time = job.start_time
+      db_job.wall_time = job.wall_time
+      db_job.cpu_time = job.cpu_time
+      #db_job.
+      return db_job
     end
   
     #Connects to the database specified in the configuration file

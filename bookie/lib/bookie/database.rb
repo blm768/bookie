@@ -9,23 +9,29 @@ module Bookie
     class Job < ActiveRecord::Base
       #To do: integrate with time fields?
       #has_one :date
-      has_one :user
-      has_one :server
+      belongs_to :user
+      belongs_to :server
+      
+      validates_presence_of :user, :server, :cpu_time, :start_time, :wall_time, :memory_usage
     end
     
     #ActiveRecord structure for a user
     class User < ActiveRecord::Base
-      has_one :group
+      belongs_to :group
+      
+      validates_presence_of :group, :name
     end
     
     #ActiveRecord structure for a group
     class Group < ActiveRecord::Base
-      belongs_to :user
+      has_many :users
+      
+      validates_presence_of :name
     end
     
     #ActiveRecord structure for a server
     class Server < ActiveRecord::Base
-      belongs_to :job
+      has_many :jobs
       
       validates_presence_of :name
     end
