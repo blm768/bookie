@@ -3,7 +3,7 @@
   "Server"        : "localhost",
   "Port"          : 8080,
   "Database"      : "bookie_test",
-  "Username"      : "root",
+  "Username"      : "blm768",
   "Password"      : "test",
   "Excluded users": ["root"]
 }

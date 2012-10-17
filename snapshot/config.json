@@ -2,7 +2,6 @@
   "Database type" : "mysql2",
   "Server"        : "localhost",
   "Port"          : 8080,
-  "Database"      : "test",
   "Username"      : "root",
   "Password"      : "test"
 }

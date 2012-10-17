@@ -15,4 +15,4 @@ client = Bookie::LinuxClient::Client.new(config)
 
 client.connect
 
-client.send_data
+client.send_data(Date.yesterday)

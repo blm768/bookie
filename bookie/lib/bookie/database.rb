@@ -10,29 +10,24 @@ module Bookie
       #To do: integrate with time fields?
       #has_one :date
       has_one :user
-      has_one :start_time
-      has_one :wall_time
-      has_one :cpu_time
-      has_one :memory_usage
       has_one :server
     end
     
     #ActiveRecord structure for a user
-    clase User < ActiveRecord::Base
-      has_one :name
+    class User < ActiveRecord::Base
       has_one :group
     end
     
     #ActiveRecord structure for a group
     class Group < ActiveRecord::Base
-      has_one :name
-      belongs_to_many :users
+      belongs_to :user
     end
     
     #ActiveRecord structure for a server
     class Server < ActiveRecord::Base
-      has_one :name
-      belongs_to_many :jobs
+      belongs_to :job
+      
+      validates_presence_of :name
     end
   end
 end

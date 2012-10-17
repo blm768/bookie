@@ -9,7 +9,7 @@ module Bookie
   #Represents a client that returns data from a standalone Linux server
     class Client < Bookie::Client
       #Yields each job in the log
-      def each_job(date = Date.yesterday)
+      def each_job(date)
         file = Pacct::File.new('snapshot/pacct')
         file.each_entry do |job|
           puts job.user_name

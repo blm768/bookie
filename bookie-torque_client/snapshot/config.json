@@ -1,9 +1,7 @@
 {
-  "Database type" : "sqlite3",
+  "Database type" : "mysql2",
   "Server"        : "localhost",
   "Port"          : 8080,
-  "Database"      : "bookie_test",
   "Username"      : "root",
-  "Password"      : "test",
-  "Excluded users": ["root"]
+  "Password"      : "test"
 }

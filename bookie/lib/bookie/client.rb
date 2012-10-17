@@ -2,6 +2,7 @@ require 'bookie'
 
 require 'active_record'
 require 'logger'
+require 'socket'
 
 module Bookie
   #Abstract class defining the interface for a Bookie client
@@ -14,7 +15,18 @@ module Bookie
     
     #Sends job data for a given day to the database server
     def send_data(date)
-      each_job do
+      #To do: resolve potential issue w/ reverse lookup?
+      #Just use hostname (not FQDN)?                                                                                             
+      hostname = Socket.gethostbyname(Socket.gethostname)[0]
+      #Make sure this machine is in the database.
+      server = Bookie::Database::Server.where(:name => hostname).first
+      unless server
+        puts "Creating server"
+        server = Bookie::Database::Server.create
+        server.name = hostname
+        server.save
+      end
+      each_job(date) do
         
       end
     end
