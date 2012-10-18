@@ -12,7 +12,7 @@ module Bookie
       belongs_to :user
       belongs_to :server
       
-      validates_presence_of :user, :server, :cpu_time, :start_time, :wall_time, :memory_usage
+      validates_presence_of :date, :user, :server, :cpu_time, :start_time, :wall_time, :memory
     end
     
     #ActiveRecord structure for a user

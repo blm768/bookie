@@ -1,3 +1,13 @@
+#message_error {
+  color: #A00;
+}
+#message_alert {
+  color: #A50;
+}
+#message_notice {
+  color: #0A0;
+}
+
 div#tables {
   float: left;
   width: 75%;
@@ -51,11 +61,14 @@ div#controls select {
   min-width: 8em;
   max-width: 100%;
 }
+div#controls input[type=text] {
+  width: 100%;
+}
 div#controls input[type=submit] {
   float: left;
   clear: both;
   width: 7em;
 }
-#date_filter_extras, #filter_extras {
+#filter_extras {
   display: none;
 }

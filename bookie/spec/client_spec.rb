@@ -3,6 +3,7 @@ require 'spec_helper'
 require 'socket'
 
 class JobStub
+  attr_accessor :date
   attr_accessor :user_name
   attr_accessor :group_name
   attr_accessor :start_time
@@ -35,6 +36,7 @@ describe Bookie::Client do
   it "correctly converts jobs to database objects" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
     djob = @client.to_database_job(@job)
+    djob.date.should eql (djob.start_time + djob.wall_time).to_date
     djob.start_time.should eql @job.start_time
     djob.wall_time.should eql @job.wall_time
     djob.cpu_time.should eql @job.cpu_time

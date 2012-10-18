@@ -30,7 +30,7 @@
     </tr>
     <% @jobs.each do |job| %>
       <tr>
-        <td><%= (job.start_time + job.wall_time).to_date %></td>
+        <td><%= (job.date).to_date %></td>
         <td><%= job.server.name %></td>
         <td><%= job.user.name %></td>
         <td><%= job.user.group.name %></td>
@@ -47,34 +47,23 @@
   <h2>Filters</h2>
   <%= form_tag("/jobs", :method => "get") do %>
     <%= label_tag(:filter_type, "Filter by:") %>
-    <select name="filter_type">
+    <%= select_tag(:filter_type, %{
       <option value="none"></option>
-      <option value="day">Date</option>
+      <option value="date">Date</option>
       <option value="server">Server</option>
       <option value="user">User</option>
       <option value="group">Group</option>
+      }.html_safe) %>
     </select>
-    <span id="date_filter_extras">
-      <%= label_tag(:date_granularity, "Granularity:") %>
-      <select name="date_granularity">
-        <option value="none"></option>
-        <option value="years">Years</option>
-        <option value="months">Months</option>
-        <option value="days">Days</option>
-      </select>
-    </span>
     <span id="filter_extras">
       <%= text_field_tag(:filter_value) %>
     </span>
     <label for="sort_type">Sort by:</label>
-    <select name="sort_type">
+    <%= select_tag(:sort, %{
       <option value="none"></option>
-      <option value="datetime">Date</option>
-      <option value="server">Server</option>
-      <option value="user">User</option>
-      <option value="group">Group</option>
+      <option value="date">Date</option>
       <option value="wall_time">Wall time</option>
-    </select>
+    }.html_safe) %> 
     <%= submit_tag("Submit") %>
   <% end %>
 </div>
