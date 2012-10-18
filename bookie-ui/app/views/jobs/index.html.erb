@@ -1,4 +1,5 @@
 <h1>Jobs</h1>
+
 <div id="tables">
   <table id="summary">
     <caption>Summary</caption>
@@ -41,36 +42,41 @@
     <% end %>
   </table>
 </div>
+
 <div id="controls">
   <h2>Filters</h2>
-  <form>
-    <label for="filter_type">Filter by:</label>
-    <select id="filter_type">
-      <option value="days">Date</option>
-      <option value="servers">Server</option>
-      <option value="users">User</option>
-      <option value="groups">Group</option>
+  <%= form_tag("/jobs", :method => "get") do %>
+    <%= label_tag(:filter_type, "Filter by:") %>
+    <select name="filter_type">
+      <option value="none"></option>
+      <option value="day">Date</option>
+      <option value="server">Server</option>
+      <option value="user">User</option>
+      <option value="group">Group</option>
     </select>
-    <input type="text" id="filter_value" />
     <span id="date_filter_extras">
-      <label for="date_granularity">Granularity:</label>
-      <select id="date_granularity">
-         <option value="years">Years</option>
-         <option value="months">Months</option>
-         <option value="days">Days</option>
+      <%= label_tag(:date_granularity, "Granularity:") %>
+      <select name="date_granularity">
+        <option value="none"></option>
+        <option value="years">Years</option>
+        <option value="months">Months</option>
+        <option value="days">Days</option>
       </select>
-    </div>
-    <input type="submit" value="Filter" />
-  </form>
-  <form>
+    </span>
+    <span id="filter_extras">
+      <%= text_field_tag(:filter_value) %>
+    </span>
     <label for="sort_type">Sort by:</label>
-    <select id="sort_type">
+    <select name="sort_type">
+      <option value="none"></option>
       <option value="datetime">Date</option>
       <option value="server">Server</option>
       <option value="user">User</option>
       <option value="group">Group</option>
       <option value="wall_time">Wall time</option>
     </select>
-    <input type="submit" value="Sort" />
-  </form>
+    <%= submit_tag("Submit") %>
+  <% end %>
 </div>
+
+

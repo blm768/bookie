@@ -51,6 +51,8 @@ BookieUi::Application.routes.draw do
   # root :to => 'welcome#index'
   
   root :to => 'jobs#index'
+  
+  resources :jobs
 
   # See how all your routes lay out with "rake routes"
 

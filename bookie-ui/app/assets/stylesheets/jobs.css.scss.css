@@ -41,12 +41,21 @@ div#controls h2 {
 }
 div#controls label {
   display: block;
-  width: 100%;
+  float: left;
+  clear: both;
+  width: 6em;
 }
 div#controls select {
-  width: 30%;
+  float: right;
+  clear: right;
+  min-width: 8em;
+  max-width: 100%;
 }
-
 div#controls input[type=submit] {
-  width: 20%;
+  float: left;
+  clear: both;
+  width: 7em;
+}
+#date_filter_extras, #filter_extras {
+  display: none;
 }
