@@ -12,7 +12,7 @@ module Bookie
       belongs_to :user
       belongs_to :server
       
-      validates_presence_of :date, :user, :server, :cpu_time, :start_time, :wall_time, :memory
+      validates_presence_of :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory
     end
     
     #ActiveRecord structure for a user
@@ -33,7 +33,7 @@ module Bookie
     class Server < ActiveRecord::Base
       has_many :jobs
       
-      validates_presence_of :name
+      validates_presence_of :name, :type
     end
   end
 end

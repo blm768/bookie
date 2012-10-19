@@ -50,23 +50,12 @@ class JobsController < ApplicationController
         @last_filter = :server
         @last_filter_value = val
       when 'user'
-        #To do: handle group changes.
-        user = Bookie::Database::User.where('name = ?', params[:filter_value]).first
-        if user
-          @jobs = @jobs.where('user_id = ?', user.id)
-        else
-          @jobs = Bookie::Database::Job.limit(0)
-        end
+        @jobs = Bookie::Filter::by_user(@jobs, val)
         @last_filter = :user
         @last_filter_value = val
       when 'group'
-        group = Bookie::Database::Group.where('name = ?', params[:filter_value]).first
-        if group
-          @jobs = @jobs.joins(:user).where('user_id = users.id && group_id = ?', group.id)
-        else
-          @jobs = Bookie::Database::Job.limit(0)
-        end
-        @last_filter = group
+        @jobs = Bookie::Filter::by_group(@jobs, val)
+        @last_filter = :group
         @last_filter_value = val
     end
     
