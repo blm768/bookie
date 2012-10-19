@@ -3,43 +3,52 @@ require 'bookie'
 
 require 'date'
 
+class BadDateError < RangeError
+
+end
+
 class JobsController < ApplicationController
   def index
     @jobs = Bookie::Database::Job
+    val = params[:filter_value].strip
     case params[:filter_type]
       when 'date'
-        date_text = params[:filter_value]
+        #To do: remove copy?
+        date_text = val
         if date_text && date_text.length > 0
-          bad_format = false
-          date_text.strip!
-          fields = date_text.split('-').map{ |s| Integer(s) } rescue bad_format = true
-          date = Date.new(*fields) rescue bad_format = true
-          next_unit = case fields.length
-            when 1
-              :next_year
-            when 2
-              :next_month
-            when 3
-              :next_day
-          end
-          if bad_format
+          begin
+            fields = date_text.split('-').map{ |s| Integer(s, 10) } rescue raise(BadDateError)
+            date = Date.new(*fields) rescue raise(BadDateError)
+            next_unit = case fields.length
+              when 1
+                :next_year
+              when 2
+                :next_month
+              when 3
+                :next_day
+            end
+          rescue BadDateError
             flash.now[:error] = "Invalid date: #{date_text}"
           else
             @jobs = @jobs.where(
               "? <= date AND date < ?",
               date.strftime("%Y-%m-%d"),
               date.send(next_unit).strftime("%Y/%m/%d"))
+            @last_filter = :date
+            @last_filter_value = val
           end
         else
           flash.now[:error] = "No date specified"
         end
       when 'server'
-        server = Bookie::Database::Server.where('name = ?', params[:filter_value]).first
+        server = Bookie::Database::Server.where('name = ?', val).first
         if server
           @jobs = @jobs.where('server_id = ?', server.id)
         else
           @jobs = Bookie::Database::Job.limit(0)
         end
+        @last_filter = :server
+        @last_filter_value = val
       when 'user'
         #To do: handle group changes.
         user = Bookie::Database::User.where('name = ?', params[:filter_value]).first
@@ -48,6 +57,8 @@ class JobsController < ApplicationController
         else
           @jobs = Bookie::Database::Job.limit(0)
         end
+        @last_filter = :user
+        @last_filter_value = val
       when 'group'
         group = Bookie::Database::Group.where('name = ?', params[:filter_value]).first
         if group
@@ -55,13 +66,17 @@ class JobsController < ApplicationController
         else
           @jobs = Bookie::Database::Job.limit(0)
         end
+        @last_filter = group
+        @last_filter_value = val
     end
     
     case params[:sort]
       when 'date'
         @jobs.order(:date)
+        @last_sort = :date
       when 'wall_time'
         @jobs.order(:wall_time)
+        @last_sort = :wall_time
     end
     
     @jobs = @jobs.all

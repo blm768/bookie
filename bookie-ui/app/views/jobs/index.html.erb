@@ -47,23 +47,23 @@
   <h2>Filters</h2>
   <%= form_tag("/jobs", :method => "get") do %>
     <%= label_tag(:filter_type, "Filter by:") %>
-    <%= select_tag(:filter_type, %{
-      <option value="none"></option>
-      <option value="date">Date</option>
-      <option value="server">Server</option>
-      <option value="user">User</option>
-      <option value="group">Group</option>
-      }.html_safe) %>
+    <%= select_tag(:filter_type, options({
+        :none => "",
+        :date => "Date",
+        :server => "Server",
+        :user => "User",
+        :group => "Group"},
+        @last_filter).html_safe) %>
     </select>
     <span id="filter_extras">
-      <%= text_field_tag(:filter_value) %>
+      <%= text_field_tag(:filter_value, @last_filter_value) %>
     </span>
     <label for="sort_type">Sort by:</label>
-    <%= select_tag(:sort, %{
-      <option value="none"></option>
-      <option value="date">Date</option>
-      <option value="wall_time">Wall time</option>
-    }.html_safe) %> 
+    <%= select_tag(:sort, options({
+      :none => "",
+      :date => "Date",
+      :wall_time => "Wall time"},
+      @last_sort).html_safe) %> 
     <%= submit_tag("Submit") %>
   <% end %>
 </div>
