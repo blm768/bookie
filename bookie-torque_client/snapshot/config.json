@@ -1,7 +1,0 @@
-{
-  "Database type" : "mysql2",
-  "Server"        : "localhost",
-  "Port"          : 8080,
-  "Username"      : "root",
-  "Password"      : "test"
-}
