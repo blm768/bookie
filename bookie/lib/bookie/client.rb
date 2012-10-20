@@ -64,9 +64,8 @@ module Bookie
     #Converts the client's internal job type to a Bookie::Database::Job
     def to_database_job(job)
       db_job = Bookie::Database::Job.new
-      #To do: optimize for specified date?
-      db_job.date = (job.start_time + job.wall_time).to_date
       db_job.start_time = job.start_time
+      db_job.end_time = job.start_time + job.wall_time
       db_job.wall_time = job.wall_time
       db_job.cpu_time = job.cpu_time
       db_job.memory = job.memory

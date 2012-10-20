@@ -3,7 +3,7 @@ require "bookie/version"
 require "bookie/client"
 require "bookie/config"
 require "bookie/database"
-require "bookie/database/filter"
+require "bookie/filter"
 
 #The Bookie root module
 module Bookie

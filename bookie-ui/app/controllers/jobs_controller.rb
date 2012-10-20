@@ -41,12 +41,7 @@ class JobsController < ApplicationController
           flash.now[:error] = "No date specified"
         end
       when 'server'
-        server = Bookie::Database::Server.where('name = ?', val).first
-        if server
-          @jobs = @jobs.where('server_id = ?', server.id)
-        else
-          @jobs = Bookie::Database::Job.limit(0)
-        end
+        
         @last_filter = :server
         @last_filter_value = val
       when 'user'
