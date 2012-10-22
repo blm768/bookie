@@ -15,7 +15,7 @@ jobs = Bookie::Database::Job
 #Process arguments
 args = ARGV[0 .. -1]
 filters = {}
-while args.length > 0
+while args && args.length > 0
   arg = args[0]
   #Is this a switch?
   if arg[0 .. 1] == "--"
@@ -23,9 +23,23 @@ while args.length > 0
     #To do: verify that the next argument isn't a switch.
     case switch
       when 'start_time'
-        filters[switch.intern] = args[1 .. 2]
+        if args.length < 3
+          $stderr.puts "2 arguments expected for filter"
+          exit 1
+        end
+        begin
+          filters[switch.intern] = args[1 .. 2].map{ |s| Time.parse(s) }
+        rescue ArgumentError
+          $stderr.puts "Invalid time format"
+          exit 1
+        end
+        puts filters
         args = args[2 .. -1]
       else
+        if args.length < 2
+          $stderr.puts "Argument expected for filter"
+          exit 1
+        end
         filters[switch.intern] = args[1]
         args = args[1 .. -1]
     end

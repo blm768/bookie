@@ -3,7 +3,7 @@
 #For development
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
-require 'bookie-client/client'
+require 'bookie-client'
 
 #for development
 #config = Bookie::Config.new('/etc/bookie/config.json')
@@ -11,9 +11,8 @@ config = Bookie::Config.new('snapshot/config.json')
 
 #For development
 config.excluded_users = Set.new([])
+config.connect
 
-client = Bookie::Client::LinuxClient.new(config)
+sender = Bookie::Client::LinuxSender.new(config)
 
-client.connect
-
-client.send_data(Date.yesterday)
+sender.send_data(Date.yesterday)
