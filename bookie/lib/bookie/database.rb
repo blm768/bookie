@@ -65,7 +65,8 @@ module Bookie
       def up
         create_table :servers do |t|
           t.string :name, :null => false
-          t.integer :server_type, :null => false
+          #A 1-byte integer (hopefully)
+          t.integer :server_type, :limit => 1, :null => false
         end
       end
       
@@ -100,7 +101,7 @@ module Bookie
         CreateJobs.new.up
       end
       
-      def delete_tables
+      def drop_tables
         CreateUsers.new.down
         CreateGroups.new.down
         CreateServers.new.down

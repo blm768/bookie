@@ -22,9 +22,9 @@ module Bookie
         #Make sure this machine is in the database.
         server = Bookie::Database::Server.where(:name => hostname).first
         unless server
-          puts "Creating server"
           server = Bookie::Database::Server.new
           server.name = hostname
+          server.server_type = system_type
           server.save!
         end
         each_job(date) do |job|
@@ -95,6 +95,10 @@ module Bookie
         file.each_entry do |job|
           yield job
         end
+      end
+      
+      def system_type
+        return 0
       end
     end
   end

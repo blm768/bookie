@@ -1,0 +1,33 @@
+#/usr/bin/env ruby
+
+#For development
+$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+
+require 'bookie-client'
+
+drop = false
+
+def write_usage_and_exit
+  $stderr.puts "Usage: bookie-create-tables [--drop]"
+  exit 1
+end
+
+write_usage_and_exit if ARGV.length > 1
+
+if ARGV[0]
+  if ARGV[0] == '--drop'
+    drop = true
+  else
+    write_usage_and_exit
+  end
+end
+
+#For development
+config = Bookie::Config.new('snapshot/config.json')
+config.connect
+
+if drop
+  Bookie::Database::drop_tables
+else
+  Bookie::Database::create_tables
+end
