@@ -19,7 +19,7 @@ while args && args.length > 0
   arg = args[0]
   #Is this a switch?
   if arg[0 .. 1] == "--"
-    switch = arg[2 .. -1]
+    switch = arg[2 .. -1].gsub(/-/, "_")
     #To do: verify that the next argument isn't a switch.
     case switch
       when 'start_time'

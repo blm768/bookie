@@ -30,7 +30,8 @@ module Bookie
         end
       end
       
-      @@FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-20.20s|%-25.25s|%-25.25s|%-10.10s|%-10.10s|%-20.20s|\n"
+      #To do: settle on a character and remove the gsub.
+      @@FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-20.20s|%-26.25s|%-26.25s|%-12.10s|%-12.10s|%-20.20s|\n".gsub(/\|/, " ")
       
       def self.format_duration(dur)
         dur = Integer(dur)

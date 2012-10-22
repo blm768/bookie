@@ -20,14 +20,14 @@ module Bookie
       def by_server(jobs, server_name)
         server = Bookie::Database::Server.where('name = ?', server_name).first
         if server
-          jobs = jobs.where('server_id = ?', server.id)
+          return jobs.where('server_id = ?', server.id)
         else
-          jobs = Bookie::Database::Job.limit(0)
+          return Bookie::Database::Job.limit(0)
         end
       end
       
       def by_server_type(jobs, server_type)
-        jobs = jobs.joins(:server).where('server_type = ?', server_type)
+        return jobs.joins(:server).where('server_type = ?', Bookie::Database::SERVER_TYPE[server_type.intern])
       end
       
       def by_start_time(jobs, start_min, start_max)
