@@ -3,15 +3,16 @@
 #For development
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
-require 'bookie-linux_client'
+require 'bookie-client/client'
 
+#for development
 #config = Bookie::Config.new('/etc/bookie/config.json')
 config = Bookie::Config.new('snapshot/config.json')
 
 #For development
 config.excluded_users = Set.new([])
 
-client = Bookie::LinuxClient::Client.new(config)
+client = Bookie::Client::LinuxClient.new(config)
 
 client.connect
 
