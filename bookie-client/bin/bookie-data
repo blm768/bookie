@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+#For development
+$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+
+require 'bookie-client'
+
+#For development
+config = Bookie::Config.new('../snapshot/config.json')
+config.connect
+client = Bookie::Client::Client.new(config)
+
+jobs = Bookie::Database::Job
+
+#Process arguments
+args = ARGV[0 .. -1]
+filters = {}
+while args.length > 0
+  arg = args[0]
+  #Is this a switch?
+  if arg[0 .. 1] == "--"
+    switch = arg[2 .. -1]
+    #To do: verify that the next argument isn't a switch.
+    case switch
+      when 'start_time'
+        filters[switch.intern] = args[1 .. 2]
+        args = args[2 .. -1]
+      else
+        filters[switch.intern] = args[1]
+        args = args[1 .. -1]
+    end
+  end
+  args = args[1 .. -1]
+end
+
+client.print_jobs(Bookie::Filter::apply_filters(jobs, filters))
