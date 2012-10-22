@@ -29,6 +29,27 @@ module Bookie
       def by_start_time(jobs, start_min, start_max)
         return jobs.where('? <= start_time AND start_time <= ?', start_min, start_max)
       end
+      
+      class UnknownFilterError < ArgumentError
+      end
+      
+      def apply_filters(jobs, filters)
+        filters.each_pair do |name, value|
+          case name
+            when :user
+              jobs = by_user(jobs, value)
+            when :group
+              jobs = by_group(jobs, value)
+            when :server
+              jobs = by_server(jobs, value)
+            when :start_time
+              jobs = by_start_time(jobs, value[0], value[1])
+            else
+              raise UnknownFilterError.new("Unknown filter type '#{name}'")
+          end
+        end
+        return jobs
+      end
     end
   end
 end

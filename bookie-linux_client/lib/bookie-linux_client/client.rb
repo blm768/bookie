@@ -7,7 +7,7 @@ require 'pacct'
 module Bookie
   module LinuxClient
   #Represents a client that returns data from a standalone Linux server
-    class Client < Bookie::Client
+    class Sender < Bookie::Sender
       #Yields each job in the log
       def each_job(date)
         file = Pacct::File.new('snapshot/pacct')

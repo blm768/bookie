@@ -12,10 +12,10 @@ class JobStub
   attr_accessor :memory
 end
 
-describe Bookie::Client do
+describe Bookie::Sender do
   before(:each) do
     @config = Bookie::Config.new('snapshot/test_config.json')
-    @client = Bookie::Client.new(@config)
+    @sender = Bookie::Sender.new(@config)
     @job = JobStub.new
     @job.user_name = "root"
     @job.group_name = "root"
@@ -28,14 +28,14 @@ describe Bookie::Client do
   it "correctly filters jobs" do
     job = JobStub.new
     job.user_name = "root"
-    @client.filter_job(job).should eql nil
+    @sender.filter_job(job).should eql nil
     job.user_name = "test"
-    @client.filter_job(job).should eql job
+    @sender.filter_job(job).should eql job
   end
   
   it "correctly converts jobs to database objects" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
-    djob = @client.to_database_job(@job)
+    djob = @sender.to_database_job(@job)
     djob.start_time.should eql @job.start_time
     djob.end_time.should eql @job.start_time + @job.wall_time
     djob.wall_time.should eql @job.wall_time
@@ -66,19 +66,13 @@ describe Bookie::Client do
     db_job.expects(:"server=").with(server).returns(nil)
     db_job.expects(:"user=").with(user).returns(nil)
     db_job.expects(:"save!").returns(true)
-    @client.expects(:each_job).yields(@job)
-    @client.expects(:filter_job).returns(true)
-    @client.expects(:to_database_job).returns(db_job)
-    @client.send_data(Date.today)
+    @sender.expects(:each_job).yields(@job)
+    @sender.expects(:filter_job).returns(true)
+    @sender.expects(:to_database_job).returns(db_job)
+    @sender.send_data(Date.today)
   end
   
   it "has a stubbed-out each_job method" do
-    expect { @client.each_job(Date.today)}.to raise_error(NotImplementedError)
-  end
-  
-  it "attempts to connect to the database" do
-    ActiveRecord::Base.stubs(:logger=).returns(nil).at_least_once
-    ActiveRecord::Base.stubs(:establish_connection).returns(nil).at_least_once
-    @client.connect
+    expect { @sender.each_job(Date.today)}.to raise_error(NotImplementedError)
   end
 end

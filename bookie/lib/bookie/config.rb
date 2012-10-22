@@ -1,5 +1,6 @@
 require 'bookie'
 
+require 'active_record'
 require 'json'
 require 'set'
 
@@ -71,6 +72,21 @@ module Bookie
     #Verifies that a field is of the correct type, raising an error if the type does not match
     def verify_type(value, name, type)
       raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class == type
+    end
+    
+    #Connects to the database specified in the configuration file
+    def connect()
+      #To do: this is deprecated; find alternative?
+      #ActiveRecord.colorize_logging = false
+      #To do: create config option for this?
+      #ActiveRecord::Base.logger = Logger.new(STDERR)
+      ActiveRecord::Base.establish_connection(
+        :adapter  => self.db_type,
+        :database => self.database,
+        :username => self.username,
+        :password => self.password,
+        :host     => self.server,
+        :port     => self.port)
     end
   end
 end

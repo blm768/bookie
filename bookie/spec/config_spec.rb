@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'active_record'
+
 describe Bookie::Config do
   it "loads correct data" do
     config = Bookie::Config.new('snapshot/test_config.json')
@@ -32,5 +34,12 @@ describe Bookie::Config do
   
   it 'correctly handles a missing "Server" field' do
     expect { Bookie::Config.new('snapshot/empty.json') }.to raise_error("No database server specified")
+  end
+  
+  it "attempts to connect to the database" do
+    config = Bookie::Config.new('snapshot/test_config.json')
+    ActiveRecord::Base.stubs(:logger=).returns(nil).at_least_once
+    ActiveRecord::Base.stubs(:establish_connection).returns(nil).at_least_once
+    config.connect
   end
 end
