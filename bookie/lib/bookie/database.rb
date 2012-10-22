@@ -29,11 +29,22 @@ module Bookie
       validates_presence_of :group, :name
     end
     
+    SERVER_TYPE = {standalone: 0, torque_cluster: 1}
+    
     #ActiveRecord structure for a server
     class Server < ActiveRecord::Base
       has_many :jobs
       
       validates_presence_of :name, :server_type
+      
+      #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
+      def server_type
+        return SERVER_TYPE.key(read_attribute(:server_type))
+      end
+      
+      def server_type=(type)
+        write_attribute(:server_type, SERVER_TYPE[type])
+      end
     end
   
     class CreateUsers < ActiveRecord::Migration

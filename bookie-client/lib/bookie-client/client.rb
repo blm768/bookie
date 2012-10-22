@@ -12,8 +12,8 @@ module Bookie
       end
       
       def print_jobs(jobs, io = $stdout)
-        heading = sprintf @@FORMAT_STRING, 'User', 'Group', 'Server', 'Start time',
-          'End time', 'Wall time', 'CPU time', 'Memory usage'
+        heading = sprintf @@FORMAT_STRING, 'User', 'Group', 'Server', 'Server type',
+        'Start time', 'End time', 'Wall time', 'CPU time', 'Memory usage'
         io.write heading
         io.puts '-' * (heading.length - 1)
         jobs.all.each do |job|   
@@ -21,6 +21,7 @@ module Bookie
             job.user.name,
             job.user.group.name,
             job.server.name,
+            job.server.server_type.to_s.humanize,
             job.start_time,
             job.end_time,
             Client.format_duration(job.end_time - job.start_time),
@@ -29,7 +30,7 @@ module Bookie
         end
       end
       
-      @@FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-25.25s|%-25.25s|%-10.10s|%-10.10s|%-20.20s|\n"
+      @@FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-20.20s|%-25.25s|%-25.25s|%-10.10s|%-10.10s|%-20.20s|\n"
       
       def self.format_duration(dur)
         dur = Integer(dur)

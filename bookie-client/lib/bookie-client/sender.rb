@@ -55,9 +55,6 @@ module Bookie
       end
       
       #Returns the type code of the system
-      #==Type codes
-      # * 0: standalone machine
-      # * 1: TORQUE cluster
       def system_type
         raise NotImplementedError.new("Must be defined by subclass")
       end
@@ -98,7 +95,7 @@ module Bookie
       end
       
       def system_type
-        return 0
+        return :standalone
       end
     end
   end

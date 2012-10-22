@@ -26,8 +26,16 @@ module Bookie
         end
       end
       
+      def by_server_type(jobs, server_type)
+        jobs = jobs.joins(:server).where('server_type = ?', server_type)
+      end
+      
       def by_start_time(jobs, start_min, start_max)
         return jobs.where('? <= start_time AND start_time <= ?', start_min, start_max)
+      end
+      
+      def by_end_time(jobs, end_min, end_max)
+        return jobs.where('? <= end_time AND end_time <= ?', end_min, end_max)
       end
       
       class UnknownFilterError < ArgumentError
@@ -42,6 +50,8 @@ module Bookie
               jobs = by_group(jobs, value)
             when :server
               jobs = by_server(jobs, value)
+            when :server_type
+              jobs = by_server_type(jobs, value)
             when :start_time
               jobs = by_start_time(jobs, value[0], value[1])
             else
