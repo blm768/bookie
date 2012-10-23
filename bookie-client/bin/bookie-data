@@ -47,4 +47,8 @@ while args && args.length > 0
   args = args[1 .. -1]
 end
 
-client.print_jobs(Bookie::Filter::apply_filters(jobs, filters))
+jobs = Bookie::Filter::apply_filters(jobs, filters)
+
+#To do: ensure that the query isn't performed twice.
+client.print_summary(jobs)
+client.print_jobs(jobs)

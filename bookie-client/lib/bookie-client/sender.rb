@@ -80,6 +80,8 @@ module Bookie
         db_job.wall_time = job.wall_time
         db_job.cpu_time = job.cpu_time
         db_job.memory = job.memory
+        #To do: unit tests
+        db_job.exit_code = job.exit_code
         return db_job
       end
     end

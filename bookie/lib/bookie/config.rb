@@ -12,7 +12,7 @@ module Bookie
   #* "Database type": the type of database to be used
   #  - Defaults to "mysql2"
   #  - Corresponds to ActiveRecord database adapter name
-  #* "Server": the hostname of the server (mandatory)
+  #* "Server": the hostname of the server (required)
   #* "Port": the port on which to connect to the server (optional)
   #* "Database": the name of the database to use
   #  - Defaults to "bookie"
@@ -21,6 +21,10 @@ module Bookie
   #* "Password": the password for the database
   #  - Defaults to ""
   #* "Excluded users": an array of usernames to be excluded from the database (optional)
+  #* "System type": The type of system
+  #  - "Standalone": a standalone machine
+  #  - "TORQUE cluster": the head of a TORQUE cluster
+  #  - Defaults to "Standalone"
   class Config
     #The database type
     #
@@ -40,6 +44,8 @@ module Bookie
     attr_accessor :password
     #A set containing the names of users to be excluded
     attr_accessor :excluded_users
+    #The system type
+    attr_accessor :system_type
     
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -67,6 +73,10 @@ module Bookie
       excluded_users_array = data['Excluded users'] || []
       verify_type(excluded_users_array, 'Excluded users', Array)
       @excluded_users = Set.new(excluded_users_array)
+      
+      #To do: unit tests
+      @system_type = data['System type'] || "Standalone"
+      verify_type(@system_type, 'System type', String)
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

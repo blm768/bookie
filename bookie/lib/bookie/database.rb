@@ -12,7 +12,7 @@ module Bookie
       belongs_to :user
       belongs_to :server
       
-      validates_presence_of :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory
+      validates_presence_of :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory, :exit_code
     end
     
     #ActiveRecord structure for a group
@@ -96,6 +96,7 @@ module Bookie
           t.integer :wall_time, :null => false
           t.integer :cpu_time, :null => false
           t.integer :memory, :null => false
+          t.integer :exit_code, :null => false
         end
       end
     
