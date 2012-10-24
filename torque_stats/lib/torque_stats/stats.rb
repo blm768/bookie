@@ -64,9 +64,9 @@ module TorqueStats
             when "start"
               job.start_time = Time.at(Integer(value))
             when "resources_used.walltime"
-              job.wall_time = parse_time(value)
+              job.wall_time = parse_duration(value)
             when "resources_used.cput"
-              job.cpu_time = parse_time(value)
+              job.cpu_time = parse_duration(value)
             when "resources_used.mem"
               job.physical_memory = Integer(value[0 ... -2])
             when "resources_used.vmem"
@@ -80,12 +80,13 @@ module TorqueStats
       end
     end
     
-    #Parses a time in HH:MM:SS format, returning seconds
-    def parse_time(str)
+    #Parses a duration in HH:MM:SS format, returning seconds
+    #To do: make class method?
+    def parse_duration(str)
       hours, minutes, seconds = *str.split(':').map!{ |s| Integer(s) }
       return hours * 3600 + minutes * 60 + seconds
     end
-    protected :parse_time
+    protected :parse_duration
   end
   
   class << self;

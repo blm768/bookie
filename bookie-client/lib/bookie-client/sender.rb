@@ -36,14 +36,11 @@ module Bookie
         #The next day to be processed
         next_datetime = nil
         potential_duplicate_job = nil
-        found_duplicate_job = false
+        found_duplicate_jobs = 0
         
         existing_users = {}
         
-        i = 0
         each_job(date) do |job|
-          i += 1
-          puts i if i % 1000 == 0
           next unless filter_job(job)
           db_job = to_database_job(job)
           #Should we move on to the next day?
@@ -55,6 +52,7 @@ module Bookie
               Bookie::Database::Job,
               current_date.to_time,
               next_datetime).first
+              puts potential_duplicate_job
           end
           #Is this job a duplicate of one in the database?
           if potential_duplicate_job && Bookie::Database::Job.where(
@@ -65,12 +63,13 @@ module Bookie
           then
             #This appears to be a duplicate.
             #To do: perform a more exhaustive check here?
-            found_duplicate_job = true
+            found_duplicate_jobs += 1
             #Skip the duplicate.
             next
           end
           #Determine if the user/group pair must be added to/retrieved from the database.
-          unless existing_users[job.user_name, job.group_name]
+          user = existing_users[[job.user_name, job.group_name]]
+          unless user
             #Does the group exist?
             #To do: optimize!
             group = Bookie::Database::Group.where(:name => job.group_name).first
@@ -88,16 +87,16 @@ module Bookie
               user.group = group
               user.save!
             end
-            existing_users[job.user_name, job.group_name] = user.id
+            existing_users[[job.user_name, job.group_name]] = user
           end
           db_job.server = server
           db_job.user = user
           db_job.save!
         end
         
-        if found_duplicate_job
+        if found_duplicate_jobs > 0
           #To do: clearer message?
-          $stderr.puts "Warning: some job entries were not sent because they appear to be duplicates of entries already in the database."
+          $stderr.puts "Warning: #{found_duplicate_jobs} job entries were not sent because they appear to be duplicates of entries already in the database."
         end
       end
       

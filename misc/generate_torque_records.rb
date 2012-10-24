@@ -3,7 +3,7 @@ require 'date'
 
 f = File.open('snapshot/server_priv/accounting/20121008', 'w')
 
-count = 1000000
+count = 1000
 
 hostnames = ['test1', 'test2', 'test3']
 users = ['abc1', 'abc2', 'abc3']
