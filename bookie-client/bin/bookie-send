@@ -3,6 +3,9 @@
 #For development
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
+#For development
+ENV['TORQUEROOT'] = 'snapshot'
+
 require 'bookie-client'
 
 #for development
@@ -11,8 +14,10 @@ config = Bookie::Config.new('snapshot/config.json')
 
 #For development
 config.excluded_users = Set.new([])
+
 config.connect
 
-sender = Bookie::Client::LinuxSender.new(config)
+sender = Bookie::Client::TorqueSender.new(config)
 
-sender.send_data(Date.yesterday)
+#For development
+sender.send_data(Date.new(2012, 10, 8))

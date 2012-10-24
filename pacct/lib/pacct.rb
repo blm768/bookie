@@ -4,5 +4,9 @@ require "pacct/pacct_c"
 
 #Contains classes for working with process accounting files in acct(5) format
 module Pacct
-  # Your code goes here...
+  class Entry
+   #  def end_date
+#       return
+#     end
+  end
 end

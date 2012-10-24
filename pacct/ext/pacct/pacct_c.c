@@ -80,7 +80,12 @@ static VALUE pacct_file_new(VALUE class, VALUE filename) {
 static VALUE pacct_file_init(VALUE self, VALUE filename) {
   PacctFile* file;
   char* cFilename = StringValueCStr(filename);
-  FILE* acct = fopen(cFilename, "rb");
+  FILE* acct = fopen(cFilename, "r+b");
+  //If that didn't work, try to create the file.
+  if(!acct) {
+    acct = fopen(cFilename, "w+b");
+  }
+  //If that didn't work either, we have a problem.
   if(!acct) {
     char buf[512] = "Unable to open file ";
     size_t len = strlen(buf);
@@ -140,7 +145,37 @@ static VALUE each_entry(VALUE self) {
   return Qnil;
 }
 
+/*
+ *call-seq:
+ *  write_entry(entry)
+ *
+ * Appends the given entry to the file
+ */
+static VALUE write_entry(VALUE self, VALUE entry) {
+  //To do: verification?
+  //To do: unit testing
+  PacctFile* file;
+  struct acct_v3* acct;
+  
+  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(entry, struct acct_v3, acct);
+  
+  fseek(file->file, 0, SEEK_END);
+  
+  fwrite(acct, sizeof(struct acct_v3), 1, file->file);
+}
+
 //Methods of Pacct::Entry
+/*
+ *Returns the process ID
+ */
+static VALUE get_process_id(VALUE self) {
+  struct acct_v3* data;
+  Data_Get_Struct(self, struct acct_v3, data);
+  
+  return INT2NUM(data->ac_pid);
+}
+
 /*
  *Returns the ID of the user who executed the command
  */
@@ -308,7 +343,9 @@ void Init_pacct_c() {
   rb_define_singleton_method(cFile, "new", pacct_file_new, 1);
   rb_define_method(cFile, "initialize", pacct_file_init, 1);
   rb_define_method(cFile, "each_entry", each_entry, 0);
+  rb_define_method(cFile, "write_entry", write_entry, 1);
   
+  rb_define_method(cEntry, "process_id", get_process_id, 0);
   rb_define_method(cEntry, "user_id", get_user_id, 0);
   rb_define_method(cEntry, "user_name", get_user_name, 0);
   rb_define_method(cEntry, "group_id", get_group_id, 0);

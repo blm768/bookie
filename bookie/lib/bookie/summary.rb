@@ -7,7 +7,7 @@ module Bookie
       wall_time = 0
       cpu_time = 0
       successful_jobs = 0
-      jobs.each do |job|
+      jobs.find_each do |job|
         num_jobs += 1
         wall_time += job.wall_time
         cpu_time += job.cpu_time

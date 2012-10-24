@@ -1,6 +1,8 @@
 module TorqueStats
   #Represents a completed job
   class Job
+    #The job name
+    attr_accessor :job_name
     #The name of the user who created the job
     attr_accessor :user_name
     #The group name of the user who created the job
@@ -53,6 +55,8 @@ module TorqueStats
         fields.each do |field|
           key, value = *field.split('=')
           case key
+            when "jobname"
+              job.job_name = value
             when "user"
               job.user_name = value
             when "group"

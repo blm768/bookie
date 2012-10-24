@@ -12,7 +12,7 @@ module Bookie
       belongs_to :user
       belongs_to :server
       
-      validates_presence_of :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory, :exit_code
+      validates_presence_of :job_id_hash, :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory, :exit_code
     end
     
     #ActiveRecord structure for a group
@@ -29,7 +29,8 @@ module Bookie
       validates_presence_of :group, :name
     end
     
-    SERVER_TYPE = {standalone: 0, torque_cluster: 1}
+    SERVER_TYPE = {:standalone => 0, :torque_cluster => 1}
+    SERVER_TYPE_NAMES = {:standalone => "Standalone", :torque_cluster => "TORQUE cluster"}
     
     #ActiveRecord structure for a server
     class Server < ActiveRecord::Base
@@ -89,6 +90,7 @@ module Bookie
     class CreateJobs < ActiveRecord::Migration
       def up
         create_table :jobs do |t|
+          t.integer :job_id_hash, :null=>false
           t.references :user, :null => false
           t.references :server, :null => false
           t.datetime :start_time, :null => false

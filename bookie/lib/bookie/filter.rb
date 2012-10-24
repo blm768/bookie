@@ -31,11 +31,11 @@ module Bookie
       end
       
       def by_start_time(jobs, start_min, start_max)
-        return jobs.where('? <= start_time AND start_time <= ?', start_min, start_max)
+        return jobs.where('? <= start_time AND start_time < ?', start_min, start_max)
       end
       
       def by_end_time(jobs, end_min, end_max)
-        return jobs.where('? <= end_time AND end_time <= ?', end_min, end_max)
+        return jobs.where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
       class UnknownFilterError < ArgumentError

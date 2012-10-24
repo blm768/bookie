@@ -24,7 +24,7 @@ module Bookie
         'Start time', 'End time', 'Wall time', 'CPU time', 'Memory usage', 'Exit code'
         io.write heading
         io.puts '-' * (heading.length - 1)
-        jobs.all.each do |job|   
+        jobs.find_each do |job|   
           io.printf @@FORMAT_STRING,
             job.user.name,
             job.user.group.name,

@@ -12,6 +12,8 @@ client = Bookie::Client::Client.new(config)
 
 jobs = Bookie::Database::Job
 
+include_details = false
+
 #Process arguments
 args = ARGV[0 .. -1]
 filters = {}
@@ -22,6 +24,8 @@ while args && args.length > 0
     switch = arg[2 .. -1].gsub(/-/, "_")
     #To do: verify that the next argument isn't a switch.
     case switch
+      when 'details'
+        include_details = true
       when 'start_time'
         if args.length < 3
           $stderr.puts "2 arguments expected for filter"
@@ -51,4 +55,4 @@ jobs = Bookie::Filter::apply_filters(jobs, filters)
 
 #To do: ensure that the query isn't performed twice.
 client.print_summary(jobs)
-client.print_jobs(jobs)
+client.print_jobs(jobs) if include_details
