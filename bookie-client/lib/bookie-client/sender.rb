@@ -34,6 +34,16 @@ module Bookie
           'name = ? AND cores = ? AND end_time IS NULL',
           hostname, cores).first
         unless server
+          #Verify that all previous servers with this name have been decommissioned.
+          conflicting_server = Bookie::Database::Server.where(
+            'name = ? AND end_time IS NOT NULL',
+            hostname).first
+          if conflicting_server
+            $stderr.puts "The specifications on record for the server '#{hostname}' do not match this server's specifications."
+            $stderr.puts "Please make sure that all previous servers with this hostname have been marked as decommissioned."
+            #To do: custom error class?
+            raise "System specifications do not match those in the database"
+          end
           server = Bookie::Database::Server.new
           server.name = hostname
           server.server_type = system_type
