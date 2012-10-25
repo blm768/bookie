@@ -36,7 +36,8 @@ module Bookie
     class Server < ActiveRecord::Base
       has_many :jobs
       
-      validates_presence_of :name, :server_type
+      #To do: add cores, memory
+      validates_presence_of :name, :cores, :server_type, :start_time
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
       def server_type
@@ -54,6 +55,11 @@ module Bookie
           t.string :name, :null => false
           t.references :group, :null => false
         end
+        change_table :users do |t|
+          t.index :name
+          #To do: remove?
+          t.index :group_id
+        end
       end
       
       def down
@@ -65,6 +71,9 @@ module Bookie
       def up
         create_table :groups do |t|
           t.string :name, :null => false
+        end
+        change_table :groups do |t|
+          t.index :name
         end
       end
       
@@ -79,6 +88,16 @@ module Bookie
           t.string :name, :null => false
           #A 1-byte integer (hopefully)
           t.integer :server_type, :limit => 1, :null => false
+          t.datetime :start_time, :null => false
+          t.datetime :end_time
+          #To do: refine these types to the right lengths.
+          t.integer :cores, :null => false
+          #To do: make NOT NULL
+          t.integer :memory
+        end
+        change_table :servers do |t|
+          t.index :name
+          t.index :server_type
         end
       end
       
@@ -99,6 +118,13 @@ module Bookie
           t.integer :cpu_time, :null => false
           t.integer :memory, :null => false
           t.integer :exit_code, :null => false
+        end
+        change_table :jobs do |t|
+          t.index :job_id_hash
+          t.index :user_id
+          t.index :server_id
+          t.index :start_time
+          t.index :end_time
         end
       end
     

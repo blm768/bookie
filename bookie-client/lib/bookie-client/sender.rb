@@ -24,12 +24,19 @@ module Bookie
         #To do: resolve potential issue w/ reverse lookup?
         #Just use hostname (not FQDN)?
         hostname = Socket.gethostbyname(Socket.gethostname)[0]
+        cores = self.num_cores
         #Make sure this machine is in the database.
-        server = Bookie::Database::Server.where(:name => hostname).first
+        #To do: check for different # of cores
+        #Make sure only one server w/ a given name has a NULL end_time
+        server = Bookie::Database::Server.where(
+          'name = ? AND end_time IS NULL',
+          hostname).first
         unless server
           server = Bookie::Database::Server.new
           server.name = hostname
           server.server_type = system_type
+          server.start_time = Time.new
+          server.cores = cores
           server.save!
         end
         
@@ -48,6 +55,7 @@ module Bookie
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
+            #To do: warn even if no jobs are actually duplicates?
             potential_duplicate_job = Bookie::Filter::by_end_time(
               Bookie::Database::Job,
               current_date.to_time,
@@ -141,6 +149,24 @@ module Bookie
         #To do: unit tests
         db_job.exit_code = job.exit_code
         return db_job
+      end
+      
+      #Returns the number of processing cores on the system.
+      #
+      #To do: move once stat monitor integration happens
+      def num_cores()
+        num = 0
+  
+        begin
+          cpuData = File.open('/proc/cpuinfo', "r") 
+          cpuData.each_line do |line|
+            line.chomp!
+            num += 1 if /^processor\s*:\s*\d$/ =~ line
+          end
+        ensure
+          cpuData.close unless cpuData.nil?
+        end
+        num
       end
     end
 
