@@ -17,17 +17,13 @@ module Bookie
         end
       end
       
-      def by_server(jobs, server_name)
-        server = Bookie::Database::Server.where('name = ?', server_name).first
-        if server
-          return jobs.where('server_id = ?', server.id)
-        else
-          return Bookie::Database::Job.limit(0)
+      def by_system(jobs, system_name)
+          return jobs.joins(:system).where('system.name = ?', system_name)
         end
       end
       
-      def by_server_type(jobs, server_type)
-        return jobs.joins(:server).where('server_type = ?', Bookie::Database::SERVER_TYPE[server_type.intern])
+      def by_system_type(jobs, system_type)
+        return jobs.joins(:system).where('system_type = ?', Bookie::Database::SYSTEM_TYPE[system_type.intern])
       end
       
       def by_start_time(jobs, start_min, start_max)
@@ -48,10 +44,10 @@ module Bookie
               jobs = by_user(jobs, value)
             when :group
               jobs = by_group(jobs, value)
-            when :server
-              jobs = by_server(jobs, value)
-            when :server_type
-              jobs = by_server_type(jobs, value)
+            when :system
+              jobs = by_system(jobs, value)
+            when :system_type
+              jobs = by_system_type(jobs, value)
             when :start_time
               jobs = by_start_time(jobs, value[0], value[1])
             else
