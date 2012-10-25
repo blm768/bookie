@@ -16,9 +16,9 @@ module Bookie
         io.puts "Number of jobs:     #{summary[:jobs]}"
         io.puts "Total wall time:    #{Client.format_duration(summary[:wall_time])}"
         io.puts "Total CPU time:     #{Client.format_duration(summary[:cpu_time])}"
-        io.puts "% Successful:       #{summary[:success] * 100}%"
+        io.puts "% Successful:       #{'%.2f' % (summary[:success] * 100)}%"
         io.puts "Available CPU time: #{Client.format_duration(summary[:total_cpu_time])}"
-        io.puts "% CPU time used:    #{summary[:used_cpu_time]}"
+        io.puts "% CPU time used:    #{'%.2f' % (summary[:used_cpu_time] * 100)}%"
       end
       
       def print_jobs(jobs, io = $stdout)

@@ -35,7 +35,9 @@ module Bookie
           server = Bookie::Database::Server.new
           server.name = hostname
           server.server_type = system_type
-          server.start_time = Time.new
+          #To do: restore for production.
+          #server.start_time = Time.new
+          server.start_time = Date.new(2012, 1, 1).to_time
           server.cores = cores
           server.save!
         end
