@@ -18,8 +18,7 @@ module Bookie
       end
       
       def by_system(jobs, system_name)
-          return jobs.joins(:system).where('system.name = ?', system_name)
-        end
+        return jobs.joins(:system).where('system.name = ?', system_name)
       end
       
       def by_system_type(jobs, system_type)

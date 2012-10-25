@@ -173,14 +173,20 @@ module Bookie
         hostname = Socket.gethostbyname(Socket.gethostname)[0]
       end
       
-      #Decommissions the specified system by setting its end date in the database
-      def decommission(hostname)
-        hostname ||= self.hostname
-        cores = SystemStats::
-        systems = Bookie::Database::System.where(
+      #Decommissions the specified system by setting its end time in the database
+      #
+      #Neither argument should be nil.
+      def decommission(hostname, end_time)
+        system = Bookie::Database::System.where(
           'name = ? AND end_time IS NULL',
-          hostname,
-        )
+          hostname).first
+        if system
+          system.end_time = end_time
+          system.save!
+        else
+          $stderr.puts "No active system with hostname '#{hostname}' found"
+          #To do: throw here?
+        end
       end
     end
 
