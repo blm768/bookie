@@ -15,29 +15,29 @@ module Bookie
       end
       
       total_cpu_time = 0
-      #Find all the servers within the time range.
-      servers = Bookie::Database::Server
+      #Find all the systems within the time range.
+      systems = Bookie::Database::System
       if start_time
         assert end_time
-        servers = servers.where(
+        systems = systems.where(
           'start_time < ? AND (end_time IS NULL OR end_time > ?)',
           end_time,
           start_time)
       end
-      servers.find_each do |server|
-        server_start_time = nil
-        server_end_time = nil
+      systems.find_each do |system|
+        system_start_time = nil
+        system_end_time = nil
         #Is there a date range constraint?
         if start_time
-          server_start_time = [server.start_time, start_time].max
-          server_end_time = [server.end_time. end_time].min if server.end_time
+          system_start_time = [system.start_time, start_time].max
+          system_end_time = [system.end_time. end_time].min if system.end_time
         else
-          server_start_time = server.start_time
-          server_end_time = server.end_time
+          system_start_time = system.start_time
+          system_end_time = system.end_time
         end
-        #If the server doesn't have an end time, set it to a logical value.
-        server_end_time ||= end_time || Time.new
-        total_cpu_time += server.cores * (server_end_time - server_start_time)
+        #If the system doesn't have an end time, set it to a logical value.
+        system_end_time ||= end_time || Time.new
+        total_cpu_time += system.cores * (system_end_time - system_start_time)
       end
       
       return {

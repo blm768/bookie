@@ -17,41 +17,38 @@ module Bookie
       #* config: an instance of Bookie::Config
       def initialize(config)
         @config = config
+        @cores = SystemStats::LocalStats.new.num_cores
       end
       
       #Sends job data for a given day to the database server
       #To do: actually make the date parameter meaningful; it is currently ignored.
       def send_data(date)
-        #To do: resolve potential issue w/ reverse lookup?
-        #Just use hostname (not FQDN)?
-        hostname = Socket.gethostbyname(Socket.gethostname)[0]
-        #To do: optimize.
-        cores = SystemStats::LocalStats.new.num_cores
+        hostname = self.hostname
         #Make sure this machine is in the database.
         #To do: check for different # of cores
-        #Make sure only one server w/ a given name has a NULL end_time
-        server = Bookie::Database::Server.where(
+        #To do: Make sure only one system w/ a given name has a NULL end_time
+        system = Bookie::Database::System.where(
           'name = ? AND cores = ? AND end_time IS NULL',
-          hostname, cores).first
-        unless server
-          #Verify that all previous servers with this name have been decommissioned.
-          conflicting_server = Bookie::Database::Server.where(
+          hostname, @cores).first
+        unless system
+          #Verify that all previous systems with this name have been decommissioned.
+          conflicting_system = Bookie::Database::System.where(
             'name = ? AND end_time IS NOT NULL',
             hostname).first
-          if conflicting_server
-            $stderr.puts "The specifications on record for the server '#{hostname}' do not match this server's specifications."
-            $stderr.puts "Please make sure that all previous servers with this hostname have been marked as decommissioned."
+          if conflicting_system
+            $stderr.puts "The specifications on record for '#{hostname}' do not match this system's specifications."
+            $stderr.puts "Please make sure that all previous systems with this hostname have been marked as decommissioned."
             #To do: custom error class?
             raise "System specifications do not match those in the database"
           end
-          server = Bookie::Database::Server.new
-          server.name = hostname
-          server.server_type = system_type
+          system = Bookie::Database::System.new
+          system.name = hostname
+          system.system_type = system_type
           #To do: restore for production.
-          #server.start_time = Time.new
-          server.start_time = Date.new(2012, 1, 1).to_time
-          server.cores = cores
-          server.save!
+          #system.start_time = Time.new
+          system.start_time = Date.new(2012, 1, 1).to_time
+          system.cores = @cores
+          system.save!
         end
         
         #The next day to be processed
@@ -76,9 +73,10 @@ module Bookie
               next_datetime).first
           end
           #Is this job a duplicate of one in the database?
+          #To do: check system type.
           if potential_duplicate_job && Bookie::Database::Job.where(
-              'server_id = ? AND job_id = ? AND array_id = ? AND start_time = ?',
-              server.id,
+              'system_id = ? AND job_id = ? AND array_id = ? AND start_time = ?',
+              system.id,
               db_job.job_id,
               db_job.array_id,
               db_job.start_time).first
@@ -111,7 +109,7 @@ module Bookie
             end
             existing_users[[job.user_name, job.group_name]] = user
           end
-          db_job.server = server
+          db_job.system = system
           db_job.user = user
           db_job.save!
         end
@@ -147,7 +145,7 @@ module Bookie
       #To do:
       #This currently only converts fields that can be handled without a database lookup.
       #It should probably be made to include those. On the other hand, how do I efficiently
-      #handle the server field? A parameter?
+      #handle the system field? A parameter?
       def to_database_job(job)
         db_job = Bookie::Database::Job.new
         #To do: make more general?
@@ -167,9 +165,26 @@ module Bookie
         db_job.exit_code = job.exit_code
         return db_job
       end
+      
+      #Returns this system's hostname
+      def hostname()
+        #To do: resolve potential issue w/ reverse lookup?
+        #Just use hostname (not FQDN)?
+        hostname = Socket.gethostbyname(Socket.gethostname)[0]
+      end
+      
+      #Decommissions the specified system by setting its end date in the database
+      def decommission(hostname)
+        hostname ||= self.hostname
+        cores = SystemStats::
+        systems = Bookie::Database::System.where(
+          'name = ? AND end_time IS NULL',
+          hostname,
+        )
+      end
     end
 
-    #Represents a client that returns data from a standalone Linux server
+    #Represents a client that returns data from a standalone Linux system
     class LinuxSender < Sender
       #Yields each job in the log
       #

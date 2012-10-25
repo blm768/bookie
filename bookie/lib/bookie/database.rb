@@ -10,9 +10,9 @@ module Bookie
       #To do: integrate with time fields?
       #has_one :date
       belongs_to :user
-      belongs_to :server
+      belongs_to :system
       
-      validates_presence_of :job_id, :array_id, :user, :server, :cpu_time,
+      validates_presence_of :job_id, :array_id, :user, :system, :cpu_time,
         :start_time, :end_time, :wall_time, :memory, :exit_code
     end
     
@@ -30,23 +30,24 @@ module Bookie
       validates_presence_of :group, :name
     end
     
-    SERVER_TYPE = {:standalone => 0, :torque_cluster => 1}
-    SERVER_TYPE_NAMES = {:standalone => "Standalone", :torque_cluster => "TORQUE cluster"}
+    SYSTEM_TYPE = {:standalone => 0, :torque_cluster => 1}
+    SYSTEM_TYPE_NAMES = {:standalone => "Standalone", :torque_cluster => "TORQUE cluster"}
     
-    #ActiveRecord structure for a server
-    class Server < ActiveRecord::Base
+    #ActiveRecord structure for a network system
+    class System < ActiveRecord::Base
       has_many :jobs
       
       #To do: add cores, memory
-      validates_presence_of :name, :cores, :server_type, :start_time
+      validates_presence_of :name, :cores, :system_type, :start_time
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
-      def server_type
-        return SERVER_TYPE.key(read_attribute(:server_type))
+      def system_type
+        #To do: optimize?
+        return SYSTEM_TYPE.key(read_attribute(:system_type))
       end
       
-      def server_type=(type)
-        write_attribute(:server_type, SERVER_TYPE[type])
+      def system_type=(type)
+        write_attribute(:system_type, SYSTEM_TYPE[type])
       end
     end
   
@@ -83,12 +84,12 @@ module Bookie
       end
     end
     
-    class CreateServers < ActiveRecord::Migration
+    class CreateSystems < ActiveRecord::Migration
       def up
-        create_table :servers do |t|
+        create_table :systems do |t|
           t.string :name, :null => false
           #A 1-byte integer (hopefully)
-          t.integer :server_type, :limit => 1, :null => false
+          t.integer :system_type, :limit => 1, :null => false
           t.datetime :start_time, :null => false
           t.datetime :end_time
           #To do: determine correct type sizes.
@@ -96,16 +97,16 @@ module Bookie
           #To do: make NOT NULL
           t.integer :memory
         end
-        change_table :servers do |t|
+        change_table :systems do |t|
           t.index :name
-          t.index :server_type
+          t.index :system_type
           t.index :cores
           t.index :memory
         end
       end
       
       def down
-        drop_table :servers
+        drop_table :systems
       end
     end
     
@@ -116,7 +117,7 @@ module Bookie
           t.integer :job_id, :null => false
           t.integer :array_id, :null => false
           t.references :user, :null => false
-          t.references :server, :null => false
+          t.references :system, :null => false
           t.datetime :start_time, :null => false
           t.datetime :end_time, :null => false
           t.integer :wall_time, :null => false
@@ -128,7 +129,7 @@ module Bookie
           t.index :job_id
           t.index :array_id
           t.index :user_id
-          t.index :server_id
+          t.index :system_id
           t.index :start_time
           t.index :end_time
         end
@@ -143,14 +144,14 @@ module Bookie
       def create_tables
         CreateUsers.new.up
         CreateGroups.new.up
-        CreateServers.new.up
+        CreateSystems.new.up
         CreateJobs.new.up
       end
       
       def drop_tables
         CreateUsers.new.down
         CreateGroups.new.down
-        CreateServers.new.down
+        CreateSystems.new.down
         CreateJobs.new.down
       end
     end
