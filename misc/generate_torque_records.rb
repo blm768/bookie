@@ -15,7 +15,7 @@ rand = Random.new(Time.new.to_i)
 
 for i in 1 .. count
   f.write(";E;")
-  f.write("#{hostnames[rand.rand(hostnames.length).to_i]};")
+  f.write("#{i}[0].#{hostnames[rand.rand(hostnames.length).to_i]};")
   f.write("jobname=#{i} ")
   f.write("user=#{users[rand.rand(users.length).to_i]} ")
   f.write("group=#{groups[rand.rand(groups.length).to_i]} ")

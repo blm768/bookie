@@ -44,9 +44,9 @@ module Bookie
         :jobs => num_jobs,
         :wall_time => wall_time,
         :cpu_time => cpu_time,
-        :success => Float(successful_jobs) / num_jobs,
+        :success =>  if num_jobs == 0 then 0 else Float(successful_jobs) / num_jobs end,
         :total_cpu_time => total_cpu_time,
-        :used_cpu_time => if total_cpu_time == 0 then 'N/A' else cpu_time / total_cpu_time end,
+        :used_cpu_time => if total_cpu_time == 0 then 0 else cpu_time / total_cpu_time end,
       }
     end
   end

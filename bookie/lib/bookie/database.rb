@@ -12,7 +12,8 @@ module Bookie
       belongs_to :user
       belongs_to :server
       
-      validates_presence_of :job_id_hash, :user, :server, :cpu_time, :start_time, :end_time, :wall_time, :memory, :exit_code
+      validates_presence_of :job_id, :array_id, :user, :server, :cpu_time,
+        :start_time, :end_time, :wall_time, :memory, :exit_code
     end
     
     #ActiveRecord structure for a group
@@ -90,7 +91,7 @@ module Bookie
           t.integer :server_type, :limit => 1, :null => false
           t.datetime :start_time, :null => false
           t.datetime :end_time
-          #To do: refine these types to the right lengths.
+          #To do: determine correct type sizes.
           t.integer :cores, :null => false
           #To do: make NOT NULL
           t.integer :memory
@@ -98,6 +99,8 @@ module Bookie
         change_table :servers do |t|
           t.index :name
           t.index :server_type
+          t.index :cores
+          t.index :memory
         end
       end
       
@@ -109,7 +112,9 @@ module Bookie
     class CreateJobs < ActiveRecord::Migration
       def up
         create_table :jobs do |t|
-          t.integer :job_id_hash, :null=>false
+          #To do: determine correct type sizes.
+          t.integer :job_id, :null => false
+          t.integer :array_id, :null => false
           t.references :user, :null => false
           t.references :server, :null => false
           t.datetime :start_time, :null => false
@@ -120,7 +125,8 @@ module Bookie
           t.integer :exit_code, :null => false
         end
         change_table :jobs do |t|
-          t.index :job_id_hash
+          t.index :job_id
+          t.index :array_id
           t.index :user_id
           t.index :server_id
           t.index :start_time

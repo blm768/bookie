@@ -1,8 +1,10 @@
 module TorqueStats
   #Represents a completed job
   class Job
-    #The job name
-    attr_accessor :job_name
+    #The job ID
+    attr_accessor :job_id
+    #The array ID
+    attr_accessor :array_id
     #The name of the user who created the job
     attr_accessor :user_name
     #The group name of the user who created the job
@@ -41,22 +43,35 @@ module TorqueStats
     def each_job
       @file.rewind
       @file.each_line do |line|
+        #Skip the timestamp.
         index = line.index(';')
         next unless index
         
+        #Find the event type.
         event_type = line[index + 1 .. index + 1]
         next unless event_type == 'E'
         
-        index = line.index(';', index + 3) + 1
-        fields = line[index .. -1].split(' ')
-        
         job = Job.new()
+        
+        #Find the job ID.
+        index = line.index(';', index + 1) + 1
+        next_index = line.index('[', index)
+        
+        job.job_id = Integer(line[index ... next_index])
+        
+        #Find the node ID.
+        index = next_index + 1
+        next_index = line.index(']', index)
+        job.array_id = Integer(line[index ... next_index])
+        puts job.array_id unless job.array_id == 0
+        
+        #Find the fields.
+        index = line.index(';', next_index) + 1
+        fields = line[index .. -1].split(' ')
         
         fields.each do |field|
           key, value = *field.split('=')
           case key
-            when "jobname"
-              job.job_name = value
             when "user"
               job.user_name = value
             when "group"

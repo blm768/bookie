@@ -5,6 +5,7 @@ require 'date'
 require 'digest/md5'
 require 'fileutils'
 require 'logger'
+require 'system_stats'
 require 'torque_stats'
 require 'socket'
 
@@ -24,13 +25,14 @@ module Bookie
         #To do: resolve potential issue w/ reverse lookup?
         #Just use hostname (not FQDN)?
         hostname = Socket.gethostbyname(Socket.gethostname)[0]
-        cores = self.num_cores
+        #To do: optimize.
+        cores = SystemStats::LocalStats.new.num_cores
         #Make sure this machine is in the database.
         #To do: check for different # of cores
         #Make sure only one server w/ a given name has a NULL end_time
         server = Bookie::Database::Server.where(
-          'name = ? AND end_time IS NULL',
-          hostname).first
+          'name = ? AND cores = ? AND end_time IS NULL',
+          hostname, cores).first
         unless server
           server = Bookie::Database::Server.new
           server.name = hostname
@@ -62,13 +64,13 @@ module Bookie
               Bookie::Database::Job,
               current_date.to_time,
               next_datetime).first
-              puts potential_duplicate_job
           end
           #Is this job a duplicate of one in the database?
           if potential_duplicate_job && Bookie::Database::Job.where(
-              'server_id = ? AND job_id_hash = ? AND start_time = ?',
+              'server_id = ? AND job_id = ? AND array_id = ? AND start_time = ?',
               server.id,
-              db_job.job_id_hash,
+              db_job.job_id,
+              db_job.array_id,
               db_job.start_time).first
           then
             #This appears to be a duplicate.
@@ -138,10 +140,13 @@ module Bookie
       #handle the server field? A parameter?
       def to_database_job(job)
         db_job = Bookie::Database::Job.new
+        #To do: make more general?
         if job.respond_to? :process_id
-          db_job.job_id_hash = job.process_id 
+          db_job.job_id = job.process_id
+          db_job.array_id = 0
         else
-          db_job.job_id_hash = Digest::MD5.digest(job.job_name).unpack('l>')[0]
+          db_job.job_id = job.job_id
+          db_job.array_id = job.array_id
         end
         db_job.start_time = job.start_time
         db_job.end_time = job.start_time + job.wall_time
@@ -151,24 +156,6 @@ module Bookie
         #To do: unit tests
         db_job.exit_code = job.exit_code
         return db_job
-      end
-      
-      #Returns the number of processing cores on the system.
-      #
-      #To do: move once stat monitor integration happens
-      def num_cores()
-        num = 0
-  
-        begin
-          cpuData = File.open('/proc/cpuinfo', "r") 
-          cpuData.each_line do |line|
-            line.chomp!
-            num += 1 if /^processor\s*:\s*\d$/ =~ line
-          end
-        ensure
-          cpuData.close unless cpuData.nil?
-        end
-        num
       end
     end
 
