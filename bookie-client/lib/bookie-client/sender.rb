@@ -73,6 +73,11 @@ module Bookie
               Bookie::Database::Job,
               current_date.to_time,
               next_datetime).first
+            if potential_duplicate_job
+              #To do: send this to a logger instead?
+              date_str = current_date.strftime("%Y-%m-%d")
+              $stderr.puts("Warning: jobs already exist in the database for the date #{date_str}.")
+            end
           end
           #Is this job a duplicate of one in the database?
           #To do: check system type.
