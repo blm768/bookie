@@ -19,15 +19,26 @@ config.connect
 
 sender = Bookie::Client::LinuxSender.new(config)
 
-#For development
-sender.send_data(Date.new(2012, 10, 8))
+#Process arguments.
+date = nil
+will_decommission = false
+arg_offset = 0
 
-if ARGV[0] == "--decommission"
-  hostname = ARGV[1] || sender.hostname
-  if ARGV[2]
-    time = Time.parse(ARGV[2])
+if /\d{4}-\d{2}-\d{2}/.match(ARGV[arg_offset])
+  date = Date.parse(ARGV[arg_offset])
+  arg_offset += 1
+end
+
+if ARGV[arg_offset] == "--decommission"
+  hostname = ARGV[arg_offset + 1] || sender.hostname
+  if ARGV[arg_offset + 2]
+    time = Time.parse(ARGV[arg_offset + 2])
   else
     time = Time.new
   end
-  sender.decommission(hostname, time)
+  will_decommission = true
+  arg_offset += 3
 end
+
+sender.send_data(date)
+sender.decommission(hostname, time) if will_decommission

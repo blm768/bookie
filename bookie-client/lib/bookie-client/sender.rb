@@ -22,19 +22,20 @@ module Bookie
       end
       
       #Sends job data for a given day to the database server
-      #To do: actually make the date parameter meaningful; it is currently ignored.
-      def send_data(date)
+      #
+      #If the date parameter is nil, records for the current day are processed.
+      def send_data(date = nil)
         hostname = self.hostname
         system_type = self.system_type
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
         system = Bookie::Database::System.where(
-          'name = ? AND cores = ? AND system_type_id = ? AND end_time IS NULL',
+          'name = ? AND system_type_id = ? AND cores = ? AND end_time IS NULL',
           hostname, system_type.id, @cores).first
         unless system
           #Verify that all previous systems with this name have been decommissioned.
           conflicting_system = Bookie::Database::System.where(
-            'name = ? AND end_time IS NOT NULL',
+            'name = ? AND end_time IS NULL',
             hostname).first
           if conflicting_system
             $stderr.puts "The specifications on record for '#{hostname}' do not match this system's specifications."
@@ -75,9 +76,9 @@ module Bookie
           end
           #Is this job a duplicate of one in the database?
           #To do: check system type.
-          if potential_duplicate_job && Bookie::Database::Job.where(
-              'system_id = ? AND job_id = ? AND array_id = ? AND start_time = ?',
-              system.id,
+          if potential_duplicate_job && Bookie::Database::Job.joins(:system).where(
+              'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
+              hostname,
               db_job.job_id,
               db_job.array_id,
               db_job.start_time).first
@@ -128,7 +129,11 @@ module Bookie
         
         if found_duplicate_jobs > 0
           #To do: clearer message?
-          $stderr.puts "Warning: #{found_duplicate_jobs} job entries were not sent because they appear to be duplicates of entries already in the database."
+          if found_duplicate_jobs == 1
+            $stderr.puts "Warning: 1 job entry was not sent because it appears to be a duplicate of an entry already in the database."
+          else
+            $stderr.puts "Warning: #{found_duplicate_jobs} job entries were not sent because they appear to be duplicates of entries already in the database."
+          end
         end
       end
       
@@ -219,31 +224,41 @@ module Bookie
       #Yields each job in the log
       #
       #To do: do something with the date parameter.
-      def each_job(date)
+      def each_job(date = nil)
         #To do: modify for production.
         base_filename = 'snapshot/pacct'
-        #To do: What if this doesn't exist (when pulling up archives and the given date isn't found)?
-        file = Pacct::File.new(base_filename)
-        rotation_file = nil
-        rotation_end_time = Time.at(0)
-        file.each_entry do |job|
-          yield job
-          job_end_time = job.start_time + job.wall_time
-          if job_end_time >= rotation_end_time || !rotation_file
-            rotation_start_date = job_end_time.to_date
-            rotation_end_time = rotation_start_date.next_day.to_time
-            rotation_filename = base_filename + rotation_start_date.strftime(".%Y.%m.%d")
-            if File.exists?rotation_filename
-              $stderr.puts "Warning: log file '#{rotation_filename}' already exists. Overwriting."
-              #To do: what if this fails?
-              FileUtils.rm(rotation_filename)
-            end
-            rotation_file = Pacct::File.new(rotation_filename)
+        #Are we reading an old entry?
+        if date
+          filename = base_filename + date.strftime(".%Y.%m.%d")
+          file = Pacct::File.new(base_filename)
+          file.each_entry do |job|
+            yield job
           end
-          rotation_file.write_entry(job)
+        else
+          #To do: What if this doesn't exist (when pulling up archives and the given date isn't found)?
+          file = Pacct::File.new(base_filename)
+          rotation_file = nil
+          rotation_end_time = Time.at(0)
+          file.each_entry do |job|
+            yield job
+            job_end_time = job.start_time + job.wall_time
+            if job_end_time >= rotation_end_time || !rotation_file
+              rotation_start_date = job_end_time.to_date
+              rotation_end_time = rotation_start_date.next_day.to_time
+              rotation_filename = base_filename + rotation_start_date.strftime(".%Y.%m.%d")
+              if File.exists?rotation_filename
+                $stderr.puts "Warning: log file '#{rotation_filename}' already exists. Overwriting."
+                #To do: what if this fails?
+                FileUtils.rm(rotation_filename)
+              end
+              rotation_file = Pacct::File.new(rotation_filename)
+            end
+            rotation_file.write_entry(job)
+          end
+          #To do: uncomment for production.
+          #To do: verify that this doesn't kill accounting.
+          #FileUtils.rm(base_filename)
         end
-        #To do: uncomment for production.
-        #FileUtils.rm(base_filename)
       end
       
       def system_type_name
@@ -257,7 +272,8 @@ module Bookie
     
     class TorqueSender < Sender
       #Yields each job in the log
-      def each_job(date)
+      def each_job(date = nil)
+        date ||= Date.today
         record = TorqueStats::JobRecord.new(date)
         record.each_job do |job|
           yield job

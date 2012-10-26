@@ -7,8 +7,6 @@ module Bookie
   module Database
     #ActiveRecord structure for a completed job
     class Job < ActiveRecord::Base
-      #To do: integrate with time fields?
-      #has_one :date
       belongs_to :user
       belongs_to :system
       
@@ -37,7 +35,7 @@ module Bookie
       has_many :jobs
       belongs_to :system_type
       
-      #To do: add cores, memory
+      #To do: add memory?
       validates_presence_of :name, :cores, :system_type, :start_time
     end
     
