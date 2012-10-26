@@ -2,6 +2,7 @@ require 'bookie'
 
 require 'date'
 require 'pacct'
+require 'spreadsheet'
 
 module Bookie
   module Client
@@ -13,12 +14,27 @@ module Bookie
       
       def print_summary(jobs, io = $stdout)
         summary = Bookie::Summary::summary(jobs)
-        io.puts "Number of jobs:     #{summary[:jobs]}"
-        io.puts "Total wall time:    #{Client.format_duration(summary[:wall_time])}"
-        io.puts "Total CPU time:     #{Client.format_duration(summary[:cpu_time])}"
-        io.puts "% Successful:       #{'%.2f' % (summary[:success] * 100)}%"
-        io.puts "Available CPU time: #{Client.format_duration(summary[:total_cpu_time])}"
-        io.puts "% CPU time used:    #{'%.2f' % (summary[:used_cpu_time] * 100)}%"
+        field_labels = [
+          "Number of jobs",
+          "Total wall time",
+          "Total CPU time",
+          "% Successful",
+          "Available CPU time",
+          "% CPU time used",
+        ]
+        field_values = [
+          summary[:jobs],
+          Client.format_duration(summary[:wall_time]),
+          Client.format_duration(summary[:cpu_time]),
+          '%.2f' % (summary[:success] * 100),
+          Client.format_duration(summary[:total_cpu_time]),
+          '%.2f' % (summary[:used_cpu_time] * 100),
+        ]
+        if io == $stdout
+          field_labels.zip(field_values) do |label, value|
+            io.printf("%-20.20s%s\n", "#{label}:", value)
+          end
+        end
       end
       
       def print_jobs(jobs, io = $stdout)
