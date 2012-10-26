@@ -68,7 +68,6 @@ module Bookie
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
-            #To do: warn even if no jobs are actually duplicates?
             potential_duplicate_job = Bookie::Filter::by_end_time(
               Bookie::Database::Job,
               current_date.to_time,
@@ -80,7 +79,6 @@ module Bookie
             end
           end
           #Is this job a duplicate of one in the database?
-          #To do: check system type.
           if potential_duplicate_job && Bookie::Database::Job.joins(:system).where(
               'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
               hostname,
@@ -181,7 +179,6 @@ module Bookie
       #handle the system field? A parameter?
       def to_database_job(job)
         db_job = Bookie::Database::Job.new
-        #To do: make more general?
         if job.respond_to? :process_id
           db_job.job_id = job.process_id
           db_job.array_id = 0
@@ -219,7 +216,7 @@ module Bookie
           system.save!
         else
           $stderr.puts "No active system with hostname '#{hostname}' found"
-          #To do: throw here?
+          #To do: raise error here?
         end
       end
     end
@@ -227,8 +224,6 @@ module Bookie
     #Represents a client that returns data from a standalone Linux system
     class LinuxSender < Sender
       #Yields each job in the log
-      #
-      #To do: do something with the date parameter.
       def each_job(date = nil)
         #To do: modify for production.
         base_filename = 'snapshot/pacct'
@@ -240,7 +235,6 @@ module Bookie
             yield job
           end
         else
-          #To do: What if this doesn't exist (when pulling up archives and the given date isn't found)?
           file = Pacct::File.new(base_filename)
           rotation_file = nil
           rotation_end_time = Time.at(0)

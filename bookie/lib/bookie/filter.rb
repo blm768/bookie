@@ -4,7 +4,6 @@ module Bookie
   module Filter
     class << self;
       def by_user(jobs, user_name)
-        #To do: optimize?
         return jobs.joins(:user).where('users.name = ?', user_name)
       end
       

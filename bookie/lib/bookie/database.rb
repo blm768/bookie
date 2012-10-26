@@ -65,7 +65,7 @@ module Bookie
         end
         change_table :users do |t|
           t.index :name
-          #To do: remove?
+          #To do: remove? make part of unique key?
           t.index :group_id
         end
       end
@@ -100,7 +100,7 @@ module Bookie
           t.datetime :end_time
           #To do: determine correct type sizes.
           t.integer :cores, :null => false
-          #To do: make NOT NULL
+          #To do: make NOT NULL?
           t.integer :memory
         end
         change_table :systems do |t|
