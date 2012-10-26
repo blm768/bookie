@@ -17,6 +17,7 @@ module Bookie
       #* config: an instance of Bookie::Config
       def initialize(config)
         @config = config
+        #To do: move to local variable in method?
         @cores = SystemStats::LocalStats.new.num_cores
       end
       
@@ -24,11 +25,12 @@ module Bookie
       #To do: actually make the date parameter meaningful; it is currently ignored.
       def send_data(date)
         hostname = self.hostname
+        system_type = self.system_type
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
         system = Bookie::Database::System.where(
-          'name = ? AND cores = ? AND end_time IS NULL',
-          hostname, @cores).first
+          'name = ? AND cores = ? AND system_type_id = ? AND end_time IS NULL',
+          hostname, system_type.id, @cores).first
         unless system
           #Verify that all previous systems with this name have been decommissioned.
           conflicting_system = Bookie::Database::System.where(
@@ -137,9 +139,20 @@ module Bookie
         raise NotImplementedError.new("Must be defined by subclass")
       end
       
-      #Returns the type code of the system
+      #This must not be called when table locks are held.
       def system_type
-        raise NotImplementedError.new("Must be defined by subclass")
+        ActiveRecord::Base.connection.execute('LOCK TABLES system_types WRITE')
+        type_name = self.system_type_name
+        st = Bookie::Database::SystemType.find_by_name(type_name)
+        unless st
+          st = Bookie::Database::SystemType.new
+          st.name = type_name
+          st.memory_stat_type = self.memory_stat_type
+          st.save!
+        end
+        return st
+      ensure
+        ActiveRecord::Base.connection.execute('UNLOCK TABLES')
       end
       
       #Filters a job to see if it should be included in the final output
@@ -233,8 +246,12 @@ module Bookie
         #FileUtils.rm(base_filename)
       end
       
-      def system_type
-        return :standalone
+      def system_type_name
+        return "Standalone (Linux)"
+      end
+      
+      def memory_stat_type
+        return :avg
       end
     end
     
@@ -247,8 +264,12 @@ module Bookie
         end
       end
       
-      def system_type
-        return :torque_cluster
+      def system_type_name
+        return "TORQUE cluster"
+      end
+      
+      def memory_stat_type
+        return :max
       end
     end
   end

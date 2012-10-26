@@ -22,21 +22,30 @@ module Bookie
       end
       
       def print_jobs(jobs, io = $stdout)
-        heading = sprintf @@FORMAT_STRING, 'User', 'Group', 'Server', 'Server type',
+        heading = sprintf @@FORMAT_STRING, 'User', 'Group', 'System', 'System type',
         'Start time', 'End time', 'Wall time', 'CPU time', 'Memory usage', 'Exit code'
         io.write heading
         io.puts '-' * (heading.length - 1)
-        jobs.find_each do |job|   
+        jobs.find_each do |job|
+          system = job.system
+          #To do: optimize accesses to fields that would spin off a query?
+          system_type = system.system_type
+          memory_stat_type = system_type.memory_stat_type
+          if memory_stat_type == :unknown
+            memory_stat_type = nil
+          else
+            memory_stat_type = "(#{memory_stat_type})"
+          end
           io.printf @@FORMAT_STRING,
             job.user.name,
             job.user.group.name,
-            job.system.name,
-            Bookie::Database::SYSTEM_TYPE_NAMES[job.system.system_type],
+            system.name,
+            system_type.name,
             job.start_time,
             job.end_time,
             Client.format_duration(job.end_time - job.start_time),
             Client.format_duration(job.cpu_time),
-            "#{job.memory}kb",
+            "#{job.memory}kb #{memory_stat_type}",
             job.exit_code
         end
       end

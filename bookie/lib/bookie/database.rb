@@ -30,24 +30,32 @@ module Bookie
       validates_presence_of :group, :name
     end
     
-    SYSTEM_TYPE = {:standalone => 0, :torque_cluster => 1}
-    SYSTEM_TYPE_NAMES = {:standalone => "Standalone", :torque_cluster => "TORQUE cluster"}
+    MEMORY_STAT_TYPE = {:unknown => 0, :avg => 1, :max => 2}
     
     #ActiveRecord structure for a network system
     class System < ActiveRecord::Base
       has_many :jobs
+      belongs_to :system_type
       
       #To do: add cores, memory
       validates_presence_of :name, :cores, :system_type, :start_time
+    end
+    
+    #ActiveRecord structure for a system type
+    class SystemType < ActiveRecord::Base
+      has_many :systems
+      
+      validates_presence_of :name, :memory_stat_type
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
-      def system_type
+      def memory_stat_type
         #To do: optimize?
-        return SYSTEM_TYPE.key(read_attribute(:system_type))
+        return MEMORY_STAT_TYPE.key(read_attribute(:memory_stat_type))
       end
       
-      def system_type=(type)
-        write_attribute(:system_type, SYSTEM_TYPE[type])
+      def memory_stat_type=(type)
+        #To do: check for invalid types?
+        write_attribute(:memory_stat_type, MEMORY_STAT_TYPE[type])
       end
     end
   
@@ -89,7 +97,7 @@ module Bookie
         create_table :systems do |t|
           t.string :name, :null => false
           #A 1-byte integer (hopefully)
-          t.integer :system_type, :limit => 1, :null => false
+          t.references :system_type, :null => false
           t.datetime :start_time, :null => false
           t.datetime :end_time
           #To do: determine correct type sizes.
@@ -99,7 +107,7 @@ module Bookie
         end
         change_table :systems do |t|
           t.index :name
-          t.index :system_type
+          t.index :system_type_id
           t.index :cores
           t.index :memory
         end
@@ -107,6 +115,22 @@ module Bookie
       
       def down
         drop_table :systems
+      end
+    end
+    
+    class CreateSystemTypes < ActiveRecord::Migration
+      def up
+        create_table :system_types do |t|
+          t.string :name, :null => false
+          t.integer :memory_stat_type, :limit => 1, :null => false
+        end
+        change_table :system_types do |t|
+          t.index :name
+        end
+      end
+      
+      def down
+        drop_table :system_types
       end
     end
     
@@ -145,6 +169,7 @@ module Bookie
         CreateUsers.new.up
         CreateGroups.new.up
         CreateSystems.new.up
+        CreateSystemTypes.new.up
         CreateJobs.new.up
       end
       
@@ -152,6 +177,7 @@ module Bookie
         CreateUsers.new.down
         CreateGroups.new.down
         CreateSystems.new.down
+        CreateSystemTypes.new.down
         CreateJobs.new.down
       end
     end
