@@ -25,8 +25,7 @@ module Bookie
       def send_data(date)
         hostname = self.hostname
         #Make sure this machine is in the database.
-        #To do: check for different # of cores
-        #To do: Make sure only one system w/ a given name has a NULL end_time
+        #This code shouldn't need locks because no other system has the same hostname
         system = Bookie::Database::System.where(
           'name = ? AND cores = ? AND end_time IS NULL',
           hostname, @cores).first
@@ -92,22 +91,33 @@ module Bookie
           unless user
             #Does the group exist?
             #To do: optimize!
-            group = Bookie::Database::Group.where(:name => job.group_name).first
-            unless group
-              group = Bookie::Database::Group.new
-              group.name = job.group_name
-              group.save!
+            group = nil
+            begin
+              ActiveRecord::Base.connection.execute('LOCK TABLES groups WRITE;')
+              group = Bookie::Database::Group.where(:name => job.group_name).first
+              unless group
+                group = Bookie::Database::Group.new
+                group.name = job.group_name
+                group.save!
+              end
+            ensure
+              ActiveRecord::Base.connection.execute('UNLOCK TABLES;')
             end
             #Does the user already exist?
             #To do: optimize!
-            user = Bookie::Database::User.where(:name => job.user_name, :group_id => group.id).first
-            unless user
-              user = Bookie::Database::User.new
-              user.name = job.user_name
-              user.group = group
-              user.save!
+            begin
+              ActiveRecord::Base.connection.execute('LOCK TABLES users WRITE;')
+              user = Bookie::Database::User.where(:name => job.user_name, :group_id => group.id).first
+              unless user
+                user = Bookie::Database::User.new
+                user.name = job.user_name
+                user.group = group
+                user.save!
+              end
+              existing_users[[job.user_name, job.group_name]] = user
+            ensure
+              ActiveRecord::Base.connection.execute('UNLOCK TABLES;')
             end
-            existing_users[[job.user_name, job.group_name]] = user
           end
           db_job.system = system
           db_job.user = user
@@ -177,6 +187,7 @@ module Bookie
       #
       #Neither argument should be nil.
       def decommission(hostname, end_time)
+        #To do: does this need locks?
         system = Bookie::Database::System.where(
           'name = ? AND end_time IS NULL',
           hostname).first
