@@ -37,8 +37,6 @@ module Bookie
         end
         #If the system doesn't have an end time, set it to a logical value.
         system_end_time ||= end_time || Time.new
-        puts system_start_time
-        puts system_end_time
         total_cpu_time += system.cores * (system_end_time - system_start_time)
       end
       

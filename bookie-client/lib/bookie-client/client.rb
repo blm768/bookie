@@ -30,10 +30,17 @@ module Bookie
           Client.format_duration(summary[:total_cpu_time]),
           '%.2f' % (summary[:used_cpu_time] * 100),
         ]
-        if io == $stdout
-          field_labels.zip(field_values) do |label, value|
-            io.printf("%-20.20s%s\n", "#{label}:", value)
-          end
+        case io
+          #To do: list filters on sheet?
+          when Spreadsheet::Workbook
+            s = io.create_worksheet
+            s.name = "Accounting"
+          when IO
+            field_labels.zip(field_values) do |label, value|
+              io.printf("%-20.20s%s\n", "#{label}:", value)
+            end
+          else
+            raise ArgumentError.new("Unrecognized output object type #{io.class}")
         end
       end
       
