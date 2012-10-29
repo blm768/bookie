@@ -23,7 +23,12 @@ end
 desc "Synchronize snapshot files from the master snapshot directory"
 task :sync_snapshots do
   Dir.glob('*/snapshot/**/*').each do |entry|
+    master_snapshot = entry.sub(/^.*\/snapshot/, "snapshot")
     next unless File.file?(entry)
-    FileUtils.copy(entry.sub(/^.*\/snapshot/, "snapshot"), entry)
+    unless File.file?(master_snapshot)
+      $stderr.puts "Warning: file '#{entry}' has no counterpart in the master snapshot directory."
+      next
+    end
+    FileUtils.copy(master_snapshot, entry)
   end
 end

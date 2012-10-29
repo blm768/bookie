@@ -125,24 +125,75 @@ static VALUE pacct_entry_new(PacctFile* file) {
 
 /*
  *call-seq:
- *  each_entry {|entry| ...}
+ *  each_entry([start]) {|entry, index| ...}
  *
- *Yields each entry in the file to the given block
+ *Yields each entry in the file to the given block and its index in the file
+ *
+ *If start is given, iteration starts at the entry with that index.
  */
-static VALUE each_entry(VALUE self) {
+static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
   PacctFile* file;
-  long i;
+  VALUE start_value;
+  long start = 0;
+  int i = 0;
+  
+  rb_scan_args(argc, argv, "01", &start_value);
+  if(argc && start_value != Qnil) {
+    start = NUM2INT(start_value);
+  }
   
   Data_Get_Struct(self, PacctFile, file);
   
-  rewind(file->file);
+  if(start >= file->numEntries) {
+    char buf[100];
+    snprintf(buf, 100, "Index %li is out of range", start);
+    rb_raise(rb_eRangeError, buf);
+  }
   
-  for(i = 0; i < file->numEntries; ++i) {
+  fseek(file->file, start * sizeof(struct acct_v3), SEEK_SET);
+  
+  for(i = start; i < file->numEntries; ++i) {
     VALUE entry = pacct_entry_new(file);
-    rb_rescue(rb_yield, entry, rescue, Qnil);
+    rb_yield_values(2, entry, INT2NUM(i));
   }
 
   return Qnil;
+}
+
+/*
+ *Returns the last entry in the file
+ */
+static VALUE last_entry(VALUE self) {
+  PacctFile* file;
+  long pos;
+  VALUE entry;
+  
+  Data_Get_Struct(self, PacctFile, file);
+  
+  if(file->numEntries == 0) {
+    rb_raise(rb_eRangeError, "No last entry in file");
+  }
+  
+  //To do: error checking on file operations?
+  pos = ftell(file->file);
+  fseek(file->file, -sizeof(struct acct_v3), SEEK_END);
+  
+  entry = pacct_entry_new(file);
+  
+  fseek(file->file, pos, SEEK_SET);
+  
+  return entry;
+}
+
+/*
+ *Returns the number of entries in the file
+ */
+static VALUE get_num_entries(VALUE self) {
+  PacctFile* file;
+  
+  Data_Get_Struct(self, PacctFile, file);
+  
+  return INT2NUM(file->numEntries);
 }
 
 /*
@@ -155,14 +206,20 @@ static VALUE write_entry(VALUE self, VALUE entry) {
   //To do: verification?
   //To do: unit testing
   PacctFile* file;
+  long pos;
   struct acct_v3* acct;
   
   Data_Get_Struct(self, PacctFile, file);
   Data_Get_Struct(entry, struct acct_v3, acct);
   
+  pos = ftell(file->file);
   fseek(file->file, 0, SEEK_END);
   
   fwrite(acct, sizeof(struct acct_v3), 1, file->file);
+  
+  fseek(file->file, pos, SEEK_SET);
+  
+  return Qnil;
 }
 
 //Methods of Pacct::Entry
@@ -198,8 +255,9 @@ static VALUE get_user_name(VALUE self) {
   pw_data = getpwuid(data->ac_uid);
   if(!pw_data) {
     char buf[512];
+    VALUE err;
     snprintf(buf, 512, "Unable to obtain user name for ID %u", data->ac_uid);
-    VALUE err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
     rb_exc_raise(err);
   }
   
@@ -228,8 +286,9 @@ static VALUE get_group_name(VALUE self) {
   group_data = getgrgid(data->ac_gid);
   if(!group_data) {
     char buf[512];
+    VALUE err;
     snprintf(buf, 512, "Unable to obtain group name for ID %u", data->ac_gid);
-    VALUE err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
     rb_exc_raise(err);
   }
   
@@ -342,7 +401,9 @@ void Init_pacct_c() {
   cEntry = rb_define_class_under(mPacct, "Entry", rb_cObject);
   rb_define_singleton_method(cFile, "new", pacct_file_new, 1);
   rb_define_method(cFile, "initialize", pacct_file_init, 1);
-  rb_define_method(cFile, "each_entry", each_entry, 0);
+  rb_define_method(cFile, "each_entry", each_entry, -1);
+  rb_define_method(cFile, "last_entry", last_entry, 0);
+  rb_define_method(cFile, "num_entries", get_num_entries, 0);
   rb_define_method(cFile, "write_entry", write_entry, 1);
   
   rb_define_method(cEntry, "process_id", get_process_id, 0);

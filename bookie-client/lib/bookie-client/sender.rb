@@ -66,6 +66,7 @@ module Bookie
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
+            #To do: see if all jobs in the DB are before this one.
             potential_duplicate_job = Bookie::Filter::by_end_time(
               Bookie::Database::Job,
               current_date.to_time,
@@ -225,36 +226,58 @@ module Bookie
       def each_job(date = nil)
         #To do: modify for production.
         base_filename = 'snapshot/pacct'
-        #Are we reading an old entry?
+        #Are we reading an old log?
         if date
           filename = base_filename + date.strftime(".%Y.%m.%d")
-          file = Pacct::File.new(base_filename)
+          file = Pacct::File.new(filename)
           file.each_entry do |job|
             yield job
           end
         else
-          file = Pacct::File.new(base_filename)
-          rotation_file = nil
-          rotation_end_time = Time.at(0)
-          file.each_entry do |job|
-            yield job
-            job_end_time = job.start_time + job.wall_time
-            if job_end_time >= rotation_end_time || !rotation_file
-              rotation_start_date = job_end_time.to_date
-              rotation_end_time = rotation_start_date.next_day.to_time
-              rotation_filename = base_filename + rotation_start_date.strftime(".%Y.%m.%d")
-              if File.exists?rotation_filename
-                $stderr.puts "Warning: log file '#{rotation_filename}' already exists. Overwriting."
-                #To do: what if this fails?
-                FileUtils.rm(rotation_filename)
-              end
-              rotation_file = Pacct::File.new(rotation_filename)
+          begin
+            file = Pacct::File.new(base_filename)
+            bookmark_filename = base_filename + ".bookmark"
+            start = 0
+            current_entry = nil
+            if File.file?(bookmark_filename)
+              #To do: better checking?
+              start = File.read(bookmark_filename).to_i
             end
-            rotation_file.write_entry(job)
+            rotation_file = nil
+            rotation_end_time = Time.at(0)
+            file.each_entry(start) do |job, index|
+              current_entry = index
+              job_end_time = job.start_time + job.wall_time
+              #Is it time for a new rotation file?
+              if job_end_time >= rotation_end_time || !rotation_file
+                rotation_start_date = job_end_time.to_date
+                rotation_end_time = rotation_start_date.next_day.to_time
+                rotation_filename = base_filename + rotation_start_date.strftime(".%Y.%m.%d")
+                rotation_file = Pacct::File.new(rotation_filename)
+                #Did this file already contain data?
+                if rotation_file.num_entries > 0
+                  #See if we can just append.
+                  last = rotation_file.last_entry
+                  if last.start_time + last.wall_time >= job.start_time + job.wall_time
+                    #To do: clearer message?
+                    raise "Error: log file '#{rotation_filename}' contains entries newer than those in #{base_filename}."
+                  end
+                end
+              end
+              yield job
+              rotation_file.write_entry(job)
+            end
+          rescue => e
+            if current_entry then
+              bookmark_file = File.open(bookmark_filename, "w")
+              bookmark_file.puts current_entry
+            end
+            raise e
           end
           #To do: uncomment for production.
           #To do: verify that this doesn't kill accounting.
           #FileUtils.rm(base_filename)
+          FileUtils.rm(bookmark_filename) if File.exists?(bookmark_filename)
         end
       end
       

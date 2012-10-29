@@ -25,6 +25,7 @@ module Bookie
   #  - "Standalone": a standalone machine
   #  - "TORQUE cluster": the head of a TORQUE cluster
   #  - Defaults to "Standalone"
+  #* "Hostname": the system's hostname (required)
   class Config
     #The database type
     #
@@ -46,6 +47,8 @@ module Bookie
     attr_accessor :excluded_users
     #The system type
     attr_accessor :system_type
+    #The system's hostname
+    attr_accessor :hostname
     
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -77,6 +80,10 @@ module Bookie
       #To do: unit tests
       @system_type = data['System type'] || "Standalone"
       verify_type(@system_type, 'System type', String)
+      
+      @hostname = data['Hostname']
+      raise "No hostname specified" unless @hostname
+      verify_type(@hostname, 'Hostname', String)
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

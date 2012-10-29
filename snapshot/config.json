@@ -3,5 +3,6 @@
   "Server"        : "localhost",
   "Port"          : 8080,
   "Username"      : "root",
-  "Password"      : "test"
+  "Password"      : "test",
+  "Hostname"      : "localhost"
 }
