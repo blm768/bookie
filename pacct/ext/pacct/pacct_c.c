@@ -86,16 +86,22 @@ static VALUE pacct_file_free(void* p) {
  *
  *Creates a new Pacct::File using the given accounting file
  */
-static VALUE pacct_file_new(VALUE class, VALUE filename) {
+static VALUE pacct_file_new(int argc, VALUE* argv, VALUE class) {
   VALUE file;
+  VALUE init_args[2];
   PacctFile* ptr;// = ALLOC(PacctFile);
+  
+  init_args[1] = Qnil;
+  rb_scan_args(argc, argv, "11", init_args, init_args + 1);
+  
   file = Data_Make_Struct(class, PacctFile, 0, pacct_file_free, ptr);
   
-  rb_obj_call_init(file, 1, &filename);
+  rb_obj_call_init(file, 2, init_args);
   return file;
 }
 
-static VALUE pacct_file_init(VALUE self, VALUE filename) {
+//To do: make mode actually do something?
+static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
   PacctFile* file;
   long length;
   char* cFilename = StringValueCStr(filename);
@@ -573,8 +579,8 @@ void Init_pacct_c() {
    *Represents an entry in a Pacct::File
    */
   cEntry = rb_define_class_under(mPacct, "Entry", rb_cObject);
-  rb_define_singleton_method(cFile, "new", pacct_file_new, 1);
-  rb_define_method(cFile, "initialize", pacct_file_init, 1);
+  rb_define_singleton_method(cFile, "new", pacct_file_new, -1);
+  rb_define_method(cFile, "initialize", pacct_file_init, 2);
   rb_define_method(cFile, "each_entry", each_entry, -1);
   rb_define_method(cFile, "last_entry", last_entry, 0);
   rb_define_method(cFile, "num_entries", get_num_entries, 0);
