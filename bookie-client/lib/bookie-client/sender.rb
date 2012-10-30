@@ -29,6 +29,7 @@ module Bookie
         system_type = self.system_type
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
+        #To do: discuss the above.
         system = Bookie::Database::System.where(
           'name = ? AND system_type_id = ? AND cores = ? AND end_time IS NULL',
           hostname, system_type.id, @cores).first
@@ -97,21 +98,17 @@ module Bookie
             #Does the group exist?
             #To do: optimize!
             group = nil
-            begin
-              ActiveRecord::Base.connection.execute('LOCK TABLES groups WRITE;')
+            Bookie::Database::Group.transaction do
               group = Bookie::Database::Group.where(:name => job.group_name).first
               unless group
                 group = Bookie::Database::Group.new
                 group.name = job.group_name
                 group.save!
               end
-            ensure
-              ActiveRecord::Base.connection.execute('UNLOCK TABLES;')
             end
             #Does the user already exist?
             #To do: optimize!
-            begin
-              ActiveRecord::Base.connection.execute('LOCK TABLES users WRITE;')
+            Bookie::Database::User.transaction do
               user = Bookie::Database::User.where(:name => job.user_name, :group_id => group.id).first
               unless user
                 user = Bookie::Database::User.new
@@ -120,8 +117,6 @@ module Bookie
                 user.save!
               end
               existing_users[[job.user_name, job.group_name]] = user
-            ensure
-              ActiveRecord::Base.connection.execute('UNLOCK TABLES;')
             end
           end
           db_job.system = system
@@ -218,10 +213,12 @@ module Bookie
       #Yields each job in the log
       def each_job(date = nil)
         #To do: modify for production.
-        base_filename = 'snapshot/pacct'
+        base_dir = 'snapshot'
+        base_filename = File.join(base_dir, 'pacct')
+        log_base_filename = File.join(@config.log_dir, 'var/account/pacct')
         #Are we reading an old log?
         if date
-          filename = base_filename + date.strftime(".%Y.%m.%d")
+          filename = log_base_filename + date.strftime(".%Y.%m.%d")
           file = Pacct::File.new(filename)
           file.each_entry do |job|
             yield job
@@ -229,7 +226,7 @@ module Bookie
         else
           begin
             file = Pacct::File.new(base_filename)
-            bookmark_filename = base_filename + ".bookmark"
+            bookmark_filename = log_base_filename + ".bookmark"
             start = 0
             current_entry = nil
             #If there's a bookmark from previous processing, use it.
@@ -246,7 +243,7 @@ module Bookie
               if job_end_time >= rotation_end_time || !rotation_file
                 rotation_start_date = job_end_time.to_date
                 rotation_end_time = rotation_start_date.next_day.to_time
-                rotation_filename = base_filename + rotation_start_date.strftime(".%Y.%m.%d")
+                rotation_filename = log_base_filename + rotation_start_date.strftime(".%Y.%m.%d")
                 rotation_file = Pacct::File.new(rotation_filename)
                 #Did this file already contain data?
                 if rotation_file.num_entries > 0

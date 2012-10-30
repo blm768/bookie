@@ -49,6 +49,8 @@ module Bookie
     attr_accessor :system_type
     #The system's hostname
     attr_accessor :hostname
+    #The directory in which to place old logs
+    attr_accessor :log_dir
     
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -84,6 +86,9 @@ module Bookie
       @hostname = data['Hostname']
       raise "No hostname specified" unless @hostname
       verify_type(@hostname, 'Hostname', String)
+      
+      @log_dir = data['LogDir']
+      verify_type(@log_dir, 'LogDir', String)
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

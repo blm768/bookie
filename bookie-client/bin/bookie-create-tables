@@ -27,7 +27,20 @@ config = Bookie::Config.new('snapshot/config.json')
 config.connect
 
 if drop
-  Bookie::Database::drop_tables
+  $stdout.write "Are you sure? This will destroy all tables in the database. "
+  response = nil
+  until response
+    response = $stdin.gets.chomp
+    case response
+    when "YES"
+      Bookie::Database::drop_tables
+    when /NO/i
+      exit 0
+    else
+      $stdout.write "Please answer 'YES' or 'NO'. "
+      response = nil
+    end
+  end
 else
   Bookie::Database::create_tables
 end

@@ -4,5 +4,6 @@
   "Port"          : 8080,
   "Username"      : "root",
   "Password"      : "test",
-  "Hostname"      : "localhost"
+  "Hostname"      : "localhost",
+  "LogDir"        : "snapshot"
 }
