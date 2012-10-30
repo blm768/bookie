@@ -244,7 +244,8 @@ module Bookie
                 rotation_start_date = job_end_time.to_date
                 rotation_end_time = rotation_start_date.next_day.to_time
                 rotation_filename = log_base_filename + rotation_start_date.strftime(".%Y.%m.%d")
-                rotation_file = Pacct::File.new(rotation_filename)
+                mode = if File.exists?(rotation_filename) then 'r+b' else 'w+b' end
+                rotation_file = Pacct::File.new(rotation_filename, mode)
                 #Did this file already contain data?
                 if rotation_file.num_entries > 0
                   #See if we can just append.

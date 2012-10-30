@@ -11,6 +11,13 @@
 
 #include "ruby.h"
 
+static char const* validFileModes[] = {
+  "rb",
+  "wb",
+  "r+b",
+  "w+b",
+};
+
 //To do:
 //Verify that allocations succeed?
 
@@ -103,14 +110,29 @@ static VALUE pacct_file_new(int argc, VALUE* argv, VALUE class) {
 //To do: make mode actually do something?
 static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
   PacctFile* file;
+  FILE* acct;
   long length;
   char* cFilename = StringValueCStr(filename);
-  FILE* acct = fopen(cFilename, "r+b");
-  //If that didn't work, try to create the file.
-  if(!acct) {
-    acct = fopen(cFilename, "w+b");
+  const char* cMode = "rb";
+  
+  if(mode != Qnil) {
+    int isValidMode = 0;
+    size_t i;
+    cMode = StringValueCStr(mode);
+    for(i = 0; i < sizeof(validFileModes) / sizeof(char*); ++i) {
+      if(strcmp(cMode, validFileModes[i]) == 0) {
+        isValidMode = 1;
+        break;
+      }
+    }
+    if(!isValidMode) {
+      char buf[512];
+      snprintf(buf, sizeof(buf), "Invalid mode for Pacct::File: '%s'", cMode);
+      rb_raise(rb_eArgError, buf);
+    }
   }
-  //If that didn't work either, we have a problem.
+  
+  acct = fopen(cFilename, cMode);
   if(!acct) {
     char buf[512] = "Unable to open file ";
     size_t len = strlen(buf);
@@ -248,6 +270,7 @@ static VALUE write_entry(VALUE self, VALUE entry) {
   pos = ftell(file->file);
   fseek(file->file, 0, SEEK_END);
   
+  //To do: error checking! (also on reads, etc.)
   fwrite(acct, sizeof(struct acct_v3), 1, file->file);
   
   ++(file->numEntries);
