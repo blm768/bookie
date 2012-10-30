@@ -51,7 +51,7 @@ VALUE rescue(VALUE args, VALUE exception) {
 
 typedef struct {
   FILE* file;
-  long length, numEntries;
+  long numEntries;
 } PacctFile;
 
 static VALUE pacct_file_free(void* p) {
@@ -79,6 +79,7 @@ static VALUE pacct_file_new(VALUE class, VALUE filename) {
 
 static VALUE pacct_file_init(VALUE self, VALUE filename) {
   PacctFile* file;
+  long length;
   char* cFilename = StringValueCStr(filename);
   FILE* acct = fopen(cFilename, "r+b");
   //If that didn't work, try to create the file.
@@ -98,15 +99,15 @@ static VALUE pacct_file_init(VALUE self, VALUE filename) {
   file->file = acct;
   
   fseek(acct, 0, SEEK_END);
-  file->length = ftell(acct);
+  length = ftell(acct);
   rewind(acct);
   
-  if(file->length % sizeof(struct acct_v3) != 0) {
+  if(length % sizeof(struct acct_v3) != 0) {
     fclose(file->file);
     rb_raise(rb_eIOError, "Accounting file appears to be the wrong size.");
   }
   
-  file->numEntries = file->length / sizeof(struct acct_v3);
+  file->numEntries = length / sizeof(struct acct_v3);
   
   return self;
 }
@@ -114,9 +115,13 @@ static VALUE pacct_file_init(VALUE self, VALUE filename) {
 static VALUE pacct_entry_new(PacctFile* file) {
   VALUE entry;
   struct acct_v3* ptr = ALLOC(struct acct_v3);
-  size_t entriesRead = fread(ptr, sizeof(struct acct_v3), 1, file->file);
-  if(entriesRead != 1) {
-    rb_raise(rb_eIOError, "Unable to read record from accounting file");
+  if(file) {
+    size_t entriesRead = fread(ptr, sizeof(struct acct_v3), 1, file->file);
+    if(entriesRead != 1) {
+      rb_raise(rb_eIOError, "Unable to read record from accounting file");
+    }
+  } else {
+    memset(ptr, 0, sizeof(struct acct_v3));
   }
   entry = Data_Wrap_Struct(cEntry, 0, free, ptr);
   
@@ -144,7 +149,7 @@ static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
   
   Data_Get_Struct(self, PacctFile, file);
   
-  if(start >= file->numEntries) {
+  if(start > file->numEntries) {
     char buf[100];
     snprintf(buf, 100, "Index %li is out of range", start);
     rb_raise(rb_eRangeError, buf);
@@ -217,6 +222,8 @@ static VALUE write_entry(VALUE self, VALUE entry) {
   
   fwrite(acct, sizeof(struct acct_v3), 1, file->file);
   
+  ++(file->numEntries);
+  
   fseek(file->file, pos, SEEK_SET);
   
   return Qnil;
@@ -231,6 +238,16 @@ static VALUE get_process_id(VALUE self) {
   Data_Get_Struct(self, struct acct_v3, data);
   
   return INT2NUM(data->ac_pid);
+}
+
+//Unused
+static VALUE set_process_id(VALUE self, VALUE pid) {
+  struct acct_v3* data;
+  Data_Get_Struct(self, struct acct_v3, data);
+  
+  data->ac_pid = NUM2INT(pid);
+  
+  return Qnil;
 }
 
 /*

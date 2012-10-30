@@ -1,5 +1,15 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+
+#To do: restore for production.
+=begin
+unless Process.uid == 0
+  $stderr.puts "This command must be run as root."
+  exit 1
+end
+=end
+
 #For development
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
@@ -22,21 +32,28 @@ sender = Bookie::Client::LinuxSender.new(config)
 #Process arguments.
 date = nil
 will_decommission = false
+system_hostname = config.hostname
 system_end_time = Time.new
-arg_offset = 0
 
-if /\d{4}-\d{2}-\d{2}/.match(ARGV[arg_offset])
-  date = Date.parse(ARGV[arg_offset])
+opts = OptionParser.new do |opts|
+  opts.banner = "To do: usage instructions"
+  
+  opts.on("--decommission [HOSTNAME] [TIME]",
+  String, String,
+  "Decommission the system with the given hostname at the given time") do |hostname, time|
+    will_decommission = true
+    system_hostname = hostname if hostname
+    system_end_time = Time.parse(time) if time
+  end
+  
+  #To do: force option for pacct conflicts? Just let the user remove the offending file?
 end
 
-if ARGV[arg_offset] == "--decommission"
-  hostname = ARGV[arg_offset + 1] || sender.hostname
-  if ARGV[arg_offset + 2]
-    system_end_time = Time.parse(ARGV[arg_offset + 2])
-  end
-  will_decommission = true
-  arg_offset += 3
+opts.parse!(ARGV)
+
+if /\d{4}-\d{2}-\d{2}/.match(ARGV[0])
+  date = Date.parse(ARGV[0])
 end
 
 sender.send_data(date)
-sender.decommission(hostname, system_end_time) if will_decommission
+sender.decommission(system_hostname, system_end_time) if will_decommission

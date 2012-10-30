@@ -25,7 +25,7 @@ module Bookie
       #
       #If the date parameter is nil, records for the current day are processed.
       def send_data(date = nil)
-        hostname = self.hostname
+        hostname = @config.hostname
         system_type = self.system_type
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
@@ -195,13 +195,6 @@ module Bookie
         return db_job
       end
       
-      #Returns this system's hostname
-      def hostname()
-        #To do: resolve potential issue w/ reverse lookup?
-        #Just use hostname (not FQDN)?
-        hostname = Socket.gethostbyname(Socket.gethostname)[0]
-      end
-      
       #Decommissions the specified system by setting its end time in the database
       #
       #Neither argument should be nil.
@@ -239,6 +232,7 @@ module Bookie
             bookmark_filename = base_filename + ".bookmark"
             start = 0
             current_entry = nil
+            #If there's a bookmark from previous processing, use it.
             if File.file?(bookmark_filename)
               #To do: better checking?
               start = File.read(bookmark_filename).to_i
@@ -268,6 +262,7 @@ module Bookie
               rotation_file.write_entry(job)
             end
           rescue => e
+            #Set a bookmark so we can start here next time.
             if current_entry then
               bookmark_file = File.open(bookmark_filename, "w")
               bookmark_file.puts current_entry
