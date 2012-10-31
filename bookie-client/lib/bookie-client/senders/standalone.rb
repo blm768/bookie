@@ -59,9 +59,9 @@ module Bookie
             end
             raise e
           end
-          #To do: uncomment for production.
-          #To do: verify that this doesn't kill accounting.
-          #FileUtils.rm(base_filename)
+          file.close
+          #Empty out the pacct file.
+          File.open(base_filename, "w")
         end
       end
       
@@ -72,7 +72,7 @@ module Bookie
       end
       
       def system_type_name
-        return "Standalone (Linux)"
+        return "Standalone"
       end
       
       def memory_stat_type

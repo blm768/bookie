@@ -81,8 +81,10 @@ typedef struct {
 
 static VALUE pacct_file_free(void* p) {
   PacctFile* file = (PacctFile*) p;
-  if(file->file)
-    {fclose(file->file);}
+  if(file->file) {
+    fclose(file->file);
+    file->file = NULL;
+  }
   free(p);
   return Qnil;
 }
@@ -156,6 +158,17 @@ static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
   file->numEntries = length / sizeof(struct acct_v3);
   
   return self;
+}
+
+static VALUE pacct_file_close(VALUE self) {
+  PacctFile* file;
+  
+  Data_Get_Struct(self, PacctFile, file);
+  
+  if(file->file) {
+    fclose(file->file);
+    file->file = NULL;
+  }
 }
 
 static VALUE pacct_entry_new(PacctFile* file) {
@@ -608,6 +621,7 @@ void Init_pacct_c() {
   rb_define_method(cFile, "last_entry", last_entry, 0);
   rb_define_method(cFile, "num_entries", get_num_entries, 0);
   rb_define_method(cFile, "write_entry", write_entry, 1);
+  rb_define_method(cFile, "close", pacct_file_close, 0);
   
   rb_define_singleton_method(cEntry, "new", ruby_pacct_entry_new, 0);
   rb_define_method(cEntry, "process_id", get_process_id, 0);
