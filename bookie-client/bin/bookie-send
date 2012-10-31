@@ -27,7 +27,7 @@ config.excluded_users = Set.new([])
 
 config.connect
 
-sender = Bookie::Client::LinuxSender.new(config)
+sender = Bookie::Sender::Sender.by_name(config.system_type).new(config)
 
 #Process arguments.
 date = nil
