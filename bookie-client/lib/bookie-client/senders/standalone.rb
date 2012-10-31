@@ -1,3 +1,6 @@
+require 'fileutils'
+require 'pacct'
+
 module Bookie
   module Sender
     #Represents a client that returns data from a standalone Linux system
@@ -63,6 +66,12 @@ module Bookie
           #To do: verify that this doesn't kill accounting.
           #FileUtils.rm(base_filename)
           FileUtils.rm(bookmark_filename) if File.exists?(bookmark_filename)
+        end
+      end
+      
+      def flush_jobs(date)
+        each_job(date) do |job|
+          yield job
         end
       end
       

@@ -1,7 +1,6 @@
 require 'bookie'
 
 require 'date'
-require 'pacct'
 require 'spreadsheet'
 
 module Bookie
@@ -35,6 +34,7 @@ module Bookie
           when Spreadsheet::Workbook
             s = io.create_worksheet
             s.name = "Accounting"
+            
           when IO
             field_labels.zip(field_values) do |label, value|
               io.printf("%-20.20s%s\n", "#{label}:", value)

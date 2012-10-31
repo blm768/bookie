@@ -42,6 +42,7 @@ opts = OptionParser.new do |opts|
   String, String,
   "Decommission the system with the given hostname at the given time") do |hostname, time|
     will_decommission = true
+    date = :flush
     system_hostname = hostname if hostname
     system_end_time = Time.parse(time) if time
   end

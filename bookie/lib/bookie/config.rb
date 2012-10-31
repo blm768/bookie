@@ -80,7 +80,8 @@ module Bookie
       @excluded_users = Set.new(excluded_users_array)
       
       #To do: unit tests
-      @system_type = data['System type'] || "Standalone"
+      @system_type = data['System type']
+      raise "No system type specified" unless @system_type
       verify_type(@system_type, 'System type', String)
       
       @hostname = data['Hostname']

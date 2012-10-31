@@ -2,12 +2,8 @@ require 'bookie'
 
 require 'active_record'
 require 'date'
-require 'digest/md5'
-require 'fileutils'
 require 'logger'
 require 'system_stats'
-require 'torque_stats'
-require 'socket'
 
 module Bookie
   module Sender
@@ -35,7 +31,9 @@ module Bookie
       
       #Sends job data for a given day to the database server
       #
-      #If the date parameter is nil, records for the current day are processed.
+      #If the date parameter is nil, records relevant to the current day are processed.
+      #Passing the symbol :flush instead of a date causes all records that would normally
+      #be left for the next day to be sent.
       def send_data(date = nil)
         hostname = @config.hostname
         system_type = self.system_type
@@ -56,6 +54,7 @@ module Bookie
             #To do: custom error class?
             raise "System specifications do not match those in the database"
           end
+          #If there's no conflict, create the system in the database.
           system = Bookie::Database::System.new
           system.name = hostname
           system.system_type = system_type
@@ -71,6 +70,14 @@ module Bookie
         
         existing_users = {}
         
+        each_job = nil
+        if date == :flush
+          each_job = method(:flush_jobs)
+          date = nil
+        else
+          each_job = method(:each_job)
+        end
+        
         each_job(date) do |job|
           next unless filter_job(job)
           db_job = to_database_job(job)
@@ -79,13 +86,12 @@ module Bookie
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
-            #To do: see if all jobs in the DB are before this one.
+            #To do: see if all jobs in the DB are before this one?
             potential_duplicate_job = Bookie::Filter::by_end_time(
               Bookie::Database::Job,
               current_date.to_time,
               next_datetime).first
             if potential_duplicate_job
-              #To do: send this to a logger instead?
               date_str = current_date.strftime("%Y-%m-%d")
               $stderr.puts("Warning: jobs already exist in the database for the date #{date_str}.")
             end
