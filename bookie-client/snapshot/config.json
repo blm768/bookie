@@ -5,6 +5,7 @@
   "Username"      : "root",
   "Password"      : "test",
   "Hostname"      : "localhost",
-  "System type"   : "TORQUE cluster",
-  "LogDir"        : "snapshot"
+  "Log directory" : "snapshot",
+  "System type"   : "Standalone",
+  "Bookmark file" : "snapshot/bookmarks.json"
 }

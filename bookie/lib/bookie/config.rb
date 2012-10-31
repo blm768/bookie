@@ -7,7 +7,7 @@ require 'set'
 module Bookie
   #Holds database configuration, etc. for Bookie components
   #
-  #==Configuration format
+  #==Configuration format (To do: update!)
   #The configuration file is a JSON file with the following fields:
   #* "Database type": the type of database to be used
   #  - Defaults to "mysql2"
@@ -24,7 +24,7 @@ module Bookie
   #* "System type": The type of system
   #  - "Standalone": a standalone machine
   #  - "TORQUE cluster": the head of a TORQUE cluster
-  #  - Defaults to "Standalone"
+  #  - Other values are possible depending on which sender plugins are installed.
   #* "Hostname": the system's hostname (required)
   class Config
     #The database type
@@ -51,6 +51,10 @@ module Bookie
     attr_accessor :hostname
     #The directory in which to place old logs
     attr_accessor :log_dir
+    #The name of the bookmarks file
+    attr_accessor :bookmark_filename
+    #A hash of bookmarks for each sender
+    attr_accessor :bookmarks
     
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -88,8 +92,32 @@ module Bookie
       raise "No hostname specified" unless @hostname
       verify_type(@hostname, 'Hostname', String)
       
-      @log_dir = data['LogDir']
-      verify_type(@log_dir, 'LogDir', String)
+      @log_dir = data['Log directory']
+      verify_type(@log_dir, 'Log directory', String)
+      
+      @bookmark_filename = data['Bookmark file'] || "/etc/bookie/bookmarks.json"
+      verify_type(@bookmark_filename, 'Bookmark file', String)
+      if File.exists?(@bookmark_filename)
+        bookmark_file = File.open(bookmark_filename)
+        @bookmarks = JSON.parse(bookmark_file.read)
+      else
+        @bookmarks = {}
+      end
+      #To do: verify type of bookmark file root?
+      
+      ObjectSpace.define_finalizer(self, Config.finalize(@bookmarks, @bookmark_filename))
+    end
+    
+    def self.finalize(bookmarks, bookmark_filename)
+      bookmark_dir = File.dirname(bookmark_filename)
+      proc do
+        unless File.exists?(bookmark_dir)
+          FileUtils.mkdir_p(bookmark_dir)
+        end
+        File.open(bookmark_filename, "w") do |file|
+          JSON.dump(bookmarks, file)
+        end
+      end
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

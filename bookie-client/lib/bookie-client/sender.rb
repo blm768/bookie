@@ -22,7 +22,7 @@ module Bookie
       def self.by_name(name)
         sender_class = @@senders[name]
         unless sender_class
-          filename = name.underscore
+          filename = name.gsub(/\s+/, "_").downcase
           require "bookie-client/senders/#{filename}"
           sender_class = Bookie::Sender.const_get(filename.camelize)
         end

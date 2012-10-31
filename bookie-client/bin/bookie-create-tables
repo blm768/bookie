@@ -34,7 +34,7 @@ if drop
     case response
     when "YES"
       Bookie::Database::drop_tables
-    when /NO/i
+    when /^NO$/i
       exit 0
     else
       $stdout.write "Please answer 'YES' or 'NO'. "

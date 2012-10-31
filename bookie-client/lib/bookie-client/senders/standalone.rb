@@ -21,14 +21,12 @@ module Bookie
         else
           begin
             file = Pacct::File.new(base_filename)
-            bookmark_filename = log_base_filename + ".bookmark"
             start = 0
             current_entry = nil
             #If there's a bookmark from previous processing, use it.
-            if File.file?(bookmark_filename)
-              #To do: better checking?
-              start = File.read(bookmark_filename).to_i
-            end
+            start = @config.bookmarks.delete(system_type_name)
+            #If the bookmark exists, make sure it's an integer.
+            start = Integer(start) if start
             rotation_file = nil
             rotation_end_time = Time.at(0)
             file.each_entry(start) do |job, index|
@@ -56,16 +54,14 @@ module Bookie
             end
           rescue => e
             #Set a bookmark so we can start here next time.
-            if current_entry then
-              bookmark_file = File.open(bookmark_filename, "w")
-              bookmark_file.puts current_entry
+            if current_entry
+              @config.bookmarks[system_type_name] = current_entry
             end
             raise e
           end
           #To do: uncomment for production.
           #To do: verify that this doesn't kill accounting.
           #FileUtils.rm(base_filename)
-          FileUtils.rm(bookmark_filename) if File.exists?(bookmark_filename)
         end
       end
       
