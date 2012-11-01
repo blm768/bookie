@@ -56,6 +56,8 @@ opts = OptionParser.new do |opts|
     when /\.xls$/
       output_file = Spreadsheet::Workbook.new
       save_method = :write
+    when /\.csv$/
+      output_file = File.open(filename, "w")
     else
       $stderr.puts "Unrecognized output file extension"
       exit 1
@@ -71,5 +73,5 @@ client.print_summary(jobs, output_file)
 client.print_jobs(jobs, output_file) if include_details
 
 if output_file
-  output_file.send(save_method, filename)
+  output_file.send(save_method, filename) if save_method
 end

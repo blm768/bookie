@@ -6,14 +6,13 @@ module Bookie
     #Represents a client that returns data from a standalone Linux system
     class Standalone < Sender
       #Yields each job in the log
-      def each_job(date = nil)
+      def each_job(filename = nil)
         #To do: modify for production.
         base_dir = 'snapshot'
         base_filename = File.join(base_dir, 'pacct')
         log_base_filename = File.join(@config.log_dir, 'var/account/pacct')
         #Are we reading an old log?
-        if date
-          filename = log_base_filename + date.strftime(".%Y.%m.%d")
+        if filename
           file = Pacct::File.new(filename)
           file.each_entry do |job|
             yield job
@@ -65,8 +64,8 @@ module Bookie
         end
       end
       
-      def flush_jobs(date)
-        each_job(date) do |job|
+      def flush_jobs(filename)
+        each_job(filename) do |job|
           yield job
         end
       end
@@ -77,6 +76,11 @@ module Bookie
       
       def memory_stat_type
         return :avg
+      end
+      
+      def filename_for_date(date)
+        log_base_filename = File.join(@config.log_dir, 'var/account/pacct')
+        return log_base_filename + filename.strftime(".%Y.%m.%d")
       end
     end
   end

@@ -31,10 +31,14 @@ module Bookie
       
       #Sends job data for a given day to the database server
       #
-      #If the date parameter is nil, records relevant to the current day are processed.
-      #Passing the symbol :flush instead of a date causes all records that would normally
-      #be left for the next day to be sent.
-      def send_data(date = nil)
+      #If the filename parameter is nil, records relevant to the current day are processed.
+      #If the filename parameter is a Date object, the file for that date is processed.
+      #If the filename parameter is the symbol :flush, all records that would normally
+      #be left for the next day are sent.
+      def send_data(filename = nil)
+        if filename.class == Date
+          filename = filename_for_date(filename)
+        end
         hostname = @config.hostname
         system_type = self.system_type
         #Make sure this machine is in the database.
@@ -71,14 +75,14 @@ module Bookie
         existing_users = {}
         
         each_job = nil
-        if date == :flush
+        if filename == :flush
           each_job = method(:flush_jobs)
-          date = nil
+          filename = nil
         else
           each_job = method(:each_job)
         end
         
-        each_job(date) do |job|
+        each_job(filename) do |job|
           next unless filter_job(job)
           db_job = to_database_job(job)
           #Should we move on to the next day?
@@ -86,14 +90,17 @@ module Bookie
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
-            #To do: see if all jobs in the DB are before this one?
             potential_duplicate_job = Bookie::Filter::by_end_time(
               Bookie::Database::Job,
               current_date.to_time,
-              next_datetime).first
+              next_datetime).first 
             if potential_duplicate_job
-              date_str = current_date.strftime("%Y-%m-%d")
-              $stderr.puts("Warning: jobs already exist in the database for the date #{date_str}.")
+              if potential_duplicate_job.end_time >= job.start_time + job.wall_time
+                date_str = current_date.strftime("%Y-%m-%d")
+                $stderr.puts("Warning: jobs already exist in the database for the date #{date_str}.")
+              else
+                potential_duplicate_job = nil
+              end
             end
           end
           #Is this job a duplicate of one in the database?

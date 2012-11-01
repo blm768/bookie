@@ -47,11 +47,20 @@ module Bookie
             row[0] = SUMMARY_FIELD_LABELS[index]
             row[1] = field_values[index]
           end
+        when File
+          SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
+            if value.class == Float
+              value = '%.2f' % value
+            end
+            value << " %" if label[0] == "%"
+            io.puts "#{label}, #{value}"
+          end
         when nil
           SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
             if value.class == Float
               value = '%.2f' % value
             end
+            value << " %" if label[0] == "%"
             $stdout.printf("%-20.20s%s\n", "#{label}:", value)
           end
         else
@@ -79,6 +88,13 @@ module Bookie
             system_type = system.system_type
             s.row(index).concat(job_fields(job, system, system_type))
             index += 1
+          end
+        when File
+          io.puts DETAILS_FIELD_LABELS.join(', ')
+          jobs.find_each do |job|
+            system = job.system
+            system_type = system.system_type
+            io.puts job_fields(job, system, system_type).join(', ')
           end
         when nil
           heading = sprintf FORMAT_STRING, *DETAILS_FIELD_LABELS

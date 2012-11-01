@@ -34,8 +34,8 @@ module TorqueStats
     attr_reader :filename
   
     #Creates a JobRecord using the TORQUE record file for the given date
-    def initialize(date)
-      @filename = File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
+    def initialize(filename)
+      @filename = filename
       @file = File.open(filename)
     end
     
@@ -63,7 +63,6 @@ module TorqueStats
         index = next_index + 1
         next_index = line.index(']', index)
         job.array_id = Integer(line[index ... next_index])
-        puts job.array_id unless job.array_id == 0
         
         #Find the fields.
         index = line.index(';', next_index) + 1
@@ -107,6 +106,11 @@ module TorqueStats
   class << self;
     #The TORQUE root directory (usually the value of the environment variable TORQUEROOT)
     attr_accessor :torque_root
+    
+    def filename_for_date(date)
+      File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
+    end
   end
   @torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
+  
 end
