@@ -30,10 +30,18 @@ config.connect
 sender = Bookie::Sender::Sender.by_name(config.system_type).new(config)
 
 #Process arguments.
-date = nil
+filename = nil
 will_decommission = false
 system_hostname = config.hostname
 system_end_time = Time.new
+
+if ARGV[0]
+  if /\d{4}-\d{2}-\d{2}/.match(ARGV[0])
+    filename = Date.parse(ARGV[0])
+  elsif ARGV[0][0] != '-'
+    filename = ARGV[0]
+  end
+end
 
 opts = OptionParser.new do |opts|
   opts.banner = "To do: usage instructions"
@@ -52,9 +60,5 @@ end
 
 opts.parse!(ARGV)
 
-if /\d{4}-\d{2}-\d{2}/.match(ARGV[0])
-  date = Date.parse(ARGV[0])
-end
-
-sender.send_data(date)
+sender.send_data(filename)
 sender.decommission(system_hostname, system_end_time) if will_decommission
