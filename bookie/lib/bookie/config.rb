@@ -55,6 +55,8 @@ module Bookie
     attr_accessor :bookmark_filename
     #A hash of bookmarks for each sender
     attr_accessor :bookmarks
+    #The number of days a system can fail to post job entries before a warning is made
+    attr_accessor :maximum_idle
     
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -105,6 +107,9 @@ module Bookie
       end
       #To do: verify type of bookmark file root?
       
+      @maximum_idle = data['Maximum idle time'] || 3
+      verify_type(@maximum_idle, 'Maximum idle time', Integer)
+      
       ObjectSpace.define_finalizer(self, Config.finalize(@bookmarks, @bookmark_filename))
     end
     
@@ -122,7 +127,7 @@ module Bookie
     
     #Verifies that a field is of the correct type, raising an error if the type does not match
     def verify_type(value, name, type)
-      raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class == type
+      raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class <= type
     end
     
     #Connects to the database specified in the configuration file

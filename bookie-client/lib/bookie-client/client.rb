@@ -136,7 +136,7 @@ module Bookie
           job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
           if job == nil
             yield system.name, "No jobs on record"
-          elsif Time.now - job.end_time > 3 * 3600 * 24
+          elsif Time.now - job.end_time > @config.maximum_idle * 3600 * 24
             yield system.name, "No jobs on record since #{job.end_time.to_date}"
           end
         end
