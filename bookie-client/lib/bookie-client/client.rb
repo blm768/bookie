@@ -51,16 +51,16 @@ module Bookie
           SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
             if value.class == Float
               value = '%.2f' % value
+              value << " %" if label[0] == "%"
             end
-            value << " %" if label[0] == "%"
             io.puts "#{label}, #{value}"
           end
         when nil
           SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
             if value.class == Float
               value = '%.2f' % value
+              value << " %" if label[0] == "%"
             end
-            value << " %" if label[0] == "%"
             $stdout.printf("%-20.20s%s\n", "#{label}:", value)
           end
         else

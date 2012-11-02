@@ -159,13 +159,6 @@ module Bookie
         end
       end
       
-      #Yields each job, sorted by end time
-      #
-      #If log rotation is required, this should also be performed here. For now.
-      def each_job(date)
-        raise NotImplementedError.new("Must be defined by subclass")
-      end
-      
       #This must not be called when table locks are held.
       def system_type
         ActiveRecord::Base.connection.execute('LOCK TABLES system_types WRITE')

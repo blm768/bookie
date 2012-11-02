@@ -9,7 +9,8 @@ gem 'sqlite3'
 gem 'mysql2', '~> 0.3.11'
 
 #Internal gem; must be installed beforehand
-gem 'bookie'
+#To do: restore for production?
+#gem 'bookie'
 
 #Needed for JS support
 gem 'therubyracer'

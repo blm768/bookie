@@ -35,7 +35,6 @@ module Bookie
       has_many :jobs
       belongs_to :system_type
       
-      #To do: add memory?
       validates_presence_of :name, :cores, :system_type, :start_time
     end
     
@@ -64,9 +63,7 @@ module Bookie
           t.references :group, :null => false
         end
         change_table :users do |t|
-          t.index :name
-          #To do: remove? make part of unique key?
-          t.index :group_id
+          t.index [:name, :group_id], :unique => true
         end
       end
       
@@ -81,7 +78,7 @@ module Bookie
           t.string :name, :null => false
         end
         change_table :groups do |t|
-          t.index :name
+          t.index :name, :unique => true
         end
       end
       
@@ -100,14 +97,11 @@ module Bookie
           t.datetime :end_time
           #To do: determine correct type sizes.
           t.integer :cores, :null => false
-          #To do: make NOT NULL?
-          t.integer :memory
         end
         change_table :systems do |t|
-          t.index :name
-          t.index :system_type_id
-          t.index :cores
-          t.index :memory
+          t.index [:name, :system_type_id, :cores, :start_time], :unique => true, :name => 'identity'
+          #To do: include name here?
+          t.index [:end_time]
         end
       end
       
@@ -123,7 +117,7 @@ module Bookie
           t.integer :memory_stat_type, :limit => 1, :null => false
         end
         change_table :system_types do |t|
-          t.index :name
+          t.index :name, :unique => true
         end
       end
       
@@ -148,8 +142,7 @@ module Bookie
           t.integer :exit_code, :null => false
         end
         change_table :jobs do |t|
-          t.index :job_id
-          t.index :array_id
+          t.index [:job_id, :array_id]
           t.index :user_id
           t.index :system_id
           t.index :start_time

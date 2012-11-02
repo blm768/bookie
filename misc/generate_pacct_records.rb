@@ -3,8 +3,7 @@ require 'date'
 require 'pacct'
 
 filename = 'snapshot/pacct'
-FileUtils.rm(filename) if File.exists?(filename)
-f = Pacct::File.new(filename)
+f = Pacct::File.new(filename, "wb")
 
 count = 1000
 

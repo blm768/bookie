@@ -19,25 +19,29 @@
   <table id="details">
     <caption>Details</caption>
     <tr>
-      <th>Date</th>
-      <th>Machine</th>
       <th>User</th>
       <th>Group</th>
+      <th>System</th>
+      <th>System type</th>
       <th>Start time</th>
+      <th>End time</th>
       <th>Wall time</th>
       <th>CPU time</th>
       <th>Memory</th>
+      <th>Exit code</th>
     </tr>
     <% @jobs.each do |job| %>
       <tr>
-        <td><%= (job.date).to_date %></td>
-        <td><%= job.server.name %></td>
         <td><%= job.user.name %></td>
         <td><%= job.user.group.name %></td>
-        <td><%= job.start_time.strftime('%I:%M:%S %p') %></td>
+        <td><%= job.system.name %></td>
+        <td><%= job.system.system_type.name %></td>
+        <td><%= job.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        <td><%= job.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
         <td><%= job.wall_time %> sec</td>
         <td><%= job.cpu_time %> sec</td>
         <td><%= job.memory %>kb</td>
+        <td><%= job.exit_code %></td>
       </tr>
     <% end %>
   </table>
@@ -49,10 +53,11 @@
     <%= label_tag(:filter_type, "Filter by:") %>
     <%= select_tag(:filter_type, options({
         :none => "",
-        :date => "Date",
-        :server => "Server",
         :user => "User",
-        :group => "Group"},
+        :group => "Group",
+        :start_time => "Start time",
+        :end_time => "End time",
+        :system => "System"},
         @last_filter).html_safe) %>
     </select>
     <span id="filter_extras">

@@ -281,10 +281,10 @@ static VALUE write_entry(VALUE self, VALUE entry) {
   Data_Get_Struct(entry, struct acct_v3, acct);
   
   pos = ftell(file->file);
-  fseek(file->file, 0, SEEK_END);
+  assert(!fseek(file->file, 0, SEEK_END));
   
   //To do: error checking! (also on reads, etc.)
-  fwrite(acct, sizeof(struct acct_v3), 1, file->file);
+  assert(fwrite(acct, sizeof(struct acct_v3), 1, file->file) == 1);
   
   ++(file->numEntries);
   
