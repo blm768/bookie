@@ -16,7 +16,7 @@ $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 #For development
 ENV['TORQUEROOT'] = 'snapshot'
 
-require 'bookie-client'
+require 'bookie-client/sender'
 
 #for development
 #config = Bookie::Config.new('/etc/bookie/config.json')

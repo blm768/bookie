@@ -5,7 +5,7 @@ require 'optparse'
 #For development
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
-require 'bookie-client'
+require 'bookie-client/client'
 
 #For development
 config = Bookie::Config.new('../snapshot/config.json')
@@ -22,35 +22,35 @@ save_method = nil
 
 #Process arguments
 opts = OptionParser.new do |opts|
-  opts.banner = "To do: usage instructions"
+  opts.banner = "Usage: bookie-data [options]"
   
-  opts.on('-d', '--details') do
+  opts.on('-d', '--details', "include full details") do
     include_details = true
   end
   
-  opts.on('-u', '--user NAME') do |name|
+  opts.on('-u', '--user NAME', "filter by username") do |name|
     jobs = Bookie::Filter::by_user(jobs, name)
   end
   
-  opts.on('-g', '--group NAME') do |name|
+  opts.on('-g', '--group NAME' "filter by group") do |name|
     jobs = Bookie::Filter::by_group(jobs, name)
   end
   
-  opts.on('-system', '--system HOSTNAME') do |hostname|
+  opts.on('-system', '--system HOSTNAME', "filter by system") do |hostname|
     jobs = Bookie::Filter::by_system(jobs, hostname)
   end
   
-  opts.on('-t', '--type TYPE') do |type|
+  opts.on('-t', '--type TYPE', "filter by system type") do |type|
     jobs = Bookie::Filter::by_system_type(jobs, type)
   end
   
-  opts.on('-s', '--start-time BEGIN END') do |t_begin, t_end|
+  opts.on('-s', '--start-time BEGIN END', "filter by start time") do |t_begin, t_end|
     t_begin = Time.parse(t_begin)
     t_end = Time.parse(t_end)
     jobs = Bookie::Filter::by_start_time(jobs, t_begin, t_end)
   end
   
-  opts.on('-o', '--output-file FILENAME') do |output_filename|
+  opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME") do |output_filename|
     filename = output_filename
     case filename
     when /\.xls$/
@@ -64,7 +64,13 @@ opts = OptionParser.new do |opts|
     end
   end
 end
-opts.parse!(ARGV)
+begin
+  opts.parse(ARGV)
+rescue OptionParser::ParseError => e
+  puts e.message
+  puts opts
+  exit 1
+end
 
 #jobs = Bookie::Filter::apply_filters(jobs, filters)
 

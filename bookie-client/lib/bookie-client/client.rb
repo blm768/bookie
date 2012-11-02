@@ -69,6 +69,7 @@ module Bookie
       end
       
       def print_jobs(jobs, io)
+        
         case io
         when Spreadsheet::Workbook
           s = io.worksheet("Details") || io.create_worksheet(:name => "Details")
@@ -82,55 +83,73 @@ module Bookie
           end
           
           index = start + 1
-          jobs.find_each do |job|
-            system = job.system
-            #To do: optimize accesses to fields that would spin off a query?
-            system_type = system.system_type
-            s.row(index).concat(job_fields(job, system, system_type))
+          fields_for_each_job(jobs) do |fields|
+            s.row(index).concat(fields)
             index += 1
           end
         when File
           io.puts DETAILS_FIELD_LABELS.join(', ')
-          jobs.find_each do |job|
-            system = job.system
-            system_type = system.system_type
-            io.puts job_fields(job, system, system_type).join(', ')
+          fields_for_each_job(jobs) do |fields|
+            io.puts fields.join(', ')
           end
         when nil
           heading = sprintf FORMAT_STRING, *DETAILS_FIELD_LABELS
           $stdout.write heading
           $stdout.puts '-' * (heading.length - 1)
-          jobs.find_each do |job|
-            system = job.system
-            #To do: optimize accesses to fields that would spin off a query?
-            system_type = system.system_type
-            $stdout.printf FORMAT_STRING, *job_fields(job, system, system_type)
+          fields_for_each_job(jobs) do |fields|
+            $stdout.printf FORMAT_STRING, *fields
           end
         end
       end
       
-      def job_fields(job, system, system_type)
-        #To do: optimize?
-        memory_stat_type = system_type.memory_stat_type
-        if memory_stat_type == :unknown
-          memory_stat_type = nil
-        else
-          memory_stat_type = "(#{memory_stat_type})"
+      def fields_for_each_job(jobs)
+        users = {}
+        groups = {}
+        systems = {}
+        system_types = {}
+        jobs.find_each do |job|
+          system = systems[job.system_id]
+          unless system
+            system = job.system
+            systems[system.id] = system
+          end
+          system_type = system_types[system.system_type_id]
+          unless system_type
+            system_type = system.system_type
+            system_types[system_type.id] = system_type
+          end
+          user = users[job.user_id]
+          unless user
+            user = job.user
+            users[user.id] = user
+          end
+          group = groups[user.group_id]
+          unless group
+            group = user.group
+            groups[group.id] = group
+          end
+          #To do: optimize?
+          memory_stat_type = system_type.memory_stat_type
+          if memory_stat_type == :unknown
+            memory_stat_type = nil
+          else
+            memory_stat_type = "(#{memory_stat_type})"
+          end
+          yield [
+            user.name,
+            group.name,
+            system.name,
+            system_type.name,
+            job.start_time,
+            job.end_time,
+            Client.format_duration(job.end_time - job.start_time),
+            Client.format_duration(job.cpu_time),
+            "#{job.memory}kb #{memory_stat_type}",
+            job.exit_code
+          ]
         end
-        [
-          job.user.name,
-          job.user.group.name,
-          system.name,
-          system_type.name,
-          job.start_time,
-          job.end_time,
-          Client.format_duration(job.end_time - job.start_time),
-          Client.format_duration(job.cpu_time),
-          "#{job.memory}kb #{memory_stat_type}",
-          job.exit_code
-        ]
       end
-      protected :job_fields
+      protected :fields_for_each_job
       
       #To do: settle on a character and remove the gsub.
       FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-20.20s|%-26.25s|%-26.25s|%-12.10s|%-12.10s|%-20.20s|%-11.11s|\n".gsub(/\|/, " ")
