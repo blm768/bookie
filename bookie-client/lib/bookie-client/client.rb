@@ -99,6 +99,46 @@ module Bookie
           fields_for_each_job(jobs) do |fields|
             $stdout.printf FORMAT_STRING, *fields
           end
+        else
+          raise ArgumentError.new("Unrecognized output object type #{io.class}")
+        end
+      end
+      
+      def print_non_response_warnings(io)
+        systems = Bookie::Database::System.where('end_time IS NULL')
+        case io
+        when Spreadsheet::Workbook
+          s = io.worksheet("Warnings") || io.create_worksheet(:name => "Warnings")
+            
+          start = s.last_row_index
+          start += 2 if start > 0
+          
+          index = start + 1
+          each_non_response_warning(systems) do |system_name, warning|
+            s.row(index).concat([system_name, warning])
+            ++index
+          end
+        when File
+          each_non_response_warning(systems) do |system_name, warning|
+            io.puts "#{system_name} #{warning}"
+          end
+        when nil
+          each_non_response_warning(systems) do |system_name, warning|
+            $stdout.puts "Warning: #{warning} for #{system_name}"
+          end
+        else
+          raise ArgumentError.new("Unrecognized output object type #{io.class}")
+        end
+      end
+      
+      def each_non_response_warning(systems)
+        systems.find_each do |system|
+          job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
+          if job == nil
+            yield system.name, "No jobs on record"
+          elsif Time.now - job.end_time > 3 * 3600 * 24
+            yield system.name, "No jobs on record since #{job.end_time.to_date}"
+          end
         end
       end
       

@@ -72,10 +72,9 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-#jobs = Bookie::Filter::apply_filters(jobs, filters)
-
 #To do: ensure that the query isn't performed twice.
 client.print_summary(jobs, output_file)
+client.print_non_response_warnings(output_file)
 client.print_jobs(jobs, output_file) if include_details
 
 if output_file
