@@ -5,46 +5,60 @@
     <caption>Summary</caption>
     <tr>
       <th>Number of jobs</th>
-      <td><%= @jobs.length %></td>
+      <td><%= @summary[:jobs] %></td>
     </tr>
     <tr>
       <th>Total wall time</th>
-      <td><%= total_wall_time %> seconds</td>
+      <td><%= @summary[:wall_time] %> seconds</td>
     </tr>
     <tr>
       <th>Total CPU time</th>
-      <td><%= total_cpu_time %> seconds</td>
+      <td><%= @summary[:cpu_time] %> seconds</td>
     </tr>
-  </table>
-  <table id="details">
-    <caption>Details</caption>
     <tr>
-      <th>User</th>
-      <th>Group</th>
-      <th>System</th>
-      <th>System type</th>
-      <th>Start time</th>
-      <th>End time</th>
-      <th>Wall time</th>
-      <th>CPU time</th>
-      <th>Memory</th>
-      <th>Exit code</th>
+      <th>% Successful</th>
+      <td><%= "%.2f%%" % (@summary[:success] * 100) %></td>
     </tr>
-    <% @jobs.each do |job| %>
-      <tr>
-        <td><%= job.user.name %></td>
-        <td><%= job.user.group.name %></td>
-        <td><%= job.system.name %></td>
-        <td><%= job.system.system_type.name %></td>
-        <td><%= job.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
-        <td><%= job.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
-        <td><%= job.wall_time %> sec</td>
-        <td><%= job.cpu_time %> sec</td>
-        <td><%= job.memory %>kb</td>
-        <td><%= job.exit_code %></td>
-      </tr>
-    <% end %>
+    <tr>
+      <th>Available CPU time</th>
+      <td><%= @summary[:total_cpu_time] %></td>
+    </tr>
+    <tr>
+      <th>% CPU time used</th>
+      <td><%= "%.2f%%" % (@summary[:used_cpu_time] * 100) %></td>
+    </tr>
   </table>
+  <% if false %>
+    <table id="details">
+      <caption>Details</caption>
+      <tr>
+        <th>User</th>
+        <th>Group</th>
+        <th>System</th>
+        <th>System type</th>
+        <th>Start time</th>
+        <th>End time</th>
+        <th>Wall time</th>
+        <th>CPU time</th>
+        <th>Memory</th>
+        <th>Exit code</th>
+      </tr>
+      <% @jobs.each do |job| %>
+        <tr>
+          <td><%= job.user.name %></td>
+          <td><%= job.user.group.name %></td>
+          <td><%= job.system.name %></td>
+          <td><%= job.system.system_type.name %></td>
+          <td><%= job.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td><%= job.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td><%= job.wall_time %> sec</td>
+          <td><%= job.cpu_time %> sec</td>
+          <td><%= job.memory %>kb</td>
+          <td><%= job.exit_code %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
 </div>
 
 <div id="controls">

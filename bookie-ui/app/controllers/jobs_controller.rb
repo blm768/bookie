@@ -9,7 +9,8 @@ end
 
 class JobsController < ApplicationController
   def index
-    @jobs = Bookie::Database::Job#.select(:include => [:user, :system])
+    #To do: optimize as local variable?
+    @jobs = Bookie::Database::Job
     val = params[:filter_value]
     val = val.strip if val
     case params[:filter_type]
@@ -27,29 +28,25 @@ class JobsController < ApplicationController
       @jobs = Bookie::Filter::by_group(@jobs, val)
       @last_filter = :group
       @last_filter_value = val
+    when 'system'
+      @jobs = Bookie::Filter::by_system(@jobs, val)
+      @last_filter = :system
+      @last_filter_value = val
     end
     
     case params[:sort]
     when 'date'
-      @jobs.order(:date)
+      @jobs = @jobs.order(:end_time)
       @last_sort = :date
     when 'wall_time'
-      @jobs.order(:wall_time)
+      @jobs = @jobs.order(:wall_time)
       @last_sort = :wall_time
     end
     
-    @jobs = @jobs.all
+    @jobs = @jobs
     
-    wall_time = 0
-    cpu_time = 0
-    @jobs.each do |job|
-      wall_time += job.wall_time
-      cpu_time += job.cpu_time
-    end
-    render :template => 'jobs/index',
-      :locals => {
-        :total_wall_time => wall_time,
-        :total_cpu_time => cpu_time
-      }
+    @summary = Bookie::Summary::summary(@jobs)
+    
+    render :template => 'jobs/index'
   end
 end

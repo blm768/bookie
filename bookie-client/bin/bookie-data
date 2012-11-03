@@ -73,6 +73,7 @@ rescue OptionParser::ParseError => e
 end
 
 #To do: ensure that the query isn't performed twice.
+#To do: give summary info about start/end time constraints.
 client.print_summary(jobs, output_file)
 client.print_non_response_warnings(output_file)
 client.print_jobs(jobs, output_file) if include_details

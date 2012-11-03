@@ -62,7 +62,8 @@ module Bookie
           system = Bookie::Database::System.new
           system.name = hostname
           system.system_type = system_type
-          system.start_time = Time.new
+          system.start_time = Time.now.utc
+          puts system.start_time.utc_offset
           system.cores = @cores
           system.save!
         end
@@ -86,6 +87,7 @@ module Bookie
           next unless filter_job(job)
           db_job = to_database_job(job)
           #Should we move on to the next day?
+          #To do: how does this cooperate with time zone changes? DST?
           if !next_datetime || db_job.end_time >= next_datetime
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
@@ -199,7 +201,7 @@ module Bookie
           db_job.array_id = job.array_id
         end
         db_job.start_time = job.start_time
-        db_job.end_time = job.start_time + job.wall_time
+        db_job.end_time = db_job.start_time + job.wall_time
         db_job.wall_time = job.wall_time
         db_job.cpu_time = job.cpu_time
         db_job.memory = job.memory
