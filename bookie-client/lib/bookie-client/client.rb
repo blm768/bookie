@@ -68,7 +68,7 @@ module Bookie
         end
       end
       
-      def print_jobs(jobs, io)
+      def print_jobs(jobs, io = nil)
         
         case io
         when Spreadsheet::Workbook
@@ -104,7 +104,7 @@ module Bookie
         end
       end
       
-      def print_non_response_warnings(io)
+      def print_non_response_warnings(io = nil)
         systems = Bookie::Database::System.where('end_time IS NULL')
         case io
         when Spreadsheet::Workbook

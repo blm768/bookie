@@ -59,13 +59,11 @@ module Bookie
             raise "System specifications do not match those in the database"
           end
           #If there's no conflict, create the system in the database.
-          system = Bookie::Database::System.new
-          system.name = hostname
-          system.system_type = system_type
-          system.start_time = Time.now.utc
-          puts system.start_time.utc_offset
-          system.cores = @cores
-          system.save!
+          system = Bookie::Database::System.create!(
+            :name => hostname,
+            :system_type => system_type,
+            :start_time => Time.now.utc,
+            :cores => @cores)
         end
         
         #The next day to be processed
@@ -105,6 +103,33 @@ module Bookie
               end
             end
           end
+          #Determine if the user/group pair must be added to/retrieved from the database.
+          user = existing_users[[job.user_name, job.group_name]]
+          unless user
+            #Does the group exist?
+            #To do: optimize!
+            group = nil
+            Bookie::Database::Group.transaction do
+              group = Bookie::Database::Group.find_by_name(job.group_name)
+              unless group
+                #To do: note that this is another reason for the current duck-typing system.
+                group = Bookie::Database::Group.create!(:name => job.group_name)
+              end
+            end
+            #Does the user already exist?
+            #To do: optimize!
+            Bookie::Database::User.transaction do
+              user = Bookie::Database::User.find_by_name_and_group_id(job.user_name, group.id)
+              unless user
+                user = Bookie::Database::User.create!(
+                  :name => job.user_name,
+                  :group => group)
+              end
+              existing_users[[job.user_name, job.group_name]] = user
+            end
+          end
+          db_job.system = system
+          db_job.user = user
           #Is this job a duplicate of one in the database?
           if potential_duplicate_job && Bookie::Database::Job.joins(:system).where(
               'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
@@ -119,35 +144,6 @@ module Bookie
             #Skip the duplicate.
             next
           end
-          #Determine if the user/group pair must be added to/retrieved from the database.
-          user = existing_users[[job.user_name, job.group_name]]
-          unless user
-            #Does the group exist?
-            #To do: optimize!
-            group = nil
-            Bookie::Database::Group.transaction do
-              group = Bookie::Database::Group.where(:name => job.group_name).first
-              unless group
-                group = Bookie::Database::Group.new
-                group.name = job.group_name
-                group.save!
-              end
-            end
-            #Does the user already exist?
-            #To do: optimize!
-            Bookie::Database::User.transaction do
-              user = Bookie::Database::User.where(:name => job.user_name, :group_id => group.id).first
-              unless user
-                user = Bookie::Database::User.new
-                user.name = job.user_name
-                user.group = group
-                user.save!
-              end
-              existing_users[[job.user_name, job.group_name]] = user
-            end
-          end
-          db_job.system = system
-          db_job.user = user
           db_job.save!
         end
         
