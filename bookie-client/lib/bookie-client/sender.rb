@@ -26,7 +26,6 @@ module Bookie
           require "bookie-client/senders/#{filename}"
           sender_class = Bookie::Sender.const_get(filename.camelize)
         end
-        return sender_class
       end
       
       #Sends job data for a given day to the database server
