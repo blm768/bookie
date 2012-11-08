@@ -56,12 +56,38 @@ module Bookie
     class Group < ActiveRecord::Base
       has_many :users
       
+      def self.find_or_create(name, known_groups = nil)
+        group = known_groups[name] if known_groups
+        unless group
+          group = Bookie::Database::Group.find_by_name(name)
+          group ||= Bookie::Database::Group.create!(:name => name)
+          known_groups[name] = group if known_groups
+        end
+        group
+      end
+      
       validates_presence_of :name
     end
     
     #ActiveRecord structure for a user
     class User < ActiveRecord::Base
       belongs_to :group
+      
+      def self.find_or_create(name, group_name, known_users = nil, known_groups = nil)
+        #Determine if the user/group pair must be added to/retrieved from the database.
+        user = known_users[[name, group_name]] if known_users
+        unless user
+          #Does the group exist?
+          group = Group.find_or_create(group_name, known_groups)
+          #Does the user already exist?
+          user = Bookie::Database::User.find_by_name_and_group_id(name, group.id)
+          user ||= Bookie::Database::User.create!(
+            :name => name,
+            :group => group)
+          known_users[[name, group_name]] = user
+        end
+        user
+      end
       
       validates_presence_of :group, :name
     end

@@ -34,7 +34,7 @@ module Bookie
       #* If the filename parameter is a Date object, the file for that date is processed.
       #* If the filename parameter is the symbol :flush, all records that would normally be left for the next day are sent.
       def send_data(filename = nil)
-        if filename.class == Date
+        if filename.respond_to?(:strftime)
           filename = filename_for_date(filename)
         end
         hostname = @config.hostname
@@ -65,8 +65,8 @@ module Bookie
         potential_duplicate_job = nil
         found_duplicate_jobs = 0
         
-        existing_users = {}
-        existing_groups = {}
+        known_users = {}
+        known_groups = {}
         
         each_job = nil
         if filename == :flush
@@ -99,27 +99,11 @@ module Bookie
             end
           end
           #Determine if the user/group pair must be added to/retrieved from the database.
-          user = existing_users[[job.user_name, job.group_name]]
-          unless user
-            #Does the group exist?
-            group = existing_groups[job.group_name]
-            unless group
-              Bookie::Database::Group.transaction do
-                group = Bookie::Database::Group.find_by_name(job.group_name)
-                #To do: note that this is another reason for the current duck-typing system.
-                group ||= Bookie::Database::Group.create!(:name => job.group_name)
-              end
-              existing_groups[job.group_name] = group
-            end
-            #Does the user already exist?
-            Bookie::Database::User.transaction do
-              user = Bookie::Database::User.find_by_name_and_group_id(job.user_name, group.id)
-              user ||= Bookie::Database::User.create!(
-                :name => job.user_name,
-                :group => group)
-              existing_users[[job.user_name, job.group_name]] = user
-            end
-          end
+          user = Bookie::Database::User.find_or_create(
+            job.user_name,
+            job.group_name,
+            known_users,
+            known_groups)
           db_job.system = system
           db_job.user = user
           #Is this job a duplicate of one in the database?
