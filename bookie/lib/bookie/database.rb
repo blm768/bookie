@@ -10,6 +10,44 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
+=begin
+      def self.find_by_user_name(user_name)
+        joins(:user).where('users.name = ?', user_name)
+      end
+      
+      def self.find_by_system_name(system_name)
+        joins(:system).where('systems.name = ?', system_name)
+      end
+      
+      def self.find_by_group_name(group_name)
+        group = Group.find_by_name(group_name).first
+        return find_by_group_id(group.id) if group
+        limit(0)
+      end
+      
+      def self.find_by_system_type
+        joins(:system).where('system_type_id = ?', system_type.id)
+      end
+      
+      def self.find_by_start_time_range(start_min, start_max)
+        where('? <= start_time AND start_time < ?', start_min, start_max)
+      end
+      
+      def self.find_by_end_time_range(end_min, end_max)
+        where('? <= end_time AND end_time < ?', end_min, end_max)
+      end
+=end
+      
+      #To do: rename to likely_duplicates?
+      def duplicates
+        Job.joins(:system).where(
+              'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
+              system.name,
+              id,
+              array_id,
+              start_time)
+      end
+      
       validates_presence_of :job_id, :array_id, :user, :system, :cpu_time,
         :start_time, :end_time, :wall_time, :memory, :exit_code
     end
@@ -34,6 +72,14 @@ module Bookie
     class System < ActiveRecord::Base
       has_many :jobs
       belongs_to :system_type
+      
+      def self.find_by_specs(name, system_type, cores)
+         find_by_name_and_system_type_id_and_cores(name, system_type.id, cores)
+      end
+      
+      def self.conflicting_systems(name)
+        where('name = ? AND end_time IS NULL', name)
+      end
       
       validates_presence_of :name, :cores, :system_type, :start_time
     end

@@ -7,7 +7,7 @@ require 'system_stats'
 
 module Bookie
   module Sender
-    #Abstract class defining the interface for a data sender
+    #An object that sends data to the server
     class Sender
       #==Parameters
       #* config: an instance of Bookie::Config
@@ -30,10 +30,9 @@ module Bookie
       
       #Sends job data for a given day to the database server
       #
-      #If the filename parameter is nil, records relevant to the current day are processed.
-      #If the filename parameter is a Date object, the file for that date is processed.
-      #If the filename parameter is the symbol :flush, all records that would normally
-      #be left for the next day are sent.
+      #* If the filename parameter is nil, records relevant to the current day are processed.
+      #* If the filename parameter is a Date object, the file for that date is processed.
+      #* If the filename parameter is the symbol :flush, all records that would normally be left for the next day are sent.
       def send_data(filename = nil)
         if filename.class == Date
           filename = filename_for_date(filename)
@@ -43,14 +42,10 @@ module Bookie
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
         #To do: discuss the above.
-        system = Bookie::Database::System.where(
-          'name = ? AND system_type_id = ? AND cores = ? AND end_time IS NULL',
-          hostname, system_type.id, @cores).first
+        system = Bookie::Database::System.find_by_specs(hostname, system_type, @cores)
         unless system
           #Verify that all previous systems with this name have been decommissioned.
-          conflicting_system = Bookie::Database::System.where(
-            'name = ? AND end_time IS NULL',
-            hostname).first
+          conflicting_system = Bookie::Database::System.conflicting_systems(hostname).first
           if conflicting_system
             $stderr.puts "The specifications on record for '#{hostname}' do not match this system's specifications."
             $stderr.puts "Please make sure that all previous systems with this hostname have been marked as decommissioned."
@@ -71,6 +66,7 @@ module Bookie
         found_duplicate_jobs = 0
         
         existing_users = {}
+        existing_groups = {}
         
         each_job = nil
         if filename == :flush
@@ -82,7 +78,7 @@ module Bookie
         
         each_job(filename) do |job|
           next unless filter_job(job)
-          db_job = to_database_job(job)
+          db_job = to_model(job)
           #Should we move on to the next day?
           #To do: how does this cooperate with time zone changes? DST?
           if !next_datetime || db_job.end_time >= next_datetime
@@ -106,38 +102,29 @@ module Bookie
           user = existing_users[[job.user_name, job.group_name]]
           unless user
             #Does the group exist?
-            #To do: optimize!
-            group = nil
-            Bookie::Database::Group.transaction do
-              group = Bookie::Database::Group.find_by_name(job.group_name)
-              unless group
+            group = existing_groups[job.group_name]
+            unless group
+              Bookie::Database::Group.transaction do
+                group = Bookie::Database::Group.find_by_name(job.group_name)
                 #To do: note that this is another reason for the current duck-typing system.
-                group = Bookie::Database::Group.create!(:name => job.group_name)
+                group ||= Bookie::Database::Group.create!(:name => job.group_name)
               end
+              existing_groups[job.group_name] = group
             end
             #Does the user already exist?
-            #To do: optimize!
             Bookie::Database::User.transaction do
               user = Bookie::Database::User.find_by_name_and_group_id(job.user_name, group.id)
-              unless user
-                user = Bookie::Database::User.create!(
-                  :name => job.user_name,
-                  :group => group)
-              end
+              user ||= Bookie::Database::User.create!(
+                :name => job.user_name,
+                :group => group)
               existing_users[[job.user_name, job.group_name]] = user
             end
           end
           db_job.system = system
           db_job.user = user
           #Is this job a duplicate of one in the database?
-          if potential_duplicate_job && Bookie::Database::Job.joins(:system).where(
-              'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
-              hostname,
-              db_job.job_id,
-              db_job.array_id,
-              db_job.start_time).first
-          then
-            #This appears to be a duplicate.
+          if potential_duplicate_job && db_job.duplicates.first
+            #This is almost certainly a duplicate.
             #To do: perform a more exhaustive check here?
             found_duplicate_jobs += 1
             #Skip the duplicate.
@@ -157,17 +144,19 @@ module Bookie
       end
       
       #This must not be called when table locks are held.
+      #
+      #To do: check for name collision issues?
       def system_type
         ActiveRecord::Base.connection.execute('LOCK TABLES system_types WRITE')
         type_name = self.system_type_name
         st = Bookie::Database::SystemType.find_by_name(type_name)
         unless st
-          st = Bookie::Database::SystemType.new
-          st.name = type_name
-          st.memory_stat_type = self.memory_stat_type
-          st.save!
+          st = Bookie::Database::SystemType.create(
+            :name => type_name,
+            :memory_stat_type => self.memory_stat_type
+          )
         end
-        return st
+        st
       ensure
         ActiveRecord::Base.connection.execute('UNLOCK TABLES')
       end
@@ -186,7 +175,7 @@ module Bookie
       #This currently only converts fields that can be handled without a database lookup.
       #It should probably be made to include those. On the other hand, how do I efficiently
       #handle the system field? A parameter?
-      def to_database_job(job)
+      def to_model(job)
         db_job = Bookie::Database::Job.new
         if job.respond_to? :process_id
           db_job.job_id = job.process_id

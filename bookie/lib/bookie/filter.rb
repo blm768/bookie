@@ -8,7 +8,7 @@ module Bookie
       end
       
       def by_group(jobs, group_name)
-        group = Bookie::Database::Group.where('name = ?', group_name).first
+        group = Bookie::Database::Group.find_by_name(group_name)
         if group
           return jobs.joins(:user).where('group_id = ?', group.id)
         else
@@ -20,8 +20,10 @@ module Bookie
         return jobs.joins(:system).where('systems.name = ?', system_name)
       end
       
-      def by_system_type(jobs, system_type)
-        return jobs.joins(:system).where('system_type = ?', Bookie::Database::SYSTEM_TYPE[system_type.intern])
+      def by_system_type(system_type_name)
+        system_type = Bookie::Database::SystemType.find_by_name(system_type_name).first
+        return joins(:system).where('system_type_id = ?', system_type.id) if system_type
+        limit(0)
       end
       
       def by_start_time(jobs, start_min, start_max)

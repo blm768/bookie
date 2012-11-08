@@ -19,6 +19,7 @@
          <void property="text"> 
           <string>initialize(config)
 send_data(date)
+update_system
 filter_job(job)
 to_model(job)
 decommission(host_name, end_time)
@@ -98,9 +99,9 @@ filename_for_date</string>
      <object id="PackageNode1" class="com.horstmann.violet.PackageNode"> 
       <void method="addChild"> 
        <object id="ClassNode4" class="com.horstmann.violet.ClassNode"> 
-        <void property="methods"> 
+        <void property="attributes"> 
          <void property="text"> 
-          <string>has_duplicate?</string> 
+          <string>duplicates</string> 
          </void> 
         </void> 
         <void property="name"> 
@@ -287,8 +288,8 @@ $format_duration(dur)</string>
    <object idref="ClassNode8"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>957.0</double> 
-     <double>790.0</double> 
+     <double>1064.0</double> 
+     <double>792.0</double> 
     </void> 
    </object> 
   </void> 
@@ -483,6 +484,15 @@ close</string>
     <void method="setLocation"> 
      <double>115.0</double> 
      <double>951.0</double> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="addNode"> 
+   <object class="com.horstmann.violet.DiagramLinkNode"/> 
+   <object class="java.awt.geom.Point2D$Double"> 
+    <void method="setLocation"> 
+     <double>1913.0</double> 
+     <double>855.0</double> 
     </void> 
    </object> 
   </void> 

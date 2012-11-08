@@ -18,6 +18,7 @@ module Bookie
             yield job
           end
         else
+          #No; we're reading directly from the system process accounting file.
           begin
             file = Pacct::File.new(base_filename)
             start = 0
