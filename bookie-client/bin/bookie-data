@@ -29,25 +29,25 @@ opts = OptionParser.new do |opts|
   end
   
   opts.on('-u', '--user NAME', "filter by username") do |name|
-    jobs = Bookie::Filter::by_user(jobs, name)
+    jobs = jobs.by_user_name(name)
   end
   
   opts.on('-g', '--group NAME' "filter by group") do |name|
-    jobs = Bookie::Filter::by_group(jobs, name)
+    jobs = jobs.by_group_name(name)
   end
   
-  opts.on('-system', '--system HOSTNAME', "filter by system") do |hostname|
-    jobs = Bookie::Filter::by_system(jobs, hostname)
+  opts.on('-s', '--system HOSTNAME', "filter by system") do |hostname|
+    jobs = jobs.by_system_name(hostname)
   end
   
   opts.on('-t', '--type TYPE', "filter by system type") do |type|
-    jobs = Bookie::Filter::by_system_type(jobs, type)
+    jobs = jobs.by_system_type(type)
   end
   
-  opts.on('-s', '--start-time BEGIN END', "filter by start time") do |t_begin, t_end|
+  opts.on('-b', '--start-time BEGIN END', "filter by start time") do |t_begin, t_end|
     t_begin = Time.parse(t_begin)
     t_end = Time.parse(t_end)
-    jobs = Bookie::Filter::by_start_time(jobs, t_begin, t_end)
+    jobs = jobs.by_start_time_range(t_begin, t_end)
   end
   
   opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME") do |output_filename|
@@ -65,7 +65,7 @@ opts = OptionParser.new do |opts|
   end
 end
 begin
-  opts.parse(ARGV)
+  opts.parse!(ARGV)
 rescue OptionParser::ParseError => e
   puts e.message
   puts opts

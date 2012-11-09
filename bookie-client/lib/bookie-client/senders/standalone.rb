@@ -4,7 +4,7 @@ require 'pacct'
 module Bookie
   module Sender
     #Represents a client that returns data from a standalone Linux system
-    class Standalone < Sender
+    module Standalone
       #Yields each job in the log
       def each_job(filename = nil)
         #To do: modify for production.
@@ -37,6 +37,9 @@ module Bookie
                 rotation_start_date = job_end_time.to_date
                 rotation_end_time = rotation_start_date.next_day.to_time
                 rotation_filename = log_base_filename + rotation_start_date.strftime(".%Y.%m.%d")
+                #Close the old rotation file.
+                rotation_file.close if rotation_file
+                #Open the new rotation file.
                 mode = if File.exists?(rotation_filename) then 'r+b' else 'w+b' end
                 rotation_file = Pacct::File.new(rotation_filename, mode)
                 #Did this file already contain data?
@@ -49,7 +52,9 @@ module Bookie
                   end
                 end
               end
+              #Yield the job to the block.
               yield job
+              #Rotate the entry out.
               rotation_file.write_entry(job)
             end
           rescue => e

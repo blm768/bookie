@@ -10,33 +10,31 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
-=begin
-      def self.find_by_user_name(user_name)
+      scope :by_user_name, lambda { |user_name|
         joins(:user).where('users.name = ?', user_name)
-      end
-      
-      def self.find_by_system_name(system_name)
+      }
+
+      scope :by_system_name, lambda { |system_name|
         joins(:system).where('systems.name = ?', system_name)
-      end
+      }
       
-      def self.find_by_group_name(group_name)
+      scope :by_group_name, lambda { |group_name|
         group = Group.find_by_name(group_name).first
-        return find_by_group_id(group.id) if group
+        return joins(:user).where('group_id = ?', group.id) if group
         limit(0)
-      end
+      }
       
-      def self.find_by_system_type
+      scope :by_system_type, lambda { |system_type|
         joins(:system).where('system_type_id = ?', system_type.id)
-      end
+      }
       
-      def self.find_by_start_time_range(start_min, start_max)
+      scope :by_start_time_range, lambda { |start_min, start_max|
         where('? <= start_time AND start_time < ?', start_min, start_max)
-      end
+      }
       
-      def self.find_by_end_time_range(end_min, end_max)
+      scope :by_end_time_range, lambda { |end_min, end_max|
         where('? <= end_time AND end_time < ?', end_min, end_max)
-      end
-=end
+      }
       
       #To do: rename to likely_duplicates?
       def duplicates

@@ -15,17 +15,10 @@ module Bookie
         @config = config
         #To do: move to local variable in method?
         @cores = SystemStats::LocalStats.new.num_cores
-      end
-      
-      @@senders = {}
-      
-      def self.by_name(name)
-        sender_class = @@senders[name]
-        unless sender_class
-          filename = name.gsub(/\s+/, "_").downcase
-          require "bookie-client/senders/#{filename}"
-          sender_class = Bookie::Sender.const_get(filename.camelize)
-        end
+        t = @config.system_type
+        require "bookie-client/senders/#{t}"
+        extend Bookie::Sender.const_get(t.camelize)
+        #To do: ensure that all required methods were mixed in?
       end
       
       #Sends job data for a given day to the database server

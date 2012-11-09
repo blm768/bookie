@@ -2,7 +2,7 @@ require 'torque_stats'
 
 module Bookie
   module Sender
-    class TorqueCluster < Sender
+    module TorqueCluster
       #Yields each job in the log
       def each_job(filename = nil)
         filename ||= filename_for_date(Date.yesterday)
