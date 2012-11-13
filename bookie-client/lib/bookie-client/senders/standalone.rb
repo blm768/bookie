@@ -7,7 +7,7 @@ module Bookie
     module Standalone
       #Yields each job in the log
       def each_job(filename = nil)
-        file = Pacct::File.new(filename)
+        file = Pacct::Log.new(filename)
         file.each_entry do |job|
           yield job
         end

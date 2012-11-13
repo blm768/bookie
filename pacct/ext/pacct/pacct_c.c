@@ -22,7 +22,7 @@ static char const* validFileModes[] = {
 //Verify that allocations succeed?
 
 VALUE mPacct;
-VALUE cFile;
+VALUE cLog;
 VALUE cEntry;
 
 //Ruby's Time class
@@ -77,13 +77,13 @@ VALUE rescue(VALUE args, VALUE exception) {
 typedef struct {
   FILE* file;
   long numEntries;
-} PacctFile;
+} PacctLog;
 
-static VALUE pacct_file_free(void* p) {
-  PacctFile* file = (PacctFile*) p;
-  if(file->file) {
-    fclose(file->file);
-    file->file = NULL;
+static VALUE pacct_log_free(void* p) {
+  PacctLog* log = (PacctLog*) p;
+  if(log->file) {
+    fclose(log->file);
+    log->file = NULL;
   }
   free(p);
   return Qnil;
@@ -93,28 +93,28 @@ static VALUE pacct_file_free(void* p) {
  *call-seq:
  *  new(filename)
  *
- *Creates a new Pacct::File using the given accounting file
+ *Creates a new Pacct::Log using the given accounting file
  */
-static VALUE pacct_file_new(int argc, VALUE* argv, VALUE class) {
-  VALUE file;
+static VALUE pacct_log_new(int argc, VALUE* argv, VALUE class) {
+  VALUE log;
   VALUE init_args[2];
-  PacctFile* ptr;// = ALLOC(PacctFile);
+  PacctLog* ptr;
   
   init_args[1] = Qnil;
   rb_scan_args(argc, argv, "11", init_args, init_args + 1);
   
-  file = Data_Make_Struct(class, PacctFile, 0, pacct_file_free, ptr);
+  log = Data_Make_Struct(class, PacctLog, 0, pacct_log_free, ptr);
   
   ptr->file = NULL;
   ptr->numEntries = 0;
   
-  rb_obj_call_init(file, 2, init_args);
-  return file;
+  rb_obj_call_init(log, 2, init_args);
+  return log;
 }
 
 //To do: make mode actually do something?
-static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
-  PacctFile* file;
+static VALUE pacct_log_init(VALUE self, VALUE filename, VALUE mode) {
+  PacctLog* log;
   FILE* acct;
   long length;
   char* cFilename = StringValueCStr(filename);
@@ -145,9 +145,9 @@ static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
     rb_raise(rb_eIOError, buf);
   }
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   
-  file->file = acct;
+  log->file = acct;
   
   fseek(acct, 0, SEEK_END);
   length = ftell(acct);
@@ -157,27 +157,27 @@ static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
     rb_raise(rb_eIOError, "Accounting file appears to be the wrong size.");
   }
   
-  file->numEntries = length / sizeof(struct acct_v3);
+  log->numEntries = length / sizeof(struct acct_v3);
   
   return self;
 }
 
-static VALUE pacct_file_close(VALUE self) {
-  PacctFile* file;
+static VALUE pacct_log_close(VALUE self) {
+  PacctLog* log;
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   
-  if(file->file) {
-    fclose(file->file);
-    file->file = NULL;
+  if(log->file) {
+    fclose(log->file);
+    log->file = NULL;
   }
 }
 
-static VALUE pacct_entry_new(PacctFile* file) {
+static VALUE pacct_entry_new(PacctLog* log) {
   VALUE entry;
   struct acct_v3* ptr = ALLOC(struct acct_v3);
-  if(file) {
-    size_t entriesRead = fread(ptr, sizeof(struct acct_v3), 1, file->file);
+  if(log) {
+    size_t entriesRead = fread(ptr, sizeof(struct acct_v3), 1, log->file);
     if(entriesRead != 1) {
       rb_raise(rb_eIOError, "Unable to read record from accounting file");
     }
@@ -202,7 +202,7 @@ static VALUE ruby_pacct_entry_new(VALUE self) {
  *If start is given, iteration starts at the entry with that index.
  */
 static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
-  PacctFile* file;
+  PacctLog* log;
   VALUE start_value;
   long start = 0;
   int i = 0;
@@ -212,18 +212,18 @@ static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
     start = NUM2INT(start_value);
   }
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   
-  if(start > file->numEntries) {
+  if(start > log->numEntries) {
     char buf[100];
     snprintf(buf, 100, "Index %li is out of range", start);
     rb_raise(rb_eRangeError, buf);
   }
   
-  fseek(file->file, start * sizeof(struct acct_v3), SEEK_SET);
+  fseek(log->file, start * sizeof(struct acct_v3), SEEK_SET);
   
-  for(i = start; i < file->numEntries; ++i) {
-    VALUE entry = pacct_entry_new(file);
+  for(i = start; i < log->numEntries; ++i) {
+    VALUE entry = pacct_entry_new(log);
     rb_yield_values(2, entry, INT2NUM(i));
   }
 
@@ -234,23 +234,23 @@ static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
  *Returns the last entry in the file
  */
 static VALUE last_entry(VALUE self) {
-  PacctFile* file;
+  PacctLog* log;
   long pos;
   VALUE entry;
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   
-  if(file->numEntries == 0) {
+  if(log->numEntries == 0) {
     rb_raise(rb_eRangeError, "No last entry in file");
   }
   
   //To do: error checking on file operations?
-  pos = ftell(file->file);
-  fseek(file->file, -sizeof(struct acct_v3), SEEK_END);
+  pos = ftell(log->file);
+  fseek(log->file, -sizeof(struct acct_v3), SEEK_END);
   
-  entry = pacct_entry_new(file);
+  entry = pacct_entry_new(log);
   
-  fseek(file->file, pos, SEEK_SET);
+  fseek(log->file, pos, SEEK_SET);
   
   return entry;
 }
@@ -259,11 +259,11 @@ static VALUE last_entry(VALUE self) {
  *Returns the number of entries in the file
  */
 static VALUE get_num_entries(VALUE self) {
-  PacctFile* file;
+  PacctLog* log;
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   
-  return INT2NUM(file->numEntries);
+  return INT2NUM(log->numEntries);
 }
 
 /*
@@ -275,22 +275,22 @@ static VALUE get_num_entries(VALUE self) {
 static VALUE write_entry(VALUE self, VALUE entry) {
   //To do: verification?
   //To do: unit testing
-  PacctFile* file;
+  PacctLog* log;
   long pos;
   struct acct_v3* acct;
   
-  Data_Get_Struct(self, PacctFile, file);
+  Data_Get_Struct(self, PacctLog, log);
   Data_Get_Struct(entry, struct acct_v3, acct);
   
-  pos = ftell(file->file);
-  assert(!fseek(file->file, 0, SEEK_END));
+  pos = ftell(log->file);
+  assert(!fseek(log->file, 0, SEEK_END));
   
   //To do: error checking! (also on reads, etc.)
-  assert(fwrite(acct, sizeof(struct acct_v3), 1, file->file) == 1);
+  assert(fwrite(acct, sizeof(struct acct_v3), 1, log->file) == 1);
   
-  ++(file->numEntries);
+  ++(log->numEntries);
   
-  fseek(file->file, pos, SEEK_SET);
+  fseek(log->file, pos, SEEK_SET);
   
   return Qnil;
 }
@@ -610,20 +610,20 @@ void Init_pacct_c() {
   /*
    *Represents an accounting file in acct(5) format
    */
-  cFile = rb_define_class_under(mPacct, "File", rb_cObject);
+  cLog = rb_define_class_under(mPacct, "Log", rb_cObject);
   /*
    *Document-class: Pacct::Entry
    *
    *Represents an entry in a Pacct::File
    */
   cEntry = rb_define_class_under(mPacct, "Entry", rb_cObject);
-  rb_define_singleton_method(cFile, "new", pacct_file_new, -1);
-  rb_define_method(cFile, "initialize", pacct_file_init, 2);
-  rb_define_method(cFile, "each_entry", each_entry, -1);
-  rb_define_method(cFile, "last_entry", last_entry, 0);
-  rb_define_method(cFile, "num_entries", get_num_entries, 0);
-  rb_define_method(cFile, "write_entry", write_entry, 1);
-  rb_define_method(cFile, "close", pacct_file_close, 0);
+  rb_define_singleton_method(cLog, "new", pacct_log_new, -1);
+  rb_define_method(cLog, "initialize", pacct_log_init, 2);
+  rb_define_method(cLog, "each_entry", each_entry, -1);
+  rb_define_method(cLog, "last_entry", last_entry, 0);
+  rb_define_method(cLog, "num_entries", get_num_entries, 0);
+  rb_define_method(cLog, "write_entry", write_entry, 1);
+  rb_define_method(cLog, "close", pacct_log_close, 0);
   
   rb_define_singleton_method(cEntry, "new", ruby_pacct_entry_new, 0);
   rb_define_method(cEntry, "process_id", get_process_id, 0);
