@@ -93,6 +93,17 @@ module Bookie
       verify_type(@maximum_idle, 'Maximum idle time', Integer)
     end
     
+    #If called, this should be called before passing the object to anything else.
+    def parse_options(opts)
+      opts.on('-h', '--hostname HOSTNAME', 'Set hostname under which to record jobs') do |hostname|
+        @hostname = hostname
+      end
+      
+      opts.on('-t', '--log-type TYPE', 'Specify log type') do |log_type|
+        @system_type = log_type
+      end
+    end
+    
     #Verifies that a field is of the correct type, raising an error if the type does not match
     def verify_type(value, name, type)
       raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class <= type

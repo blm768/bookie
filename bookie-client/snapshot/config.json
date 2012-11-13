@@ -5,7 +5,5 @@
   "Username"      : "root",
   "Password"      : "test",
   "Hostname"      : "localhost",
-  "Log directory" : "snapshot",
-  "System type"   : "Standalone",
-  "Bookmark file" : "snapshot/bookmarks.json"
+  "System type"   : "standalone",
 }

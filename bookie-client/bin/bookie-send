@@ -27,11 +27,9 @@ config.excluded_users = Set.new([])
 
 config.connect
 
-sender = Bookie::Sender::Sender.new(config)
-
 #Process arguments.
 filename = ARGV[0]
-fail("No filename specified") unless filename && !(/$-{1,2}/.match(filename))
+fail("No filename specified") unless filename && filename[0] != ?-
 will_decommission = false
 system_hostname = config.hostname
 system_end_time = Time.new
@@ -48,10 +46,11 @@ opts = OptionParser.new do |opts|
     system_end_time = Time.parse(time) if time
   end
   
-  #To do: force option for pacct conflicts? Just let the user remove the offending file?
+  config.parse_options(opts)
 end
-
 opts.parse!(ARGV)
+
+sender = Bookie::Sender::Sender.new(config)
 
 sender.send_data(filename)
 sender.decommission(system_hostname, system_end_time) if will_decommission

@@ -7,6 +7,7 @@ module Bookie
       def each_job(filename)
         record = TorqueStats::JobRecord.new(filename)
         record.each_job do |job|
+          puts job.inspect
           yield job
         end
       end
