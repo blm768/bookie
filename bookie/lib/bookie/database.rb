@@ -10,31 +10,71 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
-      scope :by_user_name, lambda { |user_name|
+      def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
-      }
+      end
 
-      scope :by_system_name, lambda { |system_name|
+      def self.by_system_name(system_name)
         joins(:system).where('systems.name = ?', system_name)
-      }
+      end
       
-      scope :by_group_name, lambda { |group_name|
+      def self.by_group_name(group_name)
         group = Group.find_by_name(group_name).first
         return joins(:user).where('group_id = ?', group.id) if group
         limit(0)
-      }
+      end
       
-      scope :by_system_type, lambda { |system_type|
+      def self.by_system_type(system_type)
         joins(:system).where('system_type_id = ?', system_type.id)
-      }
+      end
       
-      scope :by_start_time_range, lambda { |start_min, start_max|
+      def self.by_start_time_range(start_min, start_max)
         where('? <= start_time AND start_time < ?', start_min, start_max)
-      }
+      end
       
-      scope :by_end_time_range, lambda { |end_min, end_max|
+      def self.by_end_time_range(end_min, end_max)
         where('? <= end_time AND end_time < ?', end_min, end_max)
-      }
+      end
+      
+      def self.each_with_relations
+        transaction do
+          users = {}
+          groups = {}
+          systems = {}
+          system_types = {}
+          find_each do |job|
+            system = systems[job.system_id]
+            if system
+              job.system = system
+            else
+              system = job.system
+              systems[system.id] = system
+            end
+            system_type = system_types[system.system_type_id]
+            if system_type
+              system.system_type = system_type
+            else
+              system_type = system.system_type
+              system_types[system_type.id] = system_type
+            end
+            user = users[job.user_id]
+            if user
+              job.user = user
+            else
+              user = job.user
+              users[user.id] = user
+            end
+            group = groups[user.group_id]
+            if group
+              job.group = group
+            else
+              group = user.group
+              groups[group.id] = group
+            end
+            yield job
+          end
+        end
+      end
       
       #To do: rename to likely_duplicates?
       def duplicates

@@ -10,14 +10,17 @@ require 'bookie-client/client'
 #For development
 config = Bookie::Config.new('../snapshot/config.json')
 config.connect
-client = Bookie::Client::Client.new(config)
 
 jobs = Bookie::Database::Job
 
 include_details = false
 
+output_type = :stdout
+#Filename (needs to be stored for Spreadsheet)
 filename = nil
-output_file = nil
+output_file = STDOUT
+#The method to be called on output_file to save it
+#Usually nil
 save_method = nil
 
 #Process arguments
@@ -55,9 +58,11 @@ opts = OptionParser.new do |opts|
     filename = output_filename
     case filename
     when /\.xls$/
+      output_type = :spreadsheet
       output_file = Spreadsheet::Workbook.new
       save_method = :write
     when /\.csv$/
+      output_type = :comma_dump
       output_file = File.open(filename, "w")
     else
       $stderr.puts "Unrecognized output file extension"
@@ -72,6 +77,8 @@ rescue OptionParser::ParseError => e
   puts opts
   exit 1
 end
+
+client = Bookie::Client::Client.new(config, output_type)
 
 #To do: ensure that the query isn't performed twice.
 #To do: give summary info about start/end time constraints.

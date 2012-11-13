@@ -7,8 +7,11 @@ module Bookie
   module Client
     #Represents a client that can pull data from the server and display tables
     class Client
-      def initialize(config)
+      def initialize(config, formatter)
         @config = config
+        formatter_filename = "bookie-client/formatters/#{formatter}"
+        require formatter_filename
+        extend Bookie::Client.const_get(formatter.to_s.camelize)
       end
       
       SUMMARY_FIELD_LABELS = [
@@ -24,7 +27,7 @@ module Bookie
           'CPU time', 'Memory usage', 'Exit code'
         ]
       
-      def print_summary(jobs, io = nil)
+      def print_summary(jobs, io)
         summary = Bookie::Summary::summary(jobs)
         field_values = [
           summary[:jobs],
@@ -34,101 +37,16 @@ module Bookie
           Client.format_duration(summary[:total_cpu_time]),
           summary[:used_cpu_time] * 100,
         ]
-        case io
-        #To do: list filters on sheet?
-        when Spreadsheet::Workbook
-          s = io.worksheet("Summary") || io.create_worksheet(:name => "Summary")
-          
-          start = s.last_row_index
-          start += 2 if start > 0
-          s.column(0).width = 20
-          SUMMARY_FIELD_LABELS.each_index do |index|
-            row = s.row(start + index) 
-            row[0] = SUMMARY_FIELD_LABELS[index]
-            row[1] = field_values[index]
-          end
-        when File
-          SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
-            if value.class == Float
-              value = '%.2f' % value
-              value << " %" if label[0] == "%"
-            end
-            io.puts "#{label}, #{value}"
-          end
-        when nil
-          SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
-            if value.class == Float
-              value = '%.2f' % value
-              value << " %" if label[0] == "%"
-            end
-            $stdout.printf("%-20.20s%s\n", "#{label}:", value)
-          end
-        else
-          raise ArgumentError.new("Unrecognized output object type #{io.class}")
-        end
+        do_print_summary(field_values, io)
       end
       
-      def print_jobs(jobs, io = nil)
-        
-        case io
-        when Spreadsheet::Workbook
-          s = io.worksheet("Details") || io.create_worksheet(:name => "Details")
-            
-          start = s.last_row_index
-          start += 2 if start > 0
-          #s.column(0).width = 20
-          s.row(start).concat(DETAILS_FIELD_LABELS)
-          (0 .. (DETAILS_FIELD_LABELS.length - 1)).step do |i|
-            s.column(i).width = 20
-          end
-          
-          index = start + 1
-          fields_for_each_job(jobs) do |fields|
-            s.row(index).concat(fields)
-            index += 1
-          end
-        when File
-          io.puts DETAILS_FIELD_LABELS.join(', ')
-          fields_for_each_job(jobs) do |fields|
-            io.puts fields.join(', ')
-          end
-        when nil
-          heading = sprintf FORMAT_STRING, *DETAILS_FIELD_LABELS
-          $stdout.write heading
-          $stdout.puts '-' * (heading.length - 1)
-          fields_for_each_job(jobs) do |fields|
-            $stdout.printf FORMAT_STRING, *fields
-          end
-        else
-          raise ArgumentError.new("Unrecognized output object type #{io.class}")
-        end
+      def print_jobs(jobs, io)
+        do_print_jobs(jobs, io)
       end
       
-      def print_non_response_warnings(io = nil)
+      def print_non_response_warnings(io)
         systems = Bookie::Database::System.where('end_time IS NULL')
-        case io
-        when Spreadsheet::Workbook
-          s = io.worksheet("Warnings") || io.create_worksheet(:name => "Warnings")
-            
-          start = s.last_row_index
-          start += 2 if start > 0
-          
-          index = start + 1
-          each_non_response_warning(systems) do |system_name, warning|
-            s.row(index).concat([system_name, warning])
-            ++index
-          end
-        when File
-          each_non_response_warning(systems) do |system_name, warning|
-            io.puts "#{system_name} #{warning}"
-          end
-        when nil
-          each_non_response_warning(systems) do |system_name, warning|
-            $stdout.puts "Warning: #{warning} for #{system_name}"
-          end
-        else
-          raise ArgumentError.new("Unrecognized output object type #{io.class}")
-        end
+        do_print_non_response_warnings(systems, io)
       end
       
       def each_non_response_warning(systems)
@@ -143,43 +61,19 @@ module Bookie
       end
       
       def fields_for_each_job(jobs)
-        users = {}
-        groups = {}
-        systems = {}
-        system_types = {}
-        jobs.find_each do |job|
-          system = systems[job.system_id]
-          unless system
-            system = job.system
-            systems[system.id] = system
-          end
-          system_type = system_types[system.system_type_id]
-          unless system_type
-            system_type = system.system_type
-            system_types[system_type.id] = system_type
-          end
-          user = users[job.user_id]
-          unless user
-            user = job.user
-            users[user.id] = user
-          end
-          group = groups[user.group_id]
-          unless group
-            group = user.group
-            groups[group.id] = group
-          end
+        jobs.each_with_relations do |job|
           #To do: optimize?
-          memory_stat_type = system_type.memory_stat_type
+          memory_stat_type = job.system.system_type.memory_stat_type
           if memory_stat_type == :unknown
             memory_stat_type = nil
           else
             memory_stat_type = "(#{memory_stat_type})"
           end
           yield [
-            user.name,
-            group.name,
-            system.name,
-            system_type.name,
+            job.user.name,
+            job.user.group.name,
+            job.system.name,
+            job.system.system_type.name,
             job.start_time,
             job.end_time,
             Client.format_duration(job.end_time - job.start_time),
