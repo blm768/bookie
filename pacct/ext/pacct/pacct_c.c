@@ -105,6 +105,9 @@ static VALUE pacct_file_new(int argc, VALUE* argv, VALUE class) {
   
   file = Data_Make_Struct(class, PacctFile, 0, pacct_file_free, ptr);
   
+  ptr->file = NULL;
+  ptr->numEntries = 0;
+  
   rb_obj_call_init(file, 2, init_args);
   return file;
 }
@@ -151,7 +154,6 @@ static VALUE pacct_file_init(VALUE self, VALUE filename, VALUE mode) {
   rewind(acct);
   
   if(length % sizeof(struct acct_v3) != 0) {
-    fclose(file->file);
     rb_raise(rb_eIOError, "Accounting file appears to be the wrong size.");
   }
   
