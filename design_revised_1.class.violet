@@ -23,7 +23,7 @@ each_job
           <string>initialize(config)
 send_data(date)
 update_system
-filter_job(job)
+filtered?(job)
 to_model(job)
 decommission(host_name, end_time)
 filename_for_date
@@ -61,6 +61,16 @@ flush_jobs(date)
         <void property="attributes"> 
          <void property="text"> 
           <string>duplicates</string> 
+         </void> 
+        </void> 
+        <void property="methods"> 
+         <void property="text"> 
+          <string>$by_user_name(name)
+$by_group_name(name)
+$by_system_name(name)
+$by_system_type(type)
+$by_start_time_range(start_min, start_max)
+$by_end_time_range(end_min, end_max)</string> 
          </void> 
         </void> 
         <void property="name"> 
@@ -204,7 +214,7 @@ $format_duration(dur)</string>
    <object idref="PackageNode1"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>1120.0</double> 
+     <double>1060.0</double> 
      <double>550.0</double> 
     </void> 
    </object> 
@@ -222,8 +232,8 @@ $format_duration(dur)</string>
    <object idref="ClassNode3"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>1282.0</double> 
-     <double>589.0</double> 
+     <double>1449.0</double> 
+     <double>601.0</double> 
     </void> 
    </object> 
   </void> 
@@ -231,7 +241,7 @@ $format_duration(dur)</string>
    <object idref="ClassNode4"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>1594.0</double> 
+     <double>1737.0</double> 
      <double>595.0</double> 
     </void> 
    </object> 
@@ -240,8 +250,8 @@ $format_duration(dur)</string>
    <object idref="ClassNode5"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>1132.0</double> 
-     <double>717.0</double> 
+     <double>1070.0</double> 
+     <double>775.0</double> 
     </void> 
    </object> 
   </void> 
@@ -249,8 +259,8 @@ $format_duration(dur)</string>
    <object idref="ClassNode6"/> 
    <object class="java.awt.geom.Point2D$Double"> 
     <void method="setLocation"> 
-     <double>1638.0</double> 
-     <double>726.0</double> 
+     <double>1621.0</double> 
+     <double>771.0</double> 
     </void> 
    </object> 
   </void> 
@@ -614,6 +624,18 @@ close</string>
    </object> 
    <object idref="PackageNode6"/> 
    <object idref="PackageNode3"/> 
+  </void> 
+  <void method="connect"> 
+   <object class="com.horstmann.violet.ClassRelationshipEdge"> 
+    <void property="endArrowHead"> 
+     <object class="com.horstmann.violet.ArrowHead" field="V"/> 
+    </void> 
+    <void property="lineStyle"> 
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/> 
+    </void> 
+   </object> 
+   <object idref="ClassNode0"/> 
+   <object idref="PackageNode1"/> 
   </void> 
  </object> 
 </java> 

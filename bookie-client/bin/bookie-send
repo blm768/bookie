@@ -30,18 +30,11 @@ config.connect
 sender = Bookie::Sender::Sender.new(config)
 
 #Process arguments.
-filename = nil
+filename = ARGV[0]
+fail("No filename specified") unless filename && !(/$-{1,2}/.match(filename))
 will_decommission = false
 system_hostname = config.hostname
 system_end_time = Time.new
-
-if ARGV[0]
-  if /\d{4}-\d{2}-\d{2}/.match(ARGV[0])
-    filename = Date.parse(ARGV[0])
-  elsif ARGV[0][0] != '-'
-    filename = ARGV[0]
-  end
-end
 
 opts = OptionParser.new do |opts|
   opts.banner = "To do: usage instructions"

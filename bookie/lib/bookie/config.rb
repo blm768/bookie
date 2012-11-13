@@ -2,6 +2,7 @@ require 'bookie'
 
 require 'active_record'
 require 'json'
+require 'logger'
 require 'set'
 
 module Bookie
@@ -49,12 +50,6 @@ module Bookie
     attr_accessor :system_type
     #The system's hostname
     attr_accessor :hostname
-    #The directory in which to place old logs
-    attr_accessor :log_dir
-    #The name of the bookmarks file
-    attr_accessor :bookmark_filename
-    #A hash of bookmarks for each sender
-    attr_accessor :bookmarks
     #The number of days a system can fail to post job entries before a warning is made
     attr_accessor :maximum_idle
     
@@ -94,35 +89,8 @@ module Bookie
       raise "No hostname specified" unless @hostname
       verify_type(@hostname, 'Hostname', String)
       
-      @log_dir = data['Log directory']
-      verify_type(@log_dir, 'Log directory', String)
-      
-      @bookmark_filename = data['Bookmark file'] || "/etc/bookie/bookmarks.json"
-      verify_type(@bookmark_filename, 'Bookmark file', String)
-      if File.exists?(@bookmark_filename)
-        bookmark_file = File.open(bookmark_filename)
-        @bookmarks = JSON.parse(bookmark_file.read)
-      else
-        @bookmarks = {}
-      end
-      #To do: verify type of bookmark file root?
-      
       @maximum_idle = data['Maximum idle time'] || 3
       verify_type(@maximum_idle, 'Maximum idle time', Integer)
-      
-      ObjectSpace.define_finalizer(self, Config.finalize(@bookmarks, @bookmark_filename))
-    end
-    
-    def self.finalize(bookmarks, bookmark_filename)
-      bookmark_dir = File.dirname(bookmark_filename)
-      proc do
-        unless File.exists?(bookmark_dir)
-          FileUtils.mkdir_p(bookmark_dir)
-        end
-        File.open(bookmark_filename, "w") do |file|
-          JSON.dump(bookmarks, file)
-        end
-      end
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

@@ -21,15 +21,8 @@ module Bookie
         #To do: ensure that all required methods were mixed in?
       end
       
-      #Sends job data for a given day to the database server
-      #
-      #* If the filename parameter is nil, records relevant to the current day are processed.
-      #* If the filename parameter is a Date object, the file for that date is processed.
-      #* If the filename parameter is the symbol :flush, all records that would normally be left for the next day are sent.
-      def send_data(filename = nil)
-        if filename.respond_to?(:strftime)
-          filename = filename_for_date(filename)
-        end
+      #Sends job data from the given file to the database server
+      def send_data(filename)
         hostname = @config.hostname
         system_type = self.system_type
         #Make sure this machine is in the database.
@@ -61,25 +54,16 @@ module Bookie
         known_users = {}
         known_groups = {}
         
-        each_job = nil
-        if filename == :flush
-          each_job = method(:flush_jobs)
-          filename = nil
-        else
-          each_job = method(:each_job)
-        end
-        
         each_job(filename) do |job|
-          next unless filter_job(job)
-          db_job = to_model(job)
+          next if filtered?(job)
+          db_job = job.to_model
           #Should we move on to the next day?
           #To do: how does this cooperate with time zone changes? DST?
           if !next_datetime || db_job.end_time >= next_datetime
             current_date = db_job.end_time.to_date
             next_datetime = current_date.next_day.to_time
             #Determine if there could be duplicate jobs already in the database for this day.
-            potential_duplicate_job = Bookie::Filter::by_end_time(
-              Bookie::Database::Job,
+            potential_duplicate_job = Bookie::Database::Job.by_end_time_range(
               current_date.to_time,
               next_datetime).first 
             if potential_duplicate_job
@@ -100,6 +84,7 @@ module Bookie
           db_job.system = system
           db_job.user = user
           #Is this job a duplicate of one in the database?
+          #To do: remove.
           if potential_duplicate_job && db_job.duplicates.first
             #This is almost certainly a duplicate.
             #To do: perform a more exhaustive check here?
@@ -141,34 +126,8 @@ module Bookie
       #Filters a job to see if it should be included in the final output
       #
       #Returns either the given job or nil
-      def filter_job(job)
-        return nil if @config.excluded_users.include?job.user_name
-        return job
-      end
-      
-      #Converts the client's internal job type to a Bookie::Database::Job
-      #
-      #To do:
-      #This currently only converts fields that can be handled without a database lookup.
-      #It should probably be made to include those. On the other hand, how do I efficiently
-      #handle the system field? A parameter?
-      def to_model(job)
-        db_job = Bookie::Database::Job.new
-        if job.respond_to? :process_id
-          db_job.job_id = job.process_id
-          db_job.array_id = 0
-        else
-          db_job.job_id = job.job_id
-          db_job.array_id = job.array_id
-        end
-        db_job.start_time = job.start_time
-        db_job.end_time = db_job.start_time + job.wall_time
-        db_job.wall_time = job.wall_time
-        db_job.cpu_time = job.cpu_time
-        db_job.memory = job.memory
-        #To do: unit tests
-        db_job.exit_code = job.exit_code
-        return db_job
+      def filtered?(job)
+        @config.excluded_users.include?job.user_name
       end
       
       #Decommissions the specified system by setting its end time in the database
@@ -186,6 +145,28 @@ module Bookie
           $stderr.puts "No active system with hostname '#{hostname}' found"
           #To do: raise error here?
         end
+      end
+    end
+    
+    module ModelHelpers
+      #Converts the client's internal job type to a Bookie::Database::Job
+      #
+      #To do:
+      #This currently only converts fields that can be handled without a database lookup.
+      #It should probably be made to include those. On the other hand, how do I efficiently
+      #handle the system field? A parameter?
+      def to_model()
+        db_job = Bookie::Database::Job.new
+        db_job.job_id = self.job_id
+        db_job.array_id = self.array_id
+        db_job.start_time = self.start_time
+        db_job.end_time = self.start_time + self.wall_time
+        db_job.wall_time = self.wall_time
+        db_job.cpu_time = self.cpu_time
+        db_job.memory = self.memory
+        #To do: unit tests
+        db_job.exit_code = self.exit_code
+        return db_job
       end
     end
   end

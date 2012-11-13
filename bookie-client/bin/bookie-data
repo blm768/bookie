@@ -38,6 +38,7 @@ opts = OptionParser.new do |opts|
   
   opts.on('-s', '--system HOSTNAME', "filter by system") do |hostname|
     jobs = jobs.by_system_name(hostname)
+    # jobs = System.find_by_name(hostname).jobs
   end
   
   opts.on('-t', '--type TYPE', "filter by system type") do |type|
