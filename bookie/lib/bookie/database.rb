@@ -19,7 +19,7 @@ module Bookie
       end
       
       def self.by_group_name(group_name)
-        group = Group.find_by_name(group_name).first
+        group = Group.find_by_name(group_name)
         return joins(:user).where('group_id = ?', group.id) if group
         limit(0)
       end

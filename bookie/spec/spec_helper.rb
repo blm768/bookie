@@ -16,6 +16,7 @@ module Helpers
   extend self
 
   def generate_database
+    base_time = Time.new(2012, 2, 1)
     #Create test database
     FileUtils.rm('test.sqlite') if File.exists?('test.sqlite')
     ActiveRecord::Base.establish_connection(
@@ -36,13 +37,13 @@ module Helpers
     user_names = ['root', 'test', 'test', 'blm768']
     user_names.each_index do |i|
       name = user_names[i]
-      unless users[name] && users[name][group_names[i]]
+      unless users[[name, group_names[i]]]
         user = Bookie::Database::User.new
         user.name = name
         user.group = groups[group_names[i]]
         user.save!
         users[name] ||= {}
-        users[name][group_names[i]] = user
+        users[[name, group_names[i]]] = user
       end
     end
     system_types = [
@@ -60,21 +61,25 @@ module Helpers
         system = Bookie::Database::System.create!(
           :name => name,
           :system_type => system_types[i & 1],
-          :start_time => Time.new(2012, 3 * i, 1),
+          :start_time => Time.new(2012, 2 * i + 1, 1),
           :cores => 2,
           :memory => 1000000)
         systems[name] = system
       end
     end
-    for i in 0 ... user_names.length do
+    for i in 0 ... 100 do
       job = Bookie::Database::Job.new
-      job.user = users[user_names[i]][group_names[i]]
-      job.server = servers[server_names[i]]
-      job.start_time = @time + 3600 * i
+      job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
+      job.system = systems[system_names[i % system_names.length]]
+      #To do: remove.
+      job.job_id = 0
+      job.array_id = 0
+      job.start_time = base_time + 3600 * i
       job.end_time = job.start_time + 3600
       job.wall_time = 3600
       job.cpu_time = 100 * i
       job.memory = (i + 1) * 1024
+      job.exit_code = i & 1
       job.save!
     end
   end
