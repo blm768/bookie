@@ -13,6 +13,8 @@ RSpec.configure do |config|
 end
 
 module Helpers
+  extend self
+
   def generate_database
     #Create test database
     FileUtils.rm('test.sqlite') if File.exists?('test.sqlite')
@@ -43,6 +45,13 @@ module Helpers
         users[name][group_names[i]] = user
       end
     end
+    system_types = [
+      Bookie::Database::SystemType.create!(
+        :name => 'Standalone',
+        :memory_stat_type => :avg),
+      Bookie::Database::SystemType.create!(
+        :name => 'TORQUE cluster',
+        :memory_stat_type => :max)]
     systems = {}
     system_names = ['test1', 'test1', 'test2', 'test3']
     system_names.each_index do |i|
@@ -50,7 +59,8 @@ module Helpers
       unless systems.include?name
         system = Bookie::Database::System.create!(
           :name => name,
-          :system_type => i & 1,
+          :system_type => system_types[i & 1],
+          :start_time => Time.new(2012, 3 * i, 1),
           :cores => 2,
           :memory => 1000000)
         systems[name] = system
