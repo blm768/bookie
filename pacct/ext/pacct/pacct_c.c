@@ -46,6 +46,7 @@ long comp_t_to_long(comp_t c) {
 
 //Converts a long to a comp_t
 //To do: make sure the value is positive?
+//To do: overflow checks?
 comp_t long_to_comp_t(long l) {
   size_t bits = 0;
   unsigned long l2 = l;
@@ -64,14 +65,6 @@ comp_t long_to_comp_t(long l) {
     }
     return (l >> (bits + rem_bits) & 0x1fff) | ((div_bits & 0x7) << 13);
   }
-}
-
-//Called when an exception is thrown in the block passed to each_entry()
-//This doesn't really seem to be needed, but it seems safer to have it.
-VALUE rescue(VALUE args, VALUE exception) {
-  rb_exc_raise(exception);
-  
-  assert(0);
 }
 
 typedef struct {
@@ -189,6 +182,7 @@ static VALUE pacct_entry_new(PacctLog* log) {
   return entry;
 }
 
+//This is the version of pacct_entry_new that is actually exposed to Ruby.
 static VALUE ruby_pacct_entry_new(VALUE self) {
   return pacct_entry_new(NULL);
 }

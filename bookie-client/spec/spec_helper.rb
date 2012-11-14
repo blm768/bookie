@@ -3,6 +3,9 @@ if ENV['COVERAGE']
   SimpleCov.start
 end
 
+#For testing
+$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+
 require 'mocha_standalone'
 
 require 'bookie-client'

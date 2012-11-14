@@ -3,7 +3,7 @@ require 'date'
 require 'pacct'
 
 filename = 'snapshot/pacct'
-f = Pacct::File.new(filename, "wb")
+log = Pacct::Log.new(filename, "wb")
 
 count = 1000
 
@@ -29,5 +29,5 @@ for i in 1 .. count
   e.user_time = cpu_time
   e.memory = rand.rand(250) + 800
   e.exit_code = rand.rand(2).to_i
-  f.write_entry(e)
+  log.write_entry(e)
 end

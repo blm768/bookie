@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe Pacct::File do  
+describe Pacct::Log do
   it "correctly loads data" do
-    file = Pacct::File.new('snapshot/pacct')
+    log = Pacct::Log.new('snapshot/pacct')
     n = 0
-    file.each_entry do |entry|
+    log.each_entry do |entry|
       entry.user_id.should eql 0
       entry.user_name.should eql "root"
       entry.group_id.should eql 0
@@ -22,13 +22,17 @@ describe Pacct::File do
     n.should eql 1
   end
   
-  it "thows an error if the file is not found" do
-    expect { Pacct::File.new('snapshot/abc') }.to raise_error
+  it "raises an error if the file is not found" do
+    expect { Pacct::Log.new('snapshot/abc') }.to raise_error
   end
   
-  it "throws an error when encountering unknown user/group IDs" do
-    file = Pacct::File.new('snapshot/pacct_invalid_ids')
-    file.each_entry do |entry|
+  it "raises an error when the file is the wrong size" do
+    expect { Pacct::Log.new('snapshot/pacct_invalid_length') }.to raise_error
+  end
+  
+  it "raises an error when encountering unknown user/group IDs" do
+    log = Pacct::Log.new('snapshot/pacct_invalid_ids')
+    log.each_entry do |entry|
       #This assumes that these users and groups don't actually exist.
       #If, for some odd reason, they _do_ exist, this test will fail.
       expect { entry.user_name }.to(

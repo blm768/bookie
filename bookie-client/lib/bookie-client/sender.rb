@@ -46,35 +46,22 @@ module Bookie
             :cores => @cores)
         end
         
-        #The next day to be processed
-        next_datetime = nil
-        potential_duplicate_job = nil
-        found_duplicate_jobs = 0
-        
         known_users = {}
         known_groups = {}
+        
+        #Check the first job to see if there are entries in the database for its date from this system.
+        each_job(filename) do |job|
+          next if filtered?(job)
+          end_time = job.start_time + job.wall_time
+          duplicate = system.jobs.find_by_end_time(end_time)
+          if duplicate
+            raise "Jobs already exist in the database for the date #{end_time.strftime('%Y-%m-%d')}."
+          end
+        end
         
         each_job(filename) do |job|
           next if filtered?(job)
           db_job = job.to_model
-          #Should we move on to the next day?
-          #To do: how does this cooperate with time zone changes? DST?
-          if !next_datetime || db_job.end_time >= next_datetime
-            current_date = db_job.end_time.to_date
-            next_datetime = current_date.next_day.to_time
-            #Determine if there could be duplicate jobs already in the database for this day.
-            potential_duplicate_job = Bookie::Database::Job.by_end_time_range(
-              current_date.to_time,
-              next_datetime).first 
-            if potential_duplicate_job
-              if potential_duplicate_job.end_time >= job.start_time + job.wall_time
-                date_str = current_date.strftime("%Y-%m-%d")
-                $stderr.puts("Warning: jobs already exist in the database for the date #{date_str}.")
-              else
-                potential_duplicate_job = nil
-              end
-            end
-          end
           #Determine if the user/group pair must be added to/retrieved from the database.
           user = Bookie::Database::User.find_or_create(
             job.user_name,
@@ -83,25 +70,7 @@ module Bookie
             known_groups)
           db_job.system = system
           db_job.user = user
-          #Is this job a duplicate of one in the database?
-          #To do: remove.
-          if potential_duplicate_job && db_job.duplicates.first
-            #This is almost certainly a duplicate.
-            #To do: perform a more exhaustive check here?
-            found_duplicate_jobs += 1
-            #Skip the duplicate.
-            next
-          end
           db_job.save!
-        end
-        
-        if found_duplicate_jobs > 0
-          #To do: clearer message?
-          if found_duplicate_jobs == 1
-            $stderr.puts "Warning: 1 job entry was not sent because it appears to be a duplicate of an entry already in the database."
-          else
-            $stderr.puts "Warning: #{found_duplicate_jobs} job entries were not sent because they appear to be duplicates of entries already in the database."
-          end
         end
       end
       
