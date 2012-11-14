@@ -5,5 +5,8 @@
   "Database"      : "snapshot/bookie_test.sqlite",
   "Username"      : "blm768",
   "Password"      : "test",
-  "Excluded users": ["root"]
+  "Excluded users": ["root"],
+  "System type"   : "standalone",
+  "Hostname"      : "localhost",
+  "Maximum idle time" : 5
 }

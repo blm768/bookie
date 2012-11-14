@@ -1,3 +1,4 @@
 {
-  "Server": "localhost"
+  "Server"   : "localhost",
+  "Hostname" : "localhost"
 }

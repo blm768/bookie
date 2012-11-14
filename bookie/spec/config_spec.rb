@@ -9,10 +9,25 @@ describe Bookie::Config do
     config.db_type.should eql "sqlite3"
     config.server.should eql "localhost"
     config.port.should eql 8080
-    config.database.should eql "bookie_test"
+    config.database.should eql "snapshot/bookie_test.sqlite"
     config.username.should eql "blm768"
     config.password.should eql "test"
     config.excluded_users.should eql Set.new(["root"])
+    config.hostname.should eql "localhost"
+    config.maximum_idle.should eql 5
+    config.system_type.should eql 'standalone'
+  end
+  
+  it "correctly parses command-line arguments" do
+    config = Bookie::Config.new('snapshot/test_config.json')
+    opts = OptionParser.new
+    config.parse_options(opts)
+    opts.parse!(%w{-h github.com -c 256 -m 100 -t none})
+    
+    config.hostname.should eql 'github.com'
+    config.cores.should eql 256
+    config.memory.should eql 100
+    config.system_type.should eql 'none'
   end
   
   it "correctly verifies types" do
@@ -36,9 +51,12 @@ describe Bookie::Config do
     expect { Bookie::Config.new('snapshot/empty.json') }.to raise_error("No database server specified")
   end
   
+  it 'requires the system type to be set' do
+    expect { Bookie::Config.new('snapshot/default.json').system_type }.to raise_error("No system type specified")
+  end
+  
   it "attempts to connect to the database" do
     config = Bookie::Config.new('snapshot/test_config.json')
-    ActiveRecord::Base.stubs(:logger=).returns(nil).at_least_once
     ActiveRecord::Base.stubs(:establish_connection).returns(nil).at_least_once
     config.connect
   end

@@ -9,8 +9,7 @@ module Bookie
     class Client
       def initialize(config, formatter)
         @config = config
-        formatter_filename = "bookie-client/formatters/#{formatter}"
-        require formatter_filename
+        require "bookie-client/formatters/#{formatter}"
         extend Bookie::Client.const_get(formatter.to_s.camelize)
       end
       

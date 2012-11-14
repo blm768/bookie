@@ -47,13 +47,27 @@ module Bookie
     attr_accessor :password
     #A set containing the names of users to be excluded
     attr_accessor :excluded_users
-    #The system type
-    attr_accessor :system_type
     #The system's hostname
     attr_accessor :hostname
     #The number of days a system can fail to post job entries before a warning is made
     attr_accessor :maximum_idle
     
+    #The system type
+    def system_type
+      raise "No system type specified" unless @system_type
+      @system_type
+    end
+    
+    #The number of cores on the system
+    def cores
+      @cores ||= @stats.num_cores
+    end
+    
+    #The RAM (in KB) in the system
+    def memory
+      @memory ||= @stats.memory[:total]
+    end
+       
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
     def initialize(filename)
@@ -85,8 +99,7 @@ module Bookie
       
       #To do: unit tests
       @system_type = data['System type']
-      raise "No system type specified" unless @system_type
-      verify_type(@system_type, 'System type', String)
+      verify_type(@system_type, 'System type', String) unless @system_type == nil
       
       @hostname = data['Hostname']
       raise "No hostname specified" unless @hostname
@@ -100,6 +113,14 @@ module Bookie
     def parse_options(opts)
       opts.on('-h', '--hostname HOSTNAME', 'Set hostname under which to record jobs') do |hostname|
         @hostname = hostname
+      end
+      
+      opts.on('-c', '--cores CORES', Integer, 'Specify number of cores in the system') do |cores|
+        @cores = cores
+      end
+      
+      opts.on('-m', '--memory KB', Integer, "Specify system's RAM (in KB)") do |memory|
+        @memory = memory
       end
       
       opts.on('-t', '--log-type TYPE', 'Specify log type') do |log_type|

@@ -70,7 +70,7 @@ module SystemStats
     #* "Swap": the total amount of swap space
     #* "SwapCached": the amount of cached swap space
     #* "SwapFree": the amount of free swap space as a percentage of total swap space
-    def mem_stats()
+    def memory()
       memTotal = nil
       memFree = nil
       swapTotal = nil

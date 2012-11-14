@@ -137,15 +137,15 @@ module Bookie
       has_many :jobs
       belongs_to :system_type
       
-      def self.find_by_specs(name, system_type, cores)
-         find_by_name_and_system_type_id_and_cores(name, system_type.id, cores)
+      def self.find_by_specs(name, system_type, cores, memory)
+         find_by_name_and_system_type_id_and_cores_and_memory(name, system_type.id, cores, memory)
       end
       
       def self.conflicting_systems(name)
         where('name = ? AND end_time IS NULL', name)
       end
       
-      validates_presence_of :name, :cores, :system_type, :start_time
+      validates_presence_of :name, :cores, :memory, :system_type, :start_time
     end
     
     #ActiveRecord structure for a system type
@@ -207,6 +207,7 @@ module Bookie
           t.datetime :end_time
           #To do: determine correct type sizes.
           t.integer :cores, :null => false
+          t.integer :memory, :null => false
         end
         change_table :systems do |t|
           t.index [:name, :system_type_id, :cores, :start_time], :unique => true, :name => 'identity'

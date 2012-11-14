@@ -13,10 +13,6 @@ module Bookie
       #* config: an instance of Bookie::Config
       def initialize(config)
         @config = config
-        #To do: move to local variable in method?
-        stats = SystemStats::LocalStats.new
-        @cores = stats.num_cores
-        @memory = stats.memory[:total]
         t = @config.system_type
         require "bookie-client/senders/#{t}"
         extend Bookie::Sender.const_get(t.camelize)
@@ -30,7 +26,7 @@ module Bookie
         #Make sure this machine is in the database.
         #This code shouldn't need locks because no other system has the same hostname
         #To do: discuss the above.
-        system = Bookie::Database::System.find_by_specs(hostname, system_type, @cores)
+        system = Bookie::Database::System.find_by_specs(hostname, system_type, @config.cores, @config.memory)
         unless system
           #Verify that all previous systems with this name have been decommissioned.
           conflicting_system = Bookie::Database::System.conflicting_systems(hostname).first
@@ -45,7 +41,8 @@ module Bookie
             :name => hostname,
             :system_type => system_type,
             :start_time => Time.now.utc,
-            :cores => @cores)
+            :cores => @config.cores,
+            :memory => @config.memory)
         end
         
         known_users = {}
