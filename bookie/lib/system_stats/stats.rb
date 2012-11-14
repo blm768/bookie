@@ -113,12 +113,12 @@ module SystemStats
         end
       end
 
-      {'Total' => memTotal,
-        'Free' => memFree,
-        'SwapTotal' => swapTotal,
-        'SwapFree' => swapFree,
-        'Cached' => memCached,
-        'SwapCached' => swapCached}
+      { :total => memTotal,
+        :free => memFree,
+        :swap_total => swapTotal,
+        :swap_free => swapFree,
+        :cached => memCached,
+        :swap_cached => swapCached}
     end
 
     #Returns a hash containing all statistics.

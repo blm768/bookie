@@ -14,7 +14,9 @@ module Bookie
       def initialize(config)
         @config = config
         #To do: move to local variable in method?
-        @cores = SystemStats::LocalStats.new.num_cores
+        stats = SystemStats::LocalStats.new
+        @cores = stats.num_cores
+        @memory = stats.memory[:total]
         t = @config.system_type
         require "bookie-client/senders/#{t}"
         extend Bookie::Sender.const_get(t.camelize)

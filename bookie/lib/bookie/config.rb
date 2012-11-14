@@ -4,6 +4,7 @@ require 'active_record'
 require 'json'
 require 'logger'
 require 'set'
+require 'system_stats'
 
 module Bookie
   #Holds database configuration, etc. for Bookie components
@@ -59,6 +60,8 @@ module Bookie
       file = File.open(filename)
       data = JSON::parse(file.read)
       file.close
+      
+      @stats = SystemStats::LocalStats.new
       
       @db_type = data['Database type'] || 'mysql2'
       verify_type(@db_type, 'Database type', String)
