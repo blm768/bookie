@@ -67,13 +67,13 @@ module Helpers
         systems[name] = system
       end
     end
+    first_system = systems['test1']
+    first_system.end_time = Time.new(2012, 3, 1)
+    first_system.save!
     for i in 0 ... 100 do
       job = Bookie::Database::Job.new
       job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
       job.system = systems[system_names[i % system_names.length]]
-      #To do: remove.
-      job.job_id = 0
-      job.array_id = 0
       job.start_time = base_time + 3600 * i
       job.end_time = job.start_time + 3600
       job.wall_time = 3600

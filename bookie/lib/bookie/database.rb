@@ -36,6 +36,7 @@ module Bookie
         where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
+      #To do: define this in other classes as well?
       def self.each_with_relations
         transaction do
           users = {}
@@ -66,7 +67,7 @@ module Bookie
             end
             group = groups[user.group_id]
             if group
-              job.group = group
+              user.group = group
             else
               group = user.group
               groups[group.id] = group
@@ -76,17 +77,7 @@ module Bookie
         end
       end
       
-      #To do: rename to likely_duplicates?
-      def duplicates
-        Job.joins(:system).where(
-              'systems.name = ? AND job_id = ? AND array_id = ? AND jobs.start_time = ?',
-              system.name,
-              id,
-              array_id,
-              start_time)
-      end
-      
-      validates_presence_of :job_id, :array_id, :user, :system, :cpu_time,
+      validates_presence_of :user, :system, :cpu_time,
         :start_time, :end_time, :wall_time, :memory, :exit_code
     end
     
@@ -97,8 +88,10 @@ module Bookie
       def self.find_or_create(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
-          group = Bookie::Database::Group.find_by_name(name)
-          group ||= Bookie::Database::Group.create!(:name => name)
+          transaction do
+            group = Bookie::Database::Group.lock.find_by_name(name)
+            group ||= Bookie::Database::Group.create!(:name => name)
+          end
           known_groups[name] = group if known_groups
         end
         group
@@ -111,18 +104,18 @@ module Bookie
     class User < ActiveRecord::Base
       belongs_to :group
       
-      def self.find_or_create(name, group_name, known_users = nil, known_groups = nil)
+      def self.find_or_create(name, group, known_users = nil)
         #Determine if the user/group pair must be added to/retrieved from the database.
-        user = known_users[[name, group_name]] if known_users
+        user = known_users[[name, group]] if known_users
         unless user
-          #Does the group exist?
-          group = Group.find_or_create(group_name, known_groups)
-          #Does the user already exist?
-          user = Bookie::Database::User.find_by_name_and_group_id(name, group.id)
-          user ||= Bookie::Database::User.create!(
-            :name => name,
-            :group => group)
-          known_users[[name, group_name]] = user
+          transaction do
+            #Does the user already exist?
+            user = Bookie::Database::User.lock.find_by_name_and_group_id(name, group.id)
+            user ||= Bookie::Database::User.create!(
+              :name => name,
+              :group => group)
+          end
+          known_users[[name, group]] = user if known_users
         end
         user
       end
@@ -141,8 +134,12 @@ module Bookie
          find_by_name_and_system_type_id_and_cores_and_memory(name, system_type.id, cores, memory)
       end
       
-      def self.conflicting_systems(name)
-        where('name = ? AND end_time IS NULL', name)
+      def self.active_systems
+        where('end_time IS NULL')
+      end
+      
+      def self.by_name(name)
+        where('name = ?', name)
       end
       
       validates_presence_of :name, :cores, :memory, :system_type, :start_time
@@ -240,9 +237,6 @@ module Bookie
     class CreateJobs < ActiveRecord::Migration
       def up
         create_table :jobs do |t|
-          #To do: determine correct type sizes.
-          t.integer :job_id, :null => false
-          t.integer :array_id, :null => false
           t.references :user, :null => false
           t.references :system, :null => false
           t.datetime :start_time, :null => false
@@ -253,7 +247,6 @@ module Bookie
           t.integer :exit_code, :null => false
         end
         change_table :jobs do |t|
-          t.index [:job_id, :array_id]
           t.index :user_id
           t.index :system_id
           t.index :start_time
