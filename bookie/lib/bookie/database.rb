@@ -40,6 +40,7 @@ module Bookie
         where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
+      #Should probably not be used with by_(start/end)_time_range
       def self.summary(start_time = nil, end_time = nil)
         jobs = self
         if start_time
@@ -68,6 +69,7 @@ module Bookie
         #Find all the systems within the time range.
         systems = Bookie::Database::System
         if start_time
+          #To do: optimize as union of queries?
           systems = systems.where(
             'start_time < ? AND (end_time IS NULL OR end_time > ?)',
             end_time,

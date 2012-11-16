@@ -16,7 +16,7 @@ module Helpers
   extend self
 
   def generate_database
-    base_time = Time.new(2012, 2, 1)
+    base_time = Time.new(2012)
     #Create test database
     FileUtils.rm('test.sqlite') if File.exists?('test.sqlite')
     ActiveRecord::Base.establish_connection(
@@ -53,7 +53,7 @@ module Helpers
       Bookie::Database::SystemType.create!(
         :name => 'TORQUE cluster',
         :memory_stat_type => :max)]
-    systems = {}
+    systems = []
     system_names = ['test1', 'test1', 'test2', 'test3']
     system_names.each_index do |i|
       name = system_names[i]
@@ -61,21 +61,19 @@ module Helpers
         system = Bookie::Database::System.create!(
           :name => name,
           :system_type => system_types[i & 1],
-          :start_time => Time.new(2012, 2 * i + 1, 1),
+          :start_time => base_time + (36000 * i),
           :cores => 2,
           :memory => 1000000)
-        systems[name] = system
+        systems << system
       end
     end
-    first_system = systems['test1']
-    first_system.end_time = Time.new(2012, 3, 1)
-    first_system.save!
-    for i in 0 ... 100 do
+    systems[1].end_time = base_time + 36000
+    systems[1].save!
+    for i in 0 ... 40 do
       job = Bookie::Database::Job.new
       job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
-      job.system = systems[system_names[i % system_names.length]]
+      job.system = systems[i / 10]
       job.start_time = base_time + 3600 * i
-      #job.end_time = job.start_time + 3600
       job.wall_time = 3600
       job.cpu_time = 100
       job.memory = (i + 1) * 1024

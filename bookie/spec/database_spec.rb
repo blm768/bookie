@@ -6,7 +6,7 @@ describe Bookie::Database do
   end
   
   after(:all) do
-    Bookie::Database::drop_tables
+    #Bookie::Database::drop_tables
   end
   
   describe Bookie::Database::Job do
@@ -24,11 +24,11 @@ describe Bookie::Database do
     
     it "correctly filters by user" do
       jobs = @jobs.by_user_name('root').all
-      jobs.length.should eql 25
+      jobs.length.should eql 10
       jobs[0].memory.should eql 1024
       jobs[0].user.name.should eql "root"
       jobs = @jobs.by_user_name('test').order(:end_time).all
-      jobs.length.should eql 50
+      jobs.length.should eql 20
       jobs.each do |job|
         job.user.name.should eql 'test'
       end
@@ -39,13 +39,12 @@ describe Bookie::Database do
   
     it "correctly filters by group" do
       jobs = @jobs.by_group_name("root").all
-      jobs.length.should eql 25
-      jobs[0].user.group.name.should eql "root"
-      jobs = @jobs.by_group_name("admin").order(:start_time).all
-      jobs.length.should eql 50
+      jobs.length.should eql 10
       jobs.each do |job|
-        job.user.group.name.should eql "admin"
+        job.user.group.name.should eql "root"
       end
+      jobs = @jobs.by_group_name("admin").order(:start_time).all
+      jobs.length.should eql 20
       jobs[0].user.name.should_not eql jobs[1].user.name
       jobs = @jobs.by_group_name("test").all
       jobs.length.should eql 0
@@ -53,14 +52,20 @@ describe Bookie::Database do
     
     it "correctly filters by system" do
       jobs = @jobs.by_system_name('test1')
-      jobs.length.should eql 50
+      jobs.length.should eql 20
+      jobs = @jobs.by_system_name('test2')
+      jobs.length.should eql 10
       jobs = @jobs.by_system_name('test3')
-      jobs.length.should eql 25
+      jobs.length.should eql 10
+      jobs = @jobs.by_system_name('test4')
+      jobs.length.should eql 0
     end
     
+    #To do: expand.
     it "correctly filters by system type" do
       sys_type = Bookie::Database::SystemType.find_by_name('Standalone')
       jobs = @jobs.by_system_type(sys_type)
+      jobs.length.should eql 20
     end
     
     it "correctly filters by start time" do
@@ -109,12 +114,17 @@ describe Bookie::Database do
     
     describe :summary do
       before(:all) do
+        @base_time = Time.new(2012)
         @jobs = Bookie::Database::Job
         @summary = @jobs.summary
         @length = @jobs.all.length
-        start_time_1 = Time.new(2012, 1, 1)
-        end_time_1   = Time.new(2012, 12, 31)
+        start_time_1 = @base_time
+        end_time_1   = @base_time + 3600 * 40
+        puts end_time_1
         @summary_1 = @jobs.summary(start_time_1, end_time_1)
+        start_time_2 = @base_time + 1800
+        end_time_2 = @base_time + (36000 * 2 + 18000)
+        @summary_clipped = @jobs.summary(start_time_2, end_time_2)
       end
       
       it "produces correct totals for jobs" do
@@ -126,7 +136,12 @@ describe Bookie::Database do
         @summary_1[:wall_time].should eql @length * 3600
         @summary_1[:cpu_time].should eql @length * 100
         @summary_1[:successful].should eql 0.5
+        clipped_jobs = @summary_clipped[:jobs]
+        clipped_jobs.should eql 25
+        @summary_clipped[:wall_time].should eql 25 * 3600 - 1800
       end
+      
+      it "produces correct totals for systems"
       
       it "correctly handles summaries that contain no jobs"
     end
@@ -188,19 +203,25 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::System do
+    #To do: expand.
     it "correctly finds by specifications" do
       sys_type = Bookie::Database::SystemType.find_by_name('Standalone')
       Bookie::Database::System.find_by_specs('test1', sys_type, 2, 1000000).name.should eql 'test1'
-      sys_type = Bookie::Database::SystemType.find_by_name('TORQUE cluster')
-      Bookie::Database::System.find_by_specs('test1', sys_type, 2, 1000000).should eql nil
+      Bookie::Database::System.find_by_specs('test1', sys_type, 1, 1000000).should eql nil
     end
     
     it "correctly finds active systems" do
-      Bookie::Database::System.active_systems.length.should eql 2
+      Bookie::Database::System.active_systems.length.should eql 3
     end
     
     it "correctly filters by name" do
-      Bookie::Database::System.by_name('test1').length.should eql 1
+      Bookie::Database::System.by_name('test1').length.should eql 2
+      Bookie::Database::System.by_name('test2').length.should eql 1
+      Bookie::Database::System.by_name('test3').length.should eql 1
     end
+  end
+  
+  describe Bookie::Database::SystemType do
+    it "correctly maps type codes to/from symbols"
   end
 end
