@@ -37,13 +37,24 @@ module Bookie
       end
       
       def self.summary(start_time = nil, end_time = nil)
+        jobs = self
+        if start_time
+          assert end_time
+          jobs = where('start_time < ? AND end_time > ?', start_time, end_time)
+        end
         num_jobs = 0
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
-        find_each do |job|
+        jobs.find_each do |job|
           num_jobs += 1
-          wall_time += job.wall_time
+          job_start_time = job.start_time
+          job_end_time = job.end_time
+          if start_time
+            job_start_time = [job_start_time, start_time].max
+            job_end_time = [job_end_time, end_time].min
+          end
+          wall_time += job_end_time.to_i - job_start_time.to_i
           cpu_time += job.cpu_time
           successful_jobs += 1 if job.exit_code == 0
         end
@@ -52,26 +63,22 @@ module Bookie
         #Find all the systems within the time range.
         systems = Bookie::Database::System
         if start_time
-          assert end_time
           systems = systems.where(
             'start_time < ? AND (end_time IS NULL OR end_time > ?)',
             end_time,
             start_time)
         end
         systems.find_each do |system|
-          system_start_time = nil
-          system_end_time = nil
+          system_start_time = system.start_time
+          system_end_time = system.end_time
           #Is there a date range constraint?
           if start_time
-            system_start_time = [system.start_time, start_time].max
-            system_end_time = [system.end_time, end_time].min if system.end_time
-          else
-            system_start_time = system.start_time
-            system_end_time = system.end_time
+            system_start_time = [system_start_time, start_time].max
+            system_end_time = [system_end_time, end_time].min if system.end_time
           end
           #If the system doesn't have an end time, set it to a logical value.
           system_end_time ||= end_time || Time.now
-          total_cpu_time += system.cores * (system_end_time - system_start_time)
+          total_cpu_time += system.cores * (system_end_time.to_i - system_start_time.to_i)
         end
       
         return {

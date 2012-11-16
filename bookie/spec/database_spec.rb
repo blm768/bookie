@@ -105,11 +105,16 @@ describe Bookie::Database do
         @jobs = Bookie::Database::Job
         @summary = @jobs.summary
         @length = @jobs.all.length
+        start_time_1 = Time.new(2012, 1, 1)
+        end_time_1   = Time.new(2012, 12, 31)
+        @summary_1 = @jobs.summary(@start_time_1, @end_time_1)
       end
       
       it "produces correct totals for jobs" do
         @summary[:jobs].should eql @length
         @summary[:wall_time].should eql @length * 3600
+        @summary_1[:jobs].should eql @length
+        @summary_1[:wall_time].should eql @length * 3600
       end
     end
   end
