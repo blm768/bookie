@@ -82,9 +82,10 @@ module Bookie
           if start_time
             system_start_time = [system_start_time, start_time].max
             system_end_time = [system_end_time, end_time].min if system.end_time
+            system_end_time ||= end_time
+          else
+            system_end_time ||= Time.now
           end
-          #If the system doesn't have an end time, set it to a logical value.
-          system_end_time ||= end_time || Time.now
           total_cpu_time += system.cores * (system_end_time.to_i - system_start_time.to_i)
         end
       

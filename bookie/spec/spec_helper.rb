@@ -67,8 +67,8 @@ module Helpers
         systems << system
       end
     end
-    systems[1].end_time = base_time + 36000
-    systems[1].save!
+    systems[0].end_time = base_time + 36000
+    systems[0].save!
     for i in 0 ... 40 do
       job = Bookie::Database::Job.new
       job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
