@@ -101,8 +101,15 @@ describe Bookie::Database do
     end
     
     describe :summary do
-      it "produces correct totals" do
-        
+      before(:all) do
+        @jobs = Bookie::Database::Job
+        @summary = @jobs.summary
+        @length = @jobs.all.length
+      end
+      
+      it "produces correct totals for jobs" do
+        @summary[:jobs].should eql @length
+        @summary[:wall_time].should eql @length * 3600
       end
     end
   end
