@@ -10,6 +10,10 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
+      def end_time
+        return start_time + wall_time
+      end
+      
       def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
       end
@@ -39,8 +43,8 @@ module Bookie
       def self.summary(start_time = nil, end_time = nil)
         jobs = self
         if start_time
-          assert end_time
-          jobs = where('start_time < ? AND end_time > ?', start_time, end_time)
+          raise ArgumentError.new('End time must be specified with start time') unless end_time
+          jobs = where('start_time < ? AND end_time > ?', end_time, start_time)
         end
         num_jobs = 0
         wall_time = 0
@@ -54,8 +58,9 @@ module Bookie
             job_start_time = [job_start_time, start_time].max
             job_end_time = [job_end_time, end_time].min
           end
-          wall_time += job_end_time.to_i - job_start_time.to_i
-          cpu_time += job.cpu_time
+          clipped_wall_time = job_end_time.to_i - job_start_time.to_i
+          wall_time += clipped_wall_time
+          cpu_time += Integer(job.cpu_time * clipped_wall_time / job.wall_time)
           successful_jobs += 1 if job.exit_code == 0
         end
         
@@ -85,7 +90,7 @@ module Bookie
           :jobs => num_jobs,
           :wall_time => wall_time,
           :cpu_time => cpu_time,
-          :success =>  if num_jobs == 0 then 0.0 else Float(successful_jobs) / num_jobs end,
+          :successful =>  if num_jobs == 0 then 0.0 else Float(successful_jobs) / num_jobs end,
           :total_cpu_time => total_cpu_time,
           :used_cpu_time => if total_cpu_time == 0 then 0.0 else cpu_time / total_cpu_time end,
         }
@@ -132,8 +137,16 @@ module Bookie
         end
       end
       
+      before_save do
+        write_attribute(:end_time, end_time)
+      end
+      
+      before_update do
+        write_attribute(:end_time, end_time)
+      end
+      
       validates_presence_of :user, :system, :cpu_time,
-        :start_time, :end_time, :wall_time, :memory, :exit_code
+        :start_time, :wall_time, :memory, :exit_code
     end
     
     #ActiveRecord structure for a group

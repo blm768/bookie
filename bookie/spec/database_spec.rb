@@ -15,6 +15,13 @@ describe Bookie::Database do
       @base_time = @jobs.first.start_time
     end
     
+    it "correctly sets end times" do
+      @jobs.find_each do |job|
+        job.end_time.should eql job.start_time + job.wall_time
+        job.end_time.should eql job.read_attribute(:end_time)
+      end
+    end
+    
     it "correctly filters by user" do
       jobs = @jobs.by_user_name('root').all
       jobs.length.should eql 25
@@ -107,15 +114,21 @@ describe Bookie::Database do
         @length = @jobs.all.length
         start_time_1 = Time.new(2012, 1, 1)
         end_time_1   = Time.new(2012, 12, 31)
-        @summary_1 = @jobs.summary(@start_time_1, @end_time_1)
+        @summary_1 = @jobs.summary(start_time_1, end_time_1)
       end
       
       it "produces correct totals for jobs" do
         @summary[:jobs].should eql @length
         @summary[:wall_time].should eql @length * 3600
+        @summary[:cpu_time].should eql @length * 100
+        @summary[:successful].should eql 0.5
         @summary_1[:jobs].should eql @length
         @summary_1[:wall_time].should eql @length * 3600
+        @summary_1[:cpu_time].should eql @length * 100
+        @summary_1[:successful].should eql 0.5
       end
+      
+      it "correctly handles summaries that contain no jobs"
     end
   end
   

@@ -75,9 +75,9 @@ module Helpers
       job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
       job.system = systems[system_names[i % system_names.length]]
       job.start_time = base_time + 3600 * i
-      job.end_time = job.start_time + 3600
+      #job.end_time = job.start_time + 3600
       job.wall_time = 3600
-      job.cpu_time = 100 * i
+      job.cpu_time = 100
       job.memory = (i + 1) * 1024
       job.exit_code = i & 1
       job.save!
