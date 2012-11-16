@@ -14,20 +14,10 @@ describe Bookie::Config do
     config.password.should eql "test"
     config.excluded_users.should eql Set.new(["root"])
     config.hostname.should eql "localhost"
+    config.cores.should eql 8
+    config.memory.should eql 8000000
     config.maximum_idle.should eql 5
     config.system_type.should eql 'standalone'
-  end
-  
-  it "correctly parses command-line arguments" do
-    config = Bookie::Config.new('snapshot/test_config.json')
-    opts = OptionParser.new
-    config.parse_options(opts)
-    opts.parse!(%w{-h github.com -c 256 -m 100 -t none})
-    
-    config.hostname.should eql 'github.com'
-    config.cores.should eql 256
-    config.memory.should eql 100
-    config.system_type.should eql 'none'
   end
   
   it "correctly verifies types" do
@@ -39,25 +29,27 @@ describe Bookie::Config do
   it "sets correct defaults" do
     dconfig = Bookie::Config.new('snapshot/default.json')
     
-    dconfig.db_type.should eql "mysql2"
     dconfig.port.should eql nil
-    dconfig.database.should eql "bookie"
-    dconfig.username.should eql "root"
-    dconfig.password.should eql ""
-    dconfig.excluded_users.should eql Set.new([])
+    dconfig.excluded_users.should eql Set.new([]) 
+    dconfig.maximum_idle.should eql 3
   end
   
-  it 'correctly handles a missing "Server" field' do
-    expect { Bookie::Config.new('snapshot/empty.json') }.to raise_error("No database server specified")
-  end
-  
-  it 'requires the system type to be set' do
-    expect { Bookie::Config.new('snapshot/default.json').system_type }.to raise_error("No system type specified")
+  it 'correctly handles missing fields' do
+    fields = JSON.parse(File.read('snapshot/default.json'))
+    fields.keys.each do |key|
+      removed = fields.delete(key)
+      JSON.stubs(:parse).returns(fields)
+      expect { Bookie::Config.new('snapshot/default.json') }.to raise_error
+      fields[key] = removed
+    end
+    JSON.stubs(:parse).returns(fields)
+    #This should not raise an error.
+    Bookie::Config.new('snapshot/default.json')
   end
   
   it "attempts to connect to the database" do
     config = Bookie::Config.new('snapshot/test_config.json')
-    ActiveRecord::Base.stubs(:establish_connection).returns(nil).at_least_once
+    ActiveRecord::Base.expects(:establish_connection)
     config.connect
   end
 end

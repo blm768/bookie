@@ -77,7 +77,8 @@ module Bookie
       
       @stats = SystemStats::LocalStats.new
       
-      @db_type = data['Database type'] || 'mysql2'
+      @db_type = data['Database type']
+      raise 'No database type specified' unless @db_type
       verify_type(@db_type, 'Database type', String)
       
       @server = data['Server']
@@ -86,11 +87,14 @@ module Bookie
       @port = data['Port']
       verify_type(@port, 'Port', Fixnum) unless @port == nil
       
-      @database = data['Database'] || "bookie"
+      @database = data['Database']
+      raise 'No database specified' unless @database
       verify_type(@database, 'Database', String)
-      @username = data['Username'] || "root"
+      @username = data['Username']
+      raise 'No database username specified' unless @database
       verify_type(@username, 'Username', String)
-      @password = data['Password'] || ""
+      @password = data['Password']
+      raise 'No database password specified' unless @password
       verify_type(@password, 'Password', String)
       
       excluded_users_array = data['Excluded users'] || []
@@ -99,33 +103,23 @@ module Bookie
       
       #To do: unit tests
       @system_type = data['System type']
-      verify_type(@system_type, 'System type', String) unless @system_type == nil
+      raise 'No system type specified' unless @system_type
+      verify_type(@system_type, 'System type', String)
       
       @hostname = data['Hostname']
       raise "No hostname specified" unless @hostname
       verify_type(@hostname, 'Hostname', String)
       
+      @cores = data['Cores']
+      raise 'Number of cores not specified' unless @cores
+      verify_type(@cores, 'Cores', Integer)
+      
+      @memory = data['Memory']
+      raise 'Memory not specified' unless @memory
+      verify_type(@memory, 'Memory', Integer)
+      
       @maximum_idle = data['Maximum idle time'] || 3
       verify_type(@maximum_idle, 'Maximum idle time', Integer)
-    end
-    
-    #If called, this should be called before passing the object to anything else.
-    def parse_options(opts)
-      opts.on('-h', '--hostname HOSTNAME', 'Set hostname under which to record jobs') do |hostname|
-        @hostname = hostname
-      end
-      
-      opts.on('-c', '--cores CORES', Integer, 'Specify number of cores in the system') do |cores|
-        @cores = cores
-      end
-      
-      opts.on('-m', '--memory KB', Integer, "Specify system's RAM (in KB)") do |memory|
-        @memory = memory
-      end
-      
-      opts.on('-t', '--log-type TYPE', 'Specify log type') do |log_type|
-        @system_type = log_type
-      end
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match

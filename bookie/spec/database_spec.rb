@@ -2,11 +2,7 @@ require 'spec_helper'
 
 describe Bookie::Database do
   before(:all) do
-    begin
-      Helpers::generate_database
-    rescue => e
-      raise StandardError.new(([e.to_s] + e.backtrace).join("\n"))
-    end
+    Helpers::generate_database
   end
   
   after(:all) do
@@ -90,16 +86,23 @@ describe Bookie::Database do
     
     describe :each_with_relations do
       it "loads all relations" do
-        Bookie::Database::User.expects(:find).times(4)
-        Bookie::Database::Group.expects(:find).times(4)
-        Bookie::Database::System.expects(:find).times(4)
-        Bookie::Database::SystemType.expects(:find).times(4)
+        relations = {}
         Bookie::Database::Job.each_with_relations do |job|
-          job.user
-          job.user.group
-          job.system
-          job.system.system_type
+          rels = [job.user, job.user.group, job.system, job.system.system_type]
+          rels.each do |r|
+            if relations.include?(r)
+              old_r = relations[r]
+              old_r.should equal r
+            end
+            relations[r] = r
+          end
         end
+      end
+    end
+    
+    describe :summary do
+      it "produces correct totals" do
+        
       end
     end
   end
