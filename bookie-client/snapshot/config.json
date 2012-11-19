@@ -1,5 +1,6 @@
 {
   "Database type" : "mysql2",
+  "Database"      : "bookie",
   "Server"        : "localhost",
   "Port"          : 8080,
   "Username"      : "root",

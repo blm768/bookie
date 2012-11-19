@@ -1,7 +1,5 @@
 require 'spec_helper'
 
-require 'socket'
-
 class JobStub
   attr_accessor :user_name
   attr_accessor :group_name
@@ -10,12 +8,14 @@ class JobStub
   attr_accessor :wall_time
   attr_accessor :cpu_time
   attr_accessor :memory
+  attr_accessor :exit_code
 end
 
-describe Bookie::Sender do
+describe Bookie::Sender::Sender do
   before(:each) do
     @config = Bookie::Config.new('snapshot/test_config.json')
-    @sender = Bookie::Sender.new(@config)
+    @config.connect
+    @sender = Bookie::Sender::Sender.new(@config)
     @job = JobStub.new
     @job.user_name = "root"
     @job.group_name = "root"
@@ -23,28 +23,41 @@ describe Bookie::Sender do
     @job.wall_time = 3
     @job.cpu_time = 2
     @job.memory = 300
+    @job.exit_code = 0
   end
   
   it "correctly filters jobs" do
     job = JobStub.new
     job.user_name = "root"
-    @sender.filter_job(job).should eql nil
+    @sender.filtered?(job).should eql true
     job.user_name = "test"
-    @sender.filter_job(job).should eql job
+    @sender.filtered?(job).should eql false
   end
   
-  it "correctly converts jobs to database objects" do
-    Bookie::Database::Job.stubs(:new).returns(JobStub.new)
-    djob = @sender.to_database_job(@job)
-    djob.start_time.should eql @job.start_time
-    djob.end_time.should eql @job.start_time + @job.wall_time
-    djob.wall_time.should eql @job.wall_time
-    djob.cpu_time.should eql @job.cpu_time
-    djob.memory.should eql @job.memory
+  it "correctly creates systems when they don't exist" do
+    Bookie::Database::System.expects(:"create!")
+    sys = @sender.system
+  end
+  
+  it "uses the existing active system" do
+    sys = @sender.system
+    Bookie::Database::System.expects(:"create!").never
+    sys = @sender.system
+  end
+  
+  it "correctly detects conflicts" do
+    csys = Bookie::Database::System.create!(
+      {
+        :name => @config.hostname,
+        :system_type => system_type,
+        :start_time => Time.now,
+        :cores => @config.cores - 1,
+        :memory => @config.memory
+      })
+    
   end
   
   it "correctly sends jobs" do
-    Socket.expects(:gethostbyname).returns(["localhost"])
     Bookie::Database::Server.expects(:where).returns []
     Bookie::Database::Group.expects(:where).returns []
     Bookie::Database::User.expects(:where).returns []
@@ -75,4 +88,29 @@ describe Bookie::Sender do
   it "has a stubbed-out each_job method" do
     expect { @sender.each_job(Date.today)}.to raise_error(NotImplementedError)
   end
+end
+
+describe Bookie::Sender::ModelHelpers do
+  before(:all) do
+    @job = JobStub.new
+    @job.user_name = "root"
+    @job.group_name = "root"
+    @job.start_time = Time.new
+    @job.wall_time = 3
+    @job.cpu_time = 2
+    @job.memory = 300
+    @job.extend(Bookie::Sender::ModelHelpers)
+  end
+  
+  it "correctly converts jobs to database objects" do
+    Bookie::Database::Job.stubs(:new).returns(JobStub.new)
+    djob = @job.to_model
+    djob.start_time.should eql @job.start_time
+    djob.end_time.should eql @job.start_time + @job.wall_time
+    djob.wall_time.should eql @job.wall_time
+    djob.cpu_time.should eql @job.cpu_time
+    djob.memory.should eql @job.memory
+    djob.exit_code.should eql @job.exit_code
+  end
+  
 end

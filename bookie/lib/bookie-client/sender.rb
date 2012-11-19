@@ -3,7 +3,6 @@ require 'bookie'
 require 'active_record'
 require 'date'
 require 'logger'
-require 'system_stats'
 
 module Bookie
   module Sender
@@ -19,8 +18,8 @@ module Bookie
         #To do: ensure that all required methods were mixed in?
       end
       
-      #Sends job data from the given file to the database server
-      def send_data(filename)
+      #Retrieves the System object with which the jobs will be associated, creating it if it does not exist
+      def system
         hostname = @config.hostname
         system_type = self.system_type
         #Make sure this machine is in the database.
@@ -44,6 +43,11 @@ module Bookie
             :cores => @config.cores,
             :memory => @config.memory)
         end
+      end
+      
+      #Sends job data from the given file to the database server
+      def send_data(filename)
+        system = self.system
         
         known_users = {}
         known_groups = {}
@@ -77,9 +81,9 @@ module Bookie
       #
       #To do: check for name collision issues?
       def system_type
-        ActiveRecord::Base.connection.execute('LOCK TABLES system_types WRITE')
+        return Bookie::Database::SystemType.find_or_create_by_name(system_type_name)
         type_name = self.system_type_name
-        st = Bookie::Database::SystemType.find_by_name(type_name)
+        st = Bookie::Database::SystemType.find_by_name(type_name).lock
         unless st
           st = Bookie::Database::SystemType.create(
             :name => type_name,
@@ -88,7 +92,7 @@ module Bookie
         end
         st
       ensure
-        ActiveRecord::Base.connection.execute('UNLOCK TABLES')
+        #ActiveRecord::Base.connection.execute('UNLOCK TABLES')
       end
       
       #Filters a job to see if it should be included in the final output
@@ -125,8 +129,6 @@ module Bookie
       #handle the system field? A parameter?
       def to_model()
         db_job = Bookie::Database::Job.new
-        db_job.job_id = self.job_id
-        db_job.array_id = self.array_id
         db_job.start_time = self.start_time
         db_job.end_time = self.start_time + self.wall_time
         db_job.wall_time = self.wall_time
