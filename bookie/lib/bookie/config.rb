@@ -4,7 +4,6 @@ require 'active_record'
 require 'json'
 require 'logger'
 require 'set'
-require 'system_stats'
 
 module Bookie
   #Holds database configuration, etc. for Bookie components
@@ -51,6 +50,8 @@ module Bookie
     attr_accessor :hostname
     #The number of days a system can fail to post job entries before a warning is made
     attr_accessor :maximum_idle
+    #The number of cores on the system
+    attr_accessor :cores
     
     #The system type
     def system_type
@@ -58,10 +59,6 @@ module Bookie
       @system_type
     end
     
-    #The number of cores on the system
-    def cores
-      @cores ||= @stats.num_cores
-    end
     
     #The RAM (in KB) in the system
     def memory
@@ -74,8 +71,6 @@ module Bookie
       file = File.open(filename)
       data = JSON::parse(file.read)
       file.close
-      
-      @stats = SystemStats::LocalStats.new
       
       @db_type = data['Database type']
       raise 'No database type specified' unless @db_type

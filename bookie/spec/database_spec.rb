@@ -6,7 +6,7 @@ describe Bookie::Database do
   end
   
   after(:all) do
-    #Bookie::Database::drop_tables
+    Bookie::Database::drop_tables
   end
   
   describe Bookie::Database::Job do
@@ -20,6 +20,13 @@ describe Bookie::Database do
         job.end_time.should eql job.start_time + job.wall_time
         job.end_time.should eql job.read_attribute(:end_time)
       end
+      #Test the update hook.
+      job = Bookie::Database::Job.first
+      job.start_time = job.start_time - 1
+      job.save!
+      job.end_time.should eql job.read_attribute(:end_time)
+      job.start_time = job.start_time + 1
+      job.save!
     end
     
     it "correctly filters by user" do
@@ -124,6 +131,7 @@ describe Bookie::Database do
         start_time_2 = @base_time + 1800
         end_time_2 = @base_time + (36000 * 2 + 18000)
         @summary_clipped = @jobs.summary(start_time_2, end_time_2)
+        @summary_empty = @jobs.summary(Time.at(0), Time.at(0))
       end
       
       it "produces correct totals for jobs" do
@@ -146,7 +154,16 @@ describe Bookie::Database do
         @summary_clipped[:total_cpu_time].should eql (3600 * (10 + 15 + 5) - 1800) * 2
       end
       
-      it "correctly handles summaries that contain no jobs"
+      it "correctly handles summaries that contain no jobs" do
+        @summary_empty.should eql ({
+            :jobs => 0,
+            :wall_time => 0,
+            :cpu_time => 0,
+            :successful => 0.0,
+            :total_cpu_time => 0,
+            :used_cpu_time => 0.0
+          })
+      end
     end
   end
   
@@ -225,6 +242,14 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::SystemType do
-    it "correctly maps type codes to/from symbols"
+    it "correctly maps memory type codes to/from symbols" do
+      systype = Bookie::Database::SystemType.new
+      systype.memory_stat_type = :avg
+      systype.memory_stat_type.should eql :avg
+      systype.read_attribute(:memory_stat_type).should eql Bookie::Database::MEMORY_STAT_TYPE[:avg]
+      systype.memory_stat_type = :max
+      systype.memory_stat_type.should eql :max
+      systype.read_attribute(:memory_stat_type).should eql Bookie::Database::MEMORY_STAT_TYPE[:max]
+    end
   end
 end
