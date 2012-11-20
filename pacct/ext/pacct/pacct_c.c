@@ -235,7 +235,7 @@ static VALUE last_entry(VALUE self) {
   Data_Get_Struct(self, PacctLog, log);
   
   if(log->numEntries == 0) {
-    rb_raise(rb_eRangeError, "No last entry in file");
+    return Qnil;
   }
   
   //To do: error checking on file operations?
@@ -333,9 +333,13 @@ static VALUE get_user_name(VALUE self) {
   if(!pw_data) {
     char buf[512];
     VALUE err;
+    int e = errno;
     snprintf(buf, 512, "Unable to obtain user name for ID %u", data->ac_uid);
     //To do: clearer messages when errno == 0?
-    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    if(e == 0) {
+        e = ENODATA;
+    }
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(e));
     rb_exc_raise(err);
   }
   
@@ -356,8 +360,12 @@ static VALUE set_user_name(VALUE self, VALUE name) {
   if(!pw_data) {
     char buf[512];
     VALUE err;
-    snprintf(buf, 512, "Unable to obtain user ID for name %s", cName);
-    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    int e = errno;
+    snprintf(buf, 512, "Unable to obtain user ID for name '%s'", cName);
+    if(e == 0) {
+        e = ENODATA;
+    }
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(e));
     rb_exc_raise(err);
   }
   
@@ -389,8 +397,12 @@ static VALUE get_group_name(VALUE self) {
   if(!group_data) {
     char buf[512];
     VALUE err;
+    int e = errno;
     snprintf(buf, 512, "Unable to obtain group name for ID %u", data->ac_gid);
-    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    if(e == 0) {
+      e = ENODATA;
+    }
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(e));
     rb_exc_raise(err);
   }
   
@@ -411,8 +423,12 @@ static VALUE set_group_name(VALUE self, VALUE name) {
   if(!group_data) {
     char buf[512];
     VALUE err;
-    snprintf(buf, 512, "Unable to obtain user ID for name %s", cName);
-    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(errno));
+    int e = errno;
+    snprintf(buf, 512, "Unable to obtain group ID for name '%s'", cName);
+    if(e == 0) {
+      e = ENODATA;
+    } 
+    err = rb_funcall(cSystemCallError, id_new, 2, rb_str_new2(buf), INT2NUM(e));
     rb_exc_raise(err);
   }
   
