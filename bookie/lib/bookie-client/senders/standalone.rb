@@ -28,13 +28,5 @@ end
 module Pacct
   class Entry
     include Bookie::Sender::ModelHelpers
-    
-    def job_id
-      process_id
-    end
-    
-    def array_id
-      0
-    end
   end
 end

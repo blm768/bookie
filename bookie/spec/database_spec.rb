@@ -2,7 +2,10 @@ require 'spec_helper'
 
 describe Bookie::Database do
   before(:all) do
-    Helpers::generate_database
+    unless @generated
+      Helpers::generate_database
+      @generated = true
+    end
   end
   
   describe Bookie::Database::Job do

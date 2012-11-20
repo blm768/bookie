@@ -6,5 +6,6 @@
   "Username"      : "root",
   "Password"      : "test",
   "Hostname"      : "localhost",
-  "System type"   : "standalone"
+  "System type"   : "standalone",
+  "Cores"         : 4
 }

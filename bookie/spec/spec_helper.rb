@@ -3,6 +3,8 @@ if ENV['COVERAGE']
   SimpleCov.start
 end
 
+$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+
 require 'fileutils'
 require 'mocha_standalone'
 

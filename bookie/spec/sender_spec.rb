@@ -38,38 +38,62 @@ describe Bookie::Sender::Sender do
   end
   
   it "uses the existing active system" do
+    begin
     #To do: possible failure cases:
     #* System exists w/ different specs
     #* Decommissioned system exists w/ same specs
-    sys = @sender.system
-    Bookie::Database::System.expects(:"create!").never
-    sys = @sender.system
-    sys.delete
+      sys = @sender.system
+      Bookie::Database::System.expects(:"create!").never
+      sys = @sender.system
+    ensure
+      sys.delete
+    end
   end
   
   it "correctly detects conflicts" do
-    csys = Bookie::Database::System.create!(
-      :name => @config.hostname,
-      :system_type => @sender.system_type,
-      :start_time => Time.now,
-      :cores => @config.cores - 1,
-      :memory => @config.memory)
-    expect { @sender.system }.to raise_error
+    begin
+      csys = Bookie::Database::System.create!(
+        :name => @config.hostname,
+        :system_type => @sender.system_type,
+        :start_time => Time.now,
+        :cores => @config.cores - 1,
+        :memory => @config.memory)
+      expect { @sender.system }.to raise_error
+    ensure
+      csys.delete
+    end
   end
   
   it "correctly sends jobs" do
-    @sender.send_data('snapshot/pacct')
-    count = 0
-    Bookie::Database::Job.each_with_relations do |job|
-      job.system.name.should eql @config.hostname
-      count += 1
+    old_excluded = @config.excluded_users
+    @config.excluded_users = Set.new
+    begin
+      @sender.send_data('snapshot/torque_generated')
+      count = 0
+      Bookie::Database::Job.each_with_relations do |job|
+        job.system.name.should eql @config.hostname
+        count += 1
+      end
+      count.should eql 100
+    ensure
+      @config.excluded_users = old_excluded
     end
-    count.should eql 100
   end
   
-  it "refuses to send jobs when jobs already have been sent from a file"
+  it "refuses to send jobs when jobs already have been sent from a file" do
+    exception = nil
+    begin
+      @sender.send_data('snapshot/torque_generated')
+    rescue => e
+      exception = e
+    end
+    e.should_not eql nil
+    e.message.should match /Jobs already exist in the database for the date [\d-]+./
+  end
   
-  it "handles missing files"
+  it "handles missing files" do
+    expect { @sender.send_data('snapshot/abc') }.to raise_error
+  end
 end
 
 describe Bookie::Sender::ModelHelpers do

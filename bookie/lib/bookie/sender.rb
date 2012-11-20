@@ -71,9 +71,8 @@ module Bookie
           #Determine if the user/group pair must be added to/retrieved from the database.
           user = Bookie::Database::User.find_or_create(
             job.user_name,
-            job.group_name,
-            known_users,
-            known_groups)
+            Bookie::Database::Group.find_or_create(job.group_name, known_groups),
+            known_users)
           db_job.system = system
           db_job.user = user
           db_job.save!
@@ -91,6 +90,7 @@ module Bookie
       def filtered?(job)
         @config.excluded_users.include?job.user_name
       end
+    end
     
     module ModelHelpers
       #Converts the client's internal job type to a Bookie::Database::Job

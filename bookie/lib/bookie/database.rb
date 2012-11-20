@@ -165,6 +165,8 @@ module Bookie
           end
           known_groups[name] = group if known_groups
         end
+        raise "error" if group == nil
+        #puts group
         group
       end
       
