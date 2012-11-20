@@ -1,10 +1,6 @@
 module TorqueStats
   #Represents a completed job
   class Job
-    #The job ID
-    attr_accessor :job_id
-    #The array ID
-    attr_accessor :array_id
     #The name of the user who created the job
     attr_accessor :user_name
     #The group name of the user who created the job
@@ -29,7 +25,7 @@ module TorqueStats
   end
   
   #Represents a job record file
-  class JobRecord
+  class JobLog
     #The name of the accounting file opened
     attr_reader :filename
   
@@ -48,24 +44,13 @@ module TorqueStats
         next unless index
         
         #Find the event type.
-        event_type = line[index + 1 .. index + 1]
-        next unless event_type == 'E'
+        event_type = line[index + 1]
+        next unless event_type == ?E
         
         job = Job.new()
         
-        #Find the job ID.
-        index = line.index(';', index + 1) + 1
-        next_index = line.index('[', index)
-        
-        job.job_id = Integer(line[index ... next_index])
-        
-        #Find the node ID.
-        index = next_index + 1
-        next_index = line.index(']', index)
-        job.array_id = Integer(line[index ... next_index])
-        
         #Find the fields.
-        index = line.index(';', next_index) + 1
+        index = line.index(';', index + 3) + 1
         fields = line[index .. -1].split(' ')
         
         fields.each do |field|
