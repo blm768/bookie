@@ -47,12 +47,14 @@ module TorqueStats
         event_type = line[index + 1]
         next unless event_type == ?E
         
+        #Find the fields.
+        index = line.index(';', index + 3)
+        next unless index
+        fields = line[index + 1 .. -1].split(' ')
+        
         job = Job.new()
         
-        #Find the fields.
-        index = line.index(';', index + 3) + 1
-        fields = line[index .. -1].split(' ')
-        
+        #To do: make sure all fields are present?
         fields.each do |field|
           key, value = *field.split('=')
           case key
