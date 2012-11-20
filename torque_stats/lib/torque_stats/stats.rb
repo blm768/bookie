@@ -88,6 +88,10 @@ module TorqueStats
       return hours * 3600 + minutes * 60 + seconds
     end
     protected :parse_duration
+    
+    def self.filename_for_date(date)
+      File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
+    end
   end
   
   class << self;
@@ -95,9 +99,7 @@ module TorqueStats
     attr_accessor :torque_root
     
     def filename_for_date(date)
-      File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
     end
   end
   @torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
-  
 end
