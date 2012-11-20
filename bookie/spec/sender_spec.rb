@@ -13,8 +13,6 @@ end
 
 describe Bookie::Sender::Sender do
   before(:each) do
-    @config = Bookie::Config.new('snapshot/test_config.json')
-    @config.connect
     @sender = Bookie::Sender::Sender.new(@config)
     @job = JobStub.new
     @job.user_name = "root"
@@ -40,54 +38,38 @@ describe Bookie::Sender::Sender do
   end
   
   it "uses the existing active system" do
+    #To do: possible failure cases:
+    #* System exists w/ different specs
+    #* Decommissioned system exists w/ same specs
     sys = @sender.system
     Bookie::Database::System.expects(:"create!").never
     sys = @sender.system
+    sys.delete
   end
   
   it "correctly detects conflicts" do
     csys = Bookie::Database::System.create!(
-      {
-        :name => @config.hostname,
-        :system_type => system_type,
-        :start_time => Time.now,
-        :cores => @config.cores - 1,
-        :memory => @config.memory
-      })
-    
+      :name => @config.hostname,
+      :system_type => @sender.system_type,
+      :start_time => Time.now,
+      :cores => @config.cores - 1,
+      :memory => @config.memory)
+    expect { @sender.system }.to raise_error
   end
   
   it "correctly sends jobs" do
-    Bookie::Database::Server.expects(:where).returns []
-    Bookie::Database::Group.expects(:where).returns []
-    Bookie::Database::User.expects(:where).returns []
-    server = mock()
-    server.expects(:"name=").with("localhost").returns(nil)
-    server.expects(:"save!").returns(true)
-    Bookie::Database::Server.expects(:new).returns(server)
-    group = mock()
-    group.expects(:id).returns(nil)
-    group.expects(:"name=").with("root").returns(nil)
-    group.expects(:"save!").returns(true)
-    Bookie::Database::Group.expects(:new).returns(group)
-    user = mock()
-    user.expects(:"name=").with("root").returns(nil)
-    user.expects(:"group=").with(group).returns(nil)
-    user.expects(:"save!").returns(true)
-    Bookie::Database::User.expects(:new).returns(user)
-    db_job = mock()
-    db_job.expects(:"server=").with(server).returns(nil)
-    db_job.expects(:"user=").with(user).returns(nil)
-    db_job.expects(:"save!").returns(true)
-    @sender.expects(:each_job).yields(@job)
-    @sender.expects(:filter_job).returns(true)
-    @sender.expects(:to_database_job).returns(db_job)
-    @sender.send_data(Date.today)
+    @sender.send_data('snapshot/pacct')
+    count = 0
+    Bookie::Database::Job.each_with_relations do |job|
+      job.system.name.should eql @config.hostname
+      count += 1
+    end
+    count.should eql 100
   end
   
-  it "has a stubbed-out each_job method" do
-    expect { @sender.each_job(Date.today)}.to raise_error(NotImplementedError)
-  end
+  it "refuses to send jobs when jobs already have been sent from a file"
+  
+  it "handles missing files"
 end
 
 describe Bookie::Sender::ModelHelpers do
@@ -112,5 +94,4 @@ describe Bookie::Sender::ModelHelpers do
     djob.memory.should eql @job.memory
     djob.exit_code.should eql @job.exit_code
   end
-  
 end

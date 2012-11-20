@@ -5,10 +5,6 @@ describe Bookie::Database do
     Helpers::generate_database
   end
   
-  after(:all) do
-    Bookie::Database::drop_tables
-  end
-  
   describe Bookie::Database::Job do
     before(:each) do
       @jobs = Bookie::Database::Job
@@ -238,6 +234,14 @@ describe Bookie::Database do
       Bookie::Database::System.by_name('test1').length.should eql 2
       Bookie::Database::System.by_name('test2').length.should eql 1
       Bookie::Database::System.by_name('test3').length.should eql 1
+    end
+    
+    it "correctly decommissions" do
+      sys = Bookie::Database::System.active_systems.find_by_name('test1')
+      sys.decommission(sys.start_time + 3)
+      sys.end_time.should eql sys.start_time + 3
+      sys.end_time = nil
+      sys.save!
     end
   end
   

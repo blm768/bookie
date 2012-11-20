@@ -201,6 +201,7 @@ module Bookie
       has_many :jobs
       belongs_to :system_type
       
+      #To do: include start time?
       def self.find_by_specs(name, system_type, cores, memory)
          find_by_name_and_system_type_id_and_cores_and_memory(name, system_type.id, cores, memory)
       end
@@ -213,6 +214,11 @@ module Bookie
         where('name = ?', name)
       end
       
+      def decommission(end_time)
+        self.end_time = end_time
+        self.save!
+      end
+      
       validates_presence_of :name, :cores, :memory, :system_type, :start_time
     end
     
@@ -221,6 +227,19 @@ module Bookie
       has_many :systems
       
       validates_presence_of :name, :memory_stat_type
+      
+      def self.find_or_create(name, memory_stat_type)
+        sys_type = nil
+        #To do: better assurance of correctness under concurrency
+        #To do: handle name conflicts?
+        transaction do
+          sys_type = SystemType.lock.find_by_name(name)
+          sys_type ||= create!(
+            :name => name,
+            :memory_stat_type => memory_stat_type)
+        end
+        sys_type
+      end
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
       def memory_stat_type

@@ -10,6 +10,16 @@ require 'bookie'
 
 RSpec.configure do |config|
   config.mock_with(:mocha)
+  
+  config.before(:all) do
+    @config = Bookie::Config.new('snapshot/test_config.json')
+    @config.connect
+    Bookie::Database::create_tables
+  end
+  
+  config.after(:all) do
+    Bookie::Database::drop_tables
+  end
 end
 
 module Helpers
@@ -18,11 +28,6 @@ module Helpers
   def generate_database
     base_time = Time.new(2012)
     #Create test database
-    FileUtils.rm('test.sqlite') if File.exists?('test.sqlite')
-    ActiveRecord::Base.establish_connection(
-        :adapter  => 'sqlite3',
-        :database => 'test.sqlite')
-    Bookie::Database::create_tables
     groups = {}
     group_names = ['root', 'default', 'admin', 'admin']
     group_names.each do |name|
