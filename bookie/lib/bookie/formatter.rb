@@ -4,13 +4,12 @@ require 'date'
 require 'spreadsheet'
 
 module Bookie
-  module Client
-    #Represents a client that can pull data from the server and display tables
-    class Client
+  module Formatter
+    class Formatter
       def initialize(config, formatter)
         @config = config
         require "bookie-client/formatters/#{formatter}"
-        extend Bookie::Client.const_get(formatter.to_s.camelize)
+        extend Bookie::Formatter.const_get(formatter.to_s.camelize)
       end
       
       SUMMARY_FIELD_LABELS = [
@@ -30,10 +29,10 @@ module Bookie
         summary = Bookie::Summary::summary(jobs)
         field_values = [
           summary[:jobs],
-          Client.format_duration(summary[:wall_time]),
-          Client.format_duration(summary[:cpu_time]),
+          Formatter.format_duration(summary[:wall_time]),
+          Formatter.format_duration(summary[:cpu_time]),
           summary[:success] * 100,
-          Client.format_duration(summary[:total_cpu_time]),
+          Formatter.format_duration(summary[:total_cpu_time]),
           summary[:used_cpu_time] * 100,
         ]
         do_print_summary(field_values, io)
@@ -84,8 +83,7 @@ module Bookie
       end
       protected :fields_for_each_job
       
-      #To do: settle on a character and remove the gsub.
-      FORMAT_STRING = "|%-15.15s|%-15.15s|%-20.20s|%-20.20s|%-26.25s|%-26.25s|%-12.10s|%-12.10s|%-20.20s|%-11.11s|\n".gsub(/\|/, " ")
+      FORMAT_STRING = "%-15.15s %-15.15s %-20.20s %-20.20s %-26.25s %-26.25s %-12.10s %-12.10s %-20.20s %-11.11s\n"
       
       def self.format_duration(dur)
         dur = Integer(dur)

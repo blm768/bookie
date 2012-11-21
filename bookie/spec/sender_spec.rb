@@ -17,7 +17,7 @@ describe Bookie::Sender::Sender do
   end
   
   after(:all) do
-    Bookie::Database::drop_tables
+    FileUtils.rm('test.sqlite')
   end
   
   before(:each) do
