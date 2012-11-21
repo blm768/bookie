@@ -5,6 +5,8 @@ describe Pacct::Log do
     @log = Pacct::Log.new('snapshot/pacct')
   end
   
+  #To do: test write methods
+  
   it "correctly loads data" do
     n = 0
     @log.each_entry do |entry|
@@ -32,6 +34,7 @@ describe Pacct::Log do
       n += 1
     end
     n.should eql 0
+    #To do: out-of-range seek
   end
   
   it "can read data more than once" do
@@ -75,13 +78,35 @@ describe Pacct::Log do
     end
   end
   
+  ENTRY_DATA = {
+    :process_id => 3,
+    :user_name => 'root',
+    :group_name => 'root',
+    :command_name => 'ls',
+    :start_time => Time.new(2012, 1, 1),
+    :wall_time => 10.0,
+    :user_time => 1,
+    :system_time => 1,
+    :memory => 100000,
+    :exit_code => 2}
+  
   it "correctly writes entries at the end of the file" do
-    Helpers::double_log('snapshot/pacct_write') do |log|
-      entry = log.last_entry
-      entry.should_not eql nil
-      entry.exit_code.should eql 1
+    e = Pacct::Entry.new
+    ENTRY_DATA.each_pair do |key, value|
+      e.method((key.to_s + '=').intern).call(value)
     end
+    FileUtils.cp('snapshot/pacct', 'snapshot/pacct_write')
+    log = Pacct::Log.new('snapshot/pacct_write', 'r+b')
+    log.write_entry(e)
+    e = log.last_entry
+    e.should_not eql nil
+    ENTRY_DATA.each_pair do |key, value|
+      e.send(key).should eql value
+    end
+    FileUtils.rm('snapshot/pacct_write')
   end
+  
+  it "raises an error if writing fails"
   
   it "creates files when opened in write mode" do
     FileUtils.rm('snapshot/abc') if File.exists?('snapshot/abc')

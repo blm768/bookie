@@ -40,30 +40,46 @@ int pageSize;
 long ticksPerSecond;
 
 //Converts a comp_t to a long
-long comp_t_to_long(comp_t c) {
-  return (c & 0x1fff) << (((c >> 13) & 0x7) * 3);
+static unsigned long comp_t_to_ulong(comp_t c) {
+  return (unsigned long)(c & 0x1fff) << (((c >> 13) & 0x7) * 3);
+}
+
+static void print_bin(unsigned long val) {
+  unsigned long bits = 1 << (sizeof(unsigned long) * 8 - 1);
+  putchar('0' + ((val & bits) > 0));
+  while(bits >>= 1) {
+    putchar('0' + ((val & bits) > 0));
+  }
+  putchar('\n');
 }
 
 //Converts a long to a comp_t
 //To do: make sure the value is positive?
-//To do: overflow checks?
-comp_t long_to_comp_t(long l) {
+//To do: overflow checks? More unit testing?
+static comp_t ulong_to_comp_t(unsigned long l) {
   size_t bits = 0;
   unsigned long l2 = l;
-  while(l2 >>= 1) {
-    ++bits;
-  }
+  if(l2) {
+    bits = 1;
+    while(l2 >>= 1) {
+      ++bits;
+    }
+  } 
   if(bits <= 13) {
     return (l & 0x1fff);
   } else {
     size_t div_bits, rem_bits;
     bits -= 13;
     div_bits = bits / 3;
+    if(div_bits >= 8) {
+      rb_raise(rb_eRangeError, "Exponent overflow in ulong_to_comp_t");
+    }
     rem_bits = bits - div_bits * 3;
     if(rem_bits) {
       div_bits += 1;
     }
-    return (l >> (bits + rem_bits) & 0x1fff) | ((div_bits & 0x7) << 13);
+    //To do: remove '&'?
+    return ((l >> bits) & 0x1fff) | ((div_bits & 0x7) << 13);
   }
 }
 
@@ -124,18 +140,13 @@ static VALUE pacct_log_init(VALUE self, VALUE filename, VALUE mode) {
       }
     }
     if(!isValidMode) {
-      char buf[512];
-      snprintf(buf, sizeof(buf), "Invalid mode for Pacct::File: '%s'", cMode);
-      rb_raise(rb_eArgError, buf);
+      rb_raise(rb_eArgError, "Invalid mode for Pacct::File: '%s'", cMode);
     }
   }
   
   acct = fopen(cFilename, cMode);
   if(!acct) {
-    char buf[512] = "Unable to open file ";
-    size_t len = strlen(buf);
-    strncpy(buf + len, cFilename, 511 - len);  
-    rb_raise(rb_eIOError, buf);
+    rb_raise(rb_eIOError, "Unable to open file '%s'", cFilename);
   }
   
   Data_Get_Struct(self, PacctLog, log);
@@ -209,16 +220,14 @@ static VALUE each_entry(int argc, VALUE* argv, VALUE self) {
   Data_Get_Struct(self, PacctLog, log);
   
   if(start > log->numEntries) {
-    char buf[100];
-    snprintf(buf, 100, "Index %li is out of range", start);
-    rb_raise(rb_eRangeError, buf);
+    rb_raise(rb_eRangeError, "Index %li is out of range", start);
   }
   
   fseek(log->file, start * sizeof(struct acct_v3), SEEK_SET);
   
   for(i = start; i < log->numEntries; ++i) {
     VALUE entry = pacct_entry_new(log);
-    rb_yield_values(2, entry, INT2NUM(i));
+    rb_yield(entry);
   }
 
   return Qnil;
@@ -444,7 +453,7 @@ static VALUE get_user_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return INT2NUM(comp_t_to_long(data->ac_utime) / ticksPerSecond);
+  return INT2NUM(comp_t_to_ulong(data->ac_utime) / ticksPerSecond);
 }
 
 /*
@@ -454,7 +463,7 @@ static VALUE set_user_time(VALUE self, VALUE value) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  data->ac_utime = long_to_comp_t(NUM2LONG(value) * ticksPerSecond);
+  data->ac_utime = ulong_to_comp_t(NUM2LONG(value) * ticksPerSecond);
   
   return Qnil;
 }
@@ -466,7 +475,7 @@ static VALUE get_system_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return INT2NUM(comp_t_to_long(data->ac_stime) / ticksPerSecond);
+  return INT2NUM(comp_t_to_ulong(data->ac_stime) / ticksPerSecond);
 }
 
 /*
@@ -476,7 +485,7 @@ static VALUE set_system_time(VALUE self, VALUE value) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  data->ac_stime = long_to_comp_t(NUM2LONG(value) * ticksPerSecond);
+  data->ac_stime = ulong_to_comp_t(NUM2LONG(value) * ticksPerSecond);
   
   return Qnil;
 }
@@ -488,7 +497,7 @@ static VALUE get_cpu_time(VALUE self) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  return INT2NUM((comp_t_to_long(data->ac_utime) + comp_t_to_long(data->ac_stime)) / ticksPerSecond);
+  return INT2NUM((comp_t_to_ulong(data->ac_utime) + comp_t_to_ulong(data->ac_stime)) / ticksPerSecond);
 }
 
 /*
@@ -543,7 +552,7 @@ static VALUE get_average_mem_usage(VALUE self) {
   Data_Get_Struct(self, struct acct_v3, data);
   
   //Why divided by page size?
-  return INT2NUM(comp_t_to_long(data->ac_mem) * 1024 / pageSize);
+  return INT2NUM(comp_t_to_ulong(data->ac_mem) * 1024 / pageSize);
 }
 
 /*
@@ -553,7 +562,7 @@ static VALUE set_average_mem_usage(VALUE self, VALUE value) {
   struct acct_v3* data;
   Data_Get_Struct(self, struct acct_v3, data);
   
-  data->ac_mem = long_to_comp_t(NUM2LONG(value) * pageSize / 1024);
+  data->ac_mem = ulong_to_comp_t(NUM2LONG(value) * pageSize / 1024);
   
   return Qnil;
 }
