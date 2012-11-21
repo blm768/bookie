@@ -16,11 +16,6 @@ RSpec.configure do |config|
   config.before(:all) do
     @config = Bookie::Config.new('snapshot/test_config.json')
     @config.connect
-    Bookie::Database::create_tables
-  end
-  
-  config.after(:all) do
-    Bookie::Database::drop_tables
   end
 end
 

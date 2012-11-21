@@ -12,6 +12,14 @@ class JobStub
 end
 
 describe Bookie::Sender::Sender do
+  before(:all) do
+    Bookie::Database::create_tables
+  end
+  
+  after(:all) do
+    Bookie::Database::drop_tables
+  end
+  
   before(:each) do
     @sender = Bookie::Sender::Sender.new(@config)
     @job = JobStub.new
@@ -37,11 +45,33 @@ describe Bookie::Sender::Sender do
     sys = @sender.system
   end
   
+  it "correctly creates systems when only old versions exist" do
+    begin
+      sys = Bookie::Database::System.create!(
+        :name => @config.hostname,
+        :start_time => Time.now,
+        :end_time => Time.now + 1,
+        :system_type => @sender.system_type,
+        :cores => @config.cores - 1,
+        :memory => @config.memory)
+      Bookie::Database::System.expects(:"create!")
+      @sender.system
+    ensure
+      sys.delete
+    end
+    begin
+      Bookie::Database::System.unstub(:"create!")
+      sys = @sender.system
+      sys.decommission(Time.now + 1)
+      Bookie::Database::System.expects(:"create!")
+      @sender.system
+    ensure
+      sys.delete
+    end   
+  end
+  
   it "uses the existing active system" do
     begin
-    #To do: possible failure cases:
-    #* System exists w/ different specs
-    #* Decommissioned system exists w/ same specs
       sys = @sender.system
       Bookie::Database::System.expects(:"create!").never
       sys = @sender.system

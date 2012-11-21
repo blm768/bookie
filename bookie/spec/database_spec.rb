@@ -3,9 +3,14 @@ require 'spec_helper'
 describe Bookie::Database do
   before(:all) do
     unless @generated
+      Bookie::Database::create_tables
       Helpers::generate_database
       @generated = true
     end
+  end
+  
+  after(:all) do
+    Bookie::Database::drop_tables
   end
   
   describe Bookie::Database::Job do
@@ -200,7 +205,7 @@ describe Bookie::Database do
     describe :find_or_create do
       it "creates the group if needed" do
         Bookie::Database::Group.expects(:"create!")
-        group = Bookie::Database::Group.find_or_create('non_root')
+        Bookie::Database::Group.find_or_create('non_root')
       end
       
       it "returns the cached group if one exists" do
@@ -222,13 +227,6 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::System do
-    #To do: expand.
-    it "correctly finds by specifications" do
-      sys_type = Bookie::Database::SystemType.find_by_name('Standalone')
-      Bookie::Database::System.find_by_specs('test1', sys_type, 2, 1000000).name.should eql 'test1'
-      Bookie::Database::System.find_by_specs('test1', sys_type, 1, 1000000).should eql nil
-    end
-    
     it "correctly finds active systems" do
       Bookie::Database::System.active_systems.length.should eql 3
     end

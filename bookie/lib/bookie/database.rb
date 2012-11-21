@@ -165,8 +165,6 @@ module Bookie
           end
           known_groups[name] = group if known_groups
         end
-        raise "error" if group == nil
-        #puts group
         group
       end
       
@@ -202,11 +200,6 @@ module Bookie
     class System < ActiveRecord::Base
       has_many :jobs
       belongs_to :system_type
-      
-      #To do: include start time?
-      def self.find_by_specs(name, system_type, cores, memory)
-         find_by_name_and_system_type_id_and_cores_and_memory(name, system_type.id, cores, memory)
-      end
       
       def self.active_systems
         where('end_time IS NULL')

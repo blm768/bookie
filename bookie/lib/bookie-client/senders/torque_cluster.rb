@@ -5,7 +5,7 @@ module Bookie
     module TorqueCluster
       #Yields each job in the log
       def each_job(filename)
-        record = TorqueStats::JobRecord.new(filename)
+        record = TorqueStats::JobLog.new(filename)
         record.each_job do |job|
           yield job
         end
