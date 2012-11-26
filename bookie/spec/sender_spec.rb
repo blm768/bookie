@@ -17,7 +17,7 @@ describe Bookie::Sender::Sender do
   end
   
   after(:all) do
-    FileUtils.rm('test.sqlite')
+    FileUtils.rm('spec/test.sqlite')
   end
   
   before(:each) do

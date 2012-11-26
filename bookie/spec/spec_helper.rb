@@ -6,7 +6,7 @@ end
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
 require 'fileutils'
-require 'mocha_standalone'
+require 'mocha/api'
 
 require 'bookie'
 
@@ -23,7 +23,7 @@ module Helpers
   extend self
 
   def generate_database
-    base_time = Time.new(2012)
+    base_time = Time.local(2012)
     #Create test database
     groups = {}
     group_names = ['root', 'default', 'admin', 'admin']

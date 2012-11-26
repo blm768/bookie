@@ -125,7 +125,7 @@ describe Bookie::Database do
     
     describe :summary do
       before(:all) do
-        @base_time = Time.new(2012)
+        @base_time = Time.local(2012)
         @jobs = Bookie::Database::Job
         @summary = @jobs.summary
         @length = @jobs.all.length
@@ -150,16 +150,16 @@ describe Bookie::Database do
         clipped_jobs = @summary_clipped[:jobs]
         clipped_jobs.should eql 25
         @summary_clipped[:wall_time].should eql 25 * 3600 - 1800
-        @summary_clipped[:cpu_time].should eql (clipped_jobs * 100) - 50
+        @summary_clipped[:cpu_time].should eql clipped_jobs * 100 - 50
       end
       
       it "produces correct totals for systems" do
         @summary_1[:total_cpu_time].should eql 3600 * (10 + 30 + 20 + 10) * 2
-        @summary_clipped[:total_cpu_time].should eql (3600 * (10 + 15 + 5) - 1800) * 2
+        @summary_clipped[:total_cpu_time].should eql((3600 * (10 + 15 + 5) - 1800) * 2)
       end
       
       it "correctly handles summaries that contain no jobs" do
-        @summary_empty.should eql ({
+        @summary_empty.should eql({
             :jobs => 0,
             :wall_time => 0,
             :cpu_time => 0,

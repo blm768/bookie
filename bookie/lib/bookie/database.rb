@@ -194,7 +194,9 @@ module Bookie
       validates_presence_of :group, :name
     end
     
-    MEMORY_STAT_TYPE = {:unknown => 0, :avg => 1, :max => 2}
+    MEMORY_STAT_TYPE = {
+      :unknown => 0, :avg => 1, :max => 2,
+      0 => :unknown, 1 => :avg, 2 => :max}
     
     #ActiveRecord structure for a network system
     class System < ActiveRecord::Base
@@ -239,7 +241,7 @@ module Bookie
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
       def memory_stat_type
         #To do: optimize?
-        return MEMORY_STAT_TYPE.key(read_attribute(:memory_stat_type))
+        return MEMORY_STAT_TYPE[read_attribute(:memory_stat_type)]
       end
       
       def memory_stat_type=(type)

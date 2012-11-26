@@ -4,13 +4,13 @@ describe Bookie::Formatter::Formatter do
   before(:all) do
     Bookie::Database::create_tables
     Helpers::generate_database
-    Object.stubs(:require)
-    Object.stubs(:extend)
-    @sender = Bookie::Formatter::Formatter.new(:none)
+    Bookie::Formatter::Formatter.any_instance.stubs(:require)
+    Bookie::Formatter::Formatter.any_instance.stubs(:extend)
+    @sender = Bookie::Formatter::Formatter.new(@config, :formatter)
   end
   
   after(:all) do
-    FileUtils.rm('test.sqlite')
+    FileUtils.rm('spec/test.sqlite')
   end
   
   it "correctly formats durations" do

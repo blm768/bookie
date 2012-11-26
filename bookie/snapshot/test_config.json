@@ -2,7 +2,7 @@
   "Database type" : "sqlite3",
   "Server"        : "localhost",
   "Port"          : 8080,
-  "Database"      : "snapshot/bookie_test.sqlite",
+  "Database"      : "spec/test.sqlite",
   "Username"      : "blm768",
   "Password"      : "test",
   "Excluded users": ["root"],
