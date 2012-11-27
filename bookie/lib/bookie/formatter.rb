@@ -8,7 +8,7 @@ module Bookie
     class Formatter
       def initialize(config, formatter)
         @config = config
-        require "bookie-client/formatters/#{formatter}"
+        require "bookie/formatters/#{formatter}"
         extend Bookie::Formatter.const_get(formatter.to_s.camelize)
       end
       
@@ -48,7 +48,7 @@ module Bookie
       end
       
       def each_non_response_warning(systems)
-        systems.find_each do |system|
+        systems.all.each do |system|
           job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
           if job == nil
             yield system.name, "No jobs on record"
@@ -74,8 +74,8 @@ module Bookie
             job.system.system_type.name,
             job.start_time,
             job.end_time,
-            Client.format_duration(job.end_time - job.start_time),
-            Client.format_duration(job.cpu_time),
+            Formatter.format_duration(job.end_time - job.start_time),
+            Formatter.format_duration(job.cpu_time),
             "#{job.memory}kb #{memory_stat_type}",
             job.exit_code
           ]

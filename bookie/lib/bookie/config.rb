@@ -127,7 +127,8 @@ module Bookie
       #To do: this is deprecated; find alternative?
       #ActiveRecord.colorize_logging = false
       #To do: create config option for this?
-      #ActiveRecord::Base.logger = Logger.new(STDERR)
+      ActiveRecord::Base.logger = Logger.new(STDERR)
+      ActiveRecord::Base.logger.level = Logger::WARN
       ActiveRecord::Base.establish_connection(
         :adapter  => self.db_type,
         :database => self.database,

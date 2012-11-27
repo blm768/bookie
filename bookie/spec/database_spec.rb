@@ -110,7 +110,7 @@ describe Bookie::Database do
     describe :each_with_relations do
       it "loads all relations" do
         relations = {}
-        Bookie::Database::Job.each_with_relations do |job|
+        Bookie::Database::Job.limit(5).each_with_relations do |job|
           rels = [job.user, job.user.group, job.system, job.system.system_type]
           rels.each do |r|
             if relations.include?(r)

@@ -51,7 +51,7 @@ module Bookie
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
-        jobs.find_each do |job|
+        jobs.all.each do |job|
           num_jobs += 1
           job_start_time = job.start_time
           job_end_time = job.end_time
@@ -75,7 +75,7 @@ module Bookie
             end_time,
             start_time)
         end
-        systems.find_each do |system|
+        systems.all.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
           #Is there a date range constraint?
@@ -106,7 +106,7 @@ module Bookie
           groups = {}
           systems = {}
           system_types = {}
-          find_each do |job|
+          all.each do |job|
             system = systems[job.system_id]
             if system
               job.system = system

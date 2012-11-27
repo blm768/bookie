@@ -13,7 +13,7 @@ module Bookie
       def initialize(config)
         @config = config
         t = @config.system_type
-        require "bookie-client/senders/#{t}"
+        require "bookie/senders/#{t}"
         extend Bookie::Sender.const_get(t.camelize)
         #To do: ensure that all required methods were mixed in?
       end
