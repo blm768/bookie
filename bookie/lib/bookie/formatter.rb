@@ -25,13 +25,13 @@ module Bookie
           'CPU time', 'Memory usage', 'Exit code'
         ]
       
-      def print_summary(jobs, io)
-        summary = Bookie::Summary::summary(jobs)
+      def print_summary(jobs, io, start_time = nil, end_time = nil)
+        summary = jobs.summary(start_time, end_time)
         field_values = [
           summary[:jobs],
           Formatter.format_duration(summary[:wall_time]),
           Formatter.format_duration(summary[:cpu_time]),
-          summary[:success] * 100,
+          summary[:successful] * 100,
           Formatter.format_duration(summary[:total_cpu_time]),
           summary[:used_cpu_time] * 100,
         ]
@@ -48,7 +48,7 @@ module Bookie
       end
       
       def each_non_response_warning(systems)
-        systems.all.each do |system|
+        systems.all.git each do |system|
           job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
           if job == nil
             yield system.name, "No jobs on record"
@@ -65,7 +65,7 @@ module Bookie
           if memory_stat_type == :unknown
             memory_stat_type = nil
           else
-            memory_stat_type = "(#{memory_stat_type})"
+            memory_stat_type = " (#{memory_stat_type})"
           end
           yield [
             job.user.name,
@@ -76,7 +76,7 @@ module Bookie
             job.end_time,
             Formatter.format_duration(job.end_time - job.start_time),
             Formatter.format_duration(job.cpu_time),
-            "#{job.memory}kb #{memory_stat_type}",
+            "#{job.memory}kb#{memory_stat_type}",
             job.exit_code
           ]
         end

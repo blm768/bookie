@@ -95,7 +95,7 @@ module Bookie
           :cpu_time => cpu_time,
           :successful =>  if num_jobs == 0 then 0.0 else Float(successful_jobs) / num_jobs end,
           :total_cpu_time => total_cpu_time,
-          :used_cpu_time => if total_cpu_time == 0 then 0.0 else cpu_time / total_cpu_time end,
+          :used_cpu_time => if total_cpu_time == 0 then 0.0 else Float(cpu_time) / total_cpu_time end,
         }
       end
       
