@@ -3,16 +3,13 @@
 require 'optparse'
 
 #For development
-$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+$LOAD_PATH << 'lib'
 
-require 'bookie-client/client'
-
-#For development
-config = Bookie::Config.new('../snapshot/config.json')
-config.connect
+require 'bookie/formatter'
 
 jobs = Bookie::Database::Job
 
+config_file = '/etc/bookie/config.json'
 include_details = false
 
 output_type = :stdout
@@ -26,6 +23,10 @@ save_method = nil
 #Process arguments
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-data [options]"
+  
+  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
+    config_file = file
+  end
   
   opts.on('-d', '--details', "include full details") do
     include_details = true
@@ -78,13 +79,16 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-client = Bookie::Client::Client.new(config, output_type)
+config = Bookie::Config.new(config_file)
+config.connect
 
-#To do: ensure that the query isn't performed twice.
+formatter = Bookie::Formatter::Formatter.new(config, output_type)
+
+#To do: ensure that the query isn't performed twice?
 #To do: give summary info about start/end time constraints.
-client.print_summary(jobs, output_file)
-client.print_non_response_warnings(output_file)
-client.print_jobs(jobs, output_file) if include_details
+formatter.print_summary(jobs, output_file)
+formatter.print_non_response_warnings(output_file)
+formatter.print_jobs(jobs, output_file) if include_details
 
 if output_file
   output_file.send(save_method, filename) if save_method

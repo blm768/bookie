@@ -1,5 +1,5 @@
 module Bookie
-  module Client
+  module Formatter
     module Spreadsheet
       def do_print_summary(field_values, workbook)
         s = workbook.worksheet("Summary") || workbook.create_worksheet(:name => "Summary")
@@ -7,7 +7,7 @@ module Bookie
         start = s.last_row_index
         start += 2 if start > 0
         s.column(0).width = 20
-        Client::SUMMARY_FIELD_LABELS.each_with_index do |value, index|
+        Formatter::SUMMARY_FIELD_LABELS.each_with_index do |value, index|
           row = s.row(start + index) 
           row[0] = value
           row[1] = field_values[index]
@@ -20,8 +20,8 @@ module Bookie
         start = s.last_row_index
         start += 2 if start > 0
         #s.column(0).width = 20
-        s.row(start).concat(Client::DETAILS_FIELD_LABELS)
-        (0 .. (Client::DETAILS_FIELD_LABELS.length - 1)).step do |i|
+        s.row(start).concat(Formatter::DETAILS_FIELD_LABELS)
+        (0 .. (Formatter::DETAILS_FIELD_LABELS.length - 1)).step do |i|
           s.column(i).width = 20
         end
         

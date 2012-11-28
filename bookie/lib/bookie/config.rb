@@ -80,7 +80,7 @@ module Bookie
       raise "No database server specified" unless @server
       verify_type(@server, 'Server', String)
       @port = data['Port']
-      verify_type(@port, 'Port', Fixnum) unless @port == nil
+      verify_type(@port, 'Port', Integer) unless @port == nil
       
       @database = data['Database']
       raise 'No database specified' unless @database

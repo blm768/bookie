@@ -1,29 +1,29 @@
 #!/usr/bin/env ruby
 
 #For development
-$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+$LOAD_PATH << 'lib'
 
-require 'bookie-client'
+require 'optparse'
 
+require 'bookie/database'
+
+config_file = '/etc/bookie/config.json'
 drop = false
 
-def write_usage_and_exit
-  $stderr.puts "Usage: bookie-create-tables [--drop]"
-  exit 1
-end
-
-write_usage_and_exit if ARGV.length > 1
-
-if ARGV[0]
-  if ARGV[0] == '--drop'
+opts = OptionParser.new do |opts|
+  opts.banner = "To do: usage instructions"
+  
+  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
+    config_file = file
+  end
+  
+  opts.on("--drop", "drop all tables") do
     drop = true
-  else
-    write_usage_and_exit
   end
 end
+opts.parse!(ARGV)
 
-#For development
-config = Bookie::Config.new('snapshot/config.json')
+config = Bookie::Config.new(config_file)
 config.connect
 
 if drop

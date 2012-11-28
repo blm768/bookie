@@ -2,7 +2,10 @@
 
 require 'optparse'
 
-#To do: restore for production.
+#For testing:
+$LOAD_PATH << 'lib'
+
+#To do: restore for production?
 =begin
 unless Process.uid == 0
   $stderr.puts "This command must be run as root."
@@ -10,45 +13,38 @@ unless Process.uid == 0
 end
 =end
 
-#For development
-$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
+require 'bookie/sender'
 
-#For development
-ENV['TORQUEROOT'] = 'snapshot'
-
-require 'bookie-client/sender'
-
-#for development
-#config = Bookie::Config.new('/etc/bookie/config.json')
-config = Bookie::Config.new('snapshot/config.json')
-
-#For development
-config.excluded_users = Set.new([])
-
-config.connect
-
-#Process arguments.
-filename = ARGV[0]
-fail("No filename specified") unless filename && filename[0] != ?-
+config_file = '/etc/bookie/config.json'
 will_decommission = false
-system_hostname = config.hostname
-system_end_time = Time.new
+system_hostname = nil
+system_end_time = nil
 
 opts = OptionParser.new do |opts|
   opts.banner = "To do: usage instructions"
   
+  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
+    config_file = file
+  end
+  
   opts.on("--decommission [HOSTNAME] [TIME]",
   String, String,
-  "Decommission the system with the given hostname at the given time") do |hostname, time|
+  "Decommission the system with the given hostname, recording the given time as its end time") do |hostname, time|
     will_decommission = true
-    date = :flush
     system_hostname = hostname if hostname
     system_end_time = Time.parse(time) if time
   end
-  
-  config.parse_options(opts)
 end
 opts.parse!(ARGV)
+
+config = Bookie::Config.new(config_file)
+config.connect
+
+system_hostname ||= config.hostname
+system_end_time ||= Time.now
+
+filename = ARGV[0]
+fail("No filename specified") unless filename
 
 sender = Bookie::Sender::Sender.new(config)
 

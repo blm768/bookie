@@ -48,7 +48,7 @@ module Bookie
       end
       
       def each_non_response_warning(systems)
-        systems.all.git each do |system|
+        systems.all.each do |system|
           job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
           if job == nil
             yield system.name, "No jobs on record"

@@ -1,9 +1,9 @@
 module Bookie
-  module Client
+  module Formatter
     module CommaDump
       def do_print_summary(field_values, file)
-        Client::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
-          if value.class == Float
+        Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
+          if value.is_a?(Float)
             value = '%.2f' % value
             value << "%" if label[0] == "%"
           end
@@ -12,7 +12,7 @@ module Bookie
       end
       
       def do_print_jobs(jobs, file)
-        file.puts Client::DETAILS_FIELD_LABELS.join(', ')
+        file.puts Formatter::DETAILS_FIELD_LABELS.join(', ')
         fields_for_each_job(jobs) do |fields|
           file.puts fields.join(', ')
         end
