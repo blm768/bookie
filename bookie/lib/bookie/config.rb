@@ -96,7 +96,6 @@ module Bookie
       verify_type(excluded_users_array, 'Excluded users', Array)
       @excluded_users = Set.new(excluded_users_array)
       
-      #To do: unit tests
       @system_type = data['System type']
       raise 'No system type specified' unless @system_type
       verify_type(@system_type, 'System type', String)
@@ -124,9 +123,8 @@ module Bookie
     
     #Connects to the database specified in the configuration file
     def connect()
-      #To do: this is deprecated; find alternative?
-      #ActiveRecord.colorize_logging = false
-      #To do: create config option for this?
+      #To consider: disable colorized logging?
+      #To consider: create config option for this?
       #ActiveRecord::Base.logger = Logger.new(STDERR)
       #ActiveRecord::Base.logger.level = Logger::WARN
       ActiveRecord::Base.time_zone_aware_attributes = true

@@ -79,7 +79,7 @@ module Bookie
         #Find all the systems within the time range.
         systems = Bookie::Database::System
         if start_time
-          #To do: optimize as union of queries?
+          #To consider: optimize as union of queries?
           systems = systems.where(
             'start_time < ? AND (end_time IS NULL OR end_time > ?)',
             end_time,
@@ -109,7 +109,7 @@ module Bookie
         }
       end
       
-      #To do: define this in other classes as well?
+      #To consider: define this in other classes as well?
       def self.each_with_relations
         transaction do
           users = {}
@@ -250,13 +250,13 @@ module Bookie
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
       def memory_stat_type
-        #To do: optimize?
         return MEMORY_STAT_TYPE[read_attribute(:memory_stat_type)]
       end
       
       def memory_stat_type=(type)
-        #To do: check for invalid types?
-        write_attribute(:memory_stat_type, MEMORY_STAT_TYPE[type])
+        type_code = MEMORY_STAT_TYPE[type]
+        raise "Unknown memory stat type #{type}" unless type_code
+        write_attribute(:memory_stat_type, type_code)
       end
     end
   
@@ -295,18 +295,18 @@ module Bookie
       def up
         create_table :systems do |t|
           t.string :name, :null => false
-          #A 1-byte integer (hopefully)
           t.references :system_type, :null => false
           t.datetime :start_time, :null => false
           t.datetime :end_time
-          #To do: determine correct type sizes.
           t.integer :cores, :null => false
-          t.integer :memory, :null => false
+          #To consider: replace with a float? (more compact)
+          t.integer :memory, :null => false, :limit => 8
         end
         change_table :systems do |t|
-          t.index [:name, :system_type_id, :cores, :start_time], :unique => true, :name => 'identity'
-          #To do: include name here?
-          t.index [:end_time]
+          t.index :name
+          t.index :start_time
+          t.index :end_time
+          t.index :system_type_id
         end
       end
       
