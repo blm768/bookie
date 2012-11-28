@@ -129,6 +129,8 @@ module Bookie
       #To do: create config option for this?
       #ActiveRecord::Base.logger = Logger.new(STDERR)
       #ActiveRecord::Base.logger.level = Logger::WARN
+      ActiveRecord::Base.time_zone_aware_attributes = true
+      ActiveRecord::Base.default_timezone = :utc
       ActiveRecord::Base.establish_connection(
         :adapter  => self.db_type,
         :database => self.database,
