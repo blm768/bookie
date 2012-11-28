@@ -72,15 +72,16 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
     
-    #To do: expand.
     it "correctly filters by system type" do
       sys_type = Bookie::Database::SystemType.find_by_name('Standalone')
+      jobs = @jobs.by_system_type(sys_type)
+      jobs.length.should eql 20
+      sys_type = Bookie::Database::SystemType.find_by_name('TORQUE cluster')
       jobs = @jobs.by_system_type(sys_type)
       jobs.length.should eql 20
     end
     
     it "correctly filters by start time" do
-      #To do: expand tests?
       jobs = @jobs.by_start_time_range(@base_time, @base_time + 3600 * 2 + 1)
       jobs.length.should eql 3
       jobs = @jobs.by_start_time_range(@base_time + 1, @base_time + 3600 * 2)
@@ -90,7 +91,6 @@ describe Bookie::Database do
     end
     
     it "correctly filters by end time" do
-      #To do: expand tests?
       jobs = @jobs.by_end_time_range(@base_time, @base_time + 3600 * 2 + 1)
       jobs.length.should eql 2
       jobs = @jobs.by_end_time_range(@base_time + 1, @base_time + 3600 * 2)
@@ -99,8 +99,16 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
     
+    it "correctly filters by inclusive time range" do
+      jobs = @jobs.by_time_range_inclusive(@base_time, @base_time + 3600 * 2 + 1)
+      jobs.length.should eql 3
+      jobs = @jobs.by_time_range_inclusive(@base_time + 1, @base_time + 3600 * 2 - 1)
+      jobs.length.should eql 2
+      jobs = @jobs.by_time_range_inclusive(Time.at(0), Time.at(3))
+      jobs.length.should eql 0
+    end
+    
     it "correctly chains filters" do
-      #To do: expand tests?
       jobs = @jobs.by_user_name("test")
       jobs = jobs.by_start_time_range(@base_time + 3600, @base_time + 3601)
       jobs.length.should eql 1

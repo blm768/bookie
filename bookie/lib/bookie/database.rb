@@ -40,12 +40,16 @@ module Bookie
         where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
-      #Should probably not be used with by_(start/end)_time_range
+      def self.by_time_range_inclusive(min, max)
+        where('start_time < ? AND end_time > ?', max, min)
+      end
+      
+      #Should probably not be used with queries that filter by start/end time
       def self.summary(start_time = nil, end_time = nil)
         jobs = self
         if start_time
           raise ArgumentError.new('End time must be specified with start time') unless end_time
-          jobs = where('start_time < ? AND end_time > ?', end_time, start_time)
+          jobs = jobs.by_time_range_inclusive(start_time, end_time)
         end
         num_jobs = 0
         wall_time = 0
