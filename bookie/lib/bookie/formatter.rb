@@ -43,12 +43,11 @@ module Bookie
       end
       
       def print_non_response_warnings(io)
-        systems = Bookie::Database::System.where('end_time IS NULL')
-        do_print_non_response_warnings(systems, io)
+        do_print_non_response_warnings(Bookie::Database::System, io)
       end
       
       def each_non_response_warning(systems)
-        systems.all.each do |system|
+        systems.active_systems.all.each do |system|
           job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
           if job == nil
             yield system.name, "No jobs on record"

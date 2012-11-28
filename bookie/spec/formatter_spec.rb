@@ -63,11 +63,31 @@ describe Bookie::Formatter::Formatter do
       '00:08:20',
       60.0,
     ]
-    $field_values[4].should match /[\d]{2,}:[\d]{2}:[\d]{2}/
+    $field_values[4].should match /^[\d]{2,}:[\d]{2}:[\d]{2}$/
   end
   
-  it "passes print_jobs to do_print_jobs" do
+  it "forwards print_jobs to do_print_jobs" do
     @formatter.expects(:do_print_jobs)
     @formatter.print_jobs(nil, nil)
+  end
+  
+  it "produces correct non-response warnings" do
+    Time.expects(:now).returns(Time.local(2013)).at_least_once
+    count = 0
+    @formatter.each_non_response_warning(Bookie::Database::System) do |system, warning|
+      warning.should match /^No jobs on record since [\d]{2,}-[\d]{2}-[\d]{2}$/
+      count += 1
+    end
+    count.should eql 3
+    #Simulates the case where a system has no jobs recorded
+    Bookie::Database::Job.any_instance.expects(:"==").with(nil).returns(true).at_least_once
+    @formatter.each_non_response_warning(Bookie::Database::System) do |system, warning|
+      warning.should eql 'No jobs on record'
+    end
+  end
+  
+  it "forwards print_non_response_warnings do do_print_non_response_warnings" do
+    @formatter.expects(:do_print_non_response_warnings).with(Bookie::Database::System, nil)
+    @formatter.print_non_response_warnings(nil)
   end
 end

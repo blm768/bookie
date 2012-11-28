@@ -47,9 +47,11 @@ describe Bookie::Config do
     Bookie::Config.new('snapshot/default.json')
   end
   
-  it "attempts to connect to the database" do
+  it "configures and connects to the database" do
     config = Bookie::Config.new('snapshot/test_config.json')
     ActiveRecord::Base.expects(:establish_connection)
     config.connect
+    ActiveRecord::Base.time_zone_aware_attributes.should eql true
+    ActiveRecord::Base.default_timezone.should eql :utc
   end
 end
