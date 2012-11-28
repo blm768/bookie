@@ -55,6 +55,10 @@ module Bookie
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
+        #To consider: job.end_time should be <= Time.now, but it might be good to check for that.
+        #Maybe in a database consistency checker tool?
+        #What if the system clock is off?
+        #Also consider a check for system start times.
         jobs.all.each do |job|
           num_jobs += 1
           job_start_time = job.start_time

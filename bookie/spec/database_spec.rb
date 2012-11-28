@@ -133,6 +133,7 @@ describe Bookie::Database do
     
     describe :summary do
       before(:all) do
+        Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
         @base_time = Time.local(2012)
         @jobs = Bookie::Database::Job
         @summary = @jobs.summary
@@ -146,7 +147,6 @@ describe Bookie::Database do
         @summary_empty = @jobs.summary(Time.at(0), Time.at(0))
       end
       
-      #To do: include available wall time for unbounded queries
       it "produces correct totals for jobs" do
         @summary[:jobs].should eql @length
         @summary[:wall_time].should eql @length * 3600
@@ -163,8 +163,15 @@ describe Bookie::Database do
       end
       
       it "produces correct totals for systems" do
+        @summary[:total_cpu_time].should eql 3600 * (10 + 30 + 20 + 10) * 2
         @summary_1[:total_cpu_time].should eql 3600 * (10 + 30 + 20 + 10) * 2
         @summary_clipped[:total_cpu_time].should eql((3600 * (10 + 15 + 5) - 1800) * 2)
+      end
+      
+      it "produces correct usage percentages" do
+        [@summary, @summary_1, @summary_clipped].each do |summary|
+          summary[:used_cpu_time].should eql Float(summary[:cpu_time]) / summary[:total_cpu_time]
+        end
       end
       
       it "correctly handles summaries that contain no jobs" do

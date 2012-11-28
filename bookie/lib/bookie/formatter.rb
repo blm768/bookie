@@ -8,8 +8,10 @@ module Bookie
     class Formatter
       def initialize(config, formatter)
         @config = config
+        #Needed for symbol arguments
+        formatter = formatter.to_s
         require "bookie/formatters/#{formatter}"
-        extend Bookie::Formatter.const_get(formatter.to_s.camelize)
+        extend Bookie::Formatter.const_get(formatter.camelize)
       end
       
       SUMMARY_FIELD_LABELS = [
