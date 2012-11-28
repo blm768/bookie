@@ -20,6 +20,9 @@ output_file = STDOUT
 #Usually nil
 save_method = nil
 
+t_min = nil
+t_max = nil
+
 #Process arguments
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-data [options]"
@@ -49,10 +52,9 @@ opts = OptionParser.new do |opts|
     jobs = jobs.by_system_type(type)
   end
   
-  opts.on('-b', '--start-time BEGIN END', "filter by start time") do |t_begin, t_end|
-    t_begin = Time.parse(t_begin)
-    t_end = Time.parse(t_end)
-    jobs = jobs.by_start_time_range(t_begin, t_end)
+  opts.on('-r', '--time BEGIN END', "filter by a time range") do |t_begin, t_end|
+    t_min = Time.parse(t_begin)
+    t_max = Time.parse(t_end)
   end
   
   opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME") do |output_filename|
@@ -85,9 +87,9 @@ config.connect
 formatter = Bookie::Formatter::Formatter.new(config, output_type)
 
 #To do: ensure that the query isn't performed twice?
-#To do: give summary info about start/end time constraints.
-formatter.print_summary(jobs, output_file)
+formatter.print_summary(jobs, output_file, t_min, t_max)
 formatter.print_non_response_warnings(output_file)
+jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
 formatter.print_jobs(jobs, output_file) if include_details
 
 if output_file

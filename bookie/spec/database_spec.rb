@@ -146,6 +146,7 @@ describe Bookie::Database do
         @summary_empty = @jobs.summary(Time.at(0), Time.at(0))
       end
       
+      #To do: include available wall time for unbounded queries
       it "produces correct totals for jobs" do
         @summary[:jobs].should eql @length
         @summary[:wall_time].should eql @length * 3600
@@ -175,6 +176,19 @@ describe Bookie::Database do
             :total_cpu_time => 0,
             :used_cpu_time => 0.0
           })
+      end
+      
+      it "correctly handles jobs with zero wall time" do
+        job = @jobs.order(:start_time).first
+        wall_time = job.wall_time
+        begin
+          job.wall_time = 0
+          job.save!
+          @jobs.order(:start_time).limit(1).summary[:wall_time].should eql 0
+        ensure
+          job.wall_time = wall_time
+          job.save!
+        end
       end
     end
   end

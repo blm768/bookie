@@ -65,7 +65,9 @@ module Bookie
           end
           clipped_wall_time = job_end_time.to_i - job_start_time.to_i
           wall_time += clipped_wall_time
-          cpu_time += Integer(job.cpu_time * clipped_wall_time / job.wall_time)
+          if job.wall_time != 0
+            cpu_time += Integer(job.cpu_time * clipped_wall_time / job.wall_time)
+          end
           successful_jobs += 1 if job.exit_code == 0
         end
         
