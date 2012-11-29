@@ -24,14 +24,16 @@ describe Bookie::Formatter::Stdout do
     m = IOMock.new
     @formatter.print_jobs(@jobs.order(:start_time).limit(2), m)
     m.buf.should eql \
-      "User            Group           System               System type          Start time                 End time" + 
-      "                   Wall time    CPU time     Memory usage         Exit code  \n------------------------------" + 
-      "-------------------------------------------------------------------------------------------------------------" + 
-      "-----------------------------------------------\nroot            root            test1                Standal" + 
-      "one           2012-01-01 08:00:00 UTC    2012-01-01 09:00:00 UTC    01:00:00     00:01:40     1024kb (avg)   " +
-      "      0          \ntest            default         test1                Standalone           2012-01-01 09:00" +
-      ":00 UTC    2012-01-01 10:00:00 UTC    01:00:00     00:01:40     2048kb (avg)         1          \n"
-
+      "User            Group           System               System type          Start " +
+      "time                 End time                   Wall time    CPU time     Memory" +
+      " usage         Exit code  \n----------------------------------------------------" +
+      "--------------------------------------------------------------------------------" +
+      "------------------------------------------------------\nroot            root    " +
+      "        test1                Standalone           2012-01-01 00:00:00        201" +
+      "2-01-01 01:00:00        01:00:00     00:01:40     1024kb (avg)         0        " +
+      "  \ntest            default         test1                Standalone           20" +
+      "12-01-01 01:00:00        2012-01-01 02:00:00        01:00:00     00:01:40     20" +
+      "48kb (avg)         1          \n"
   end
   
   it "correctly formats summaries" do
@@ -52,9 +54,9 @@ eos
     m = IOMock.new
     @formatter.print_non_response_warnings(m)
     m.buf.should eql <<-eos
-Warning: No jobs on record since 2012-01-02 for test1
+Warning: No jobs on record since 2012-01-01 for test1
 Warning: No jobs on record since 2012-01-02 for test2
-Warning: No jobs on record since 2012-01-03 for test3
+Warning: No jobs on record since 2012-01-02 for test3
 eos
   end
 end

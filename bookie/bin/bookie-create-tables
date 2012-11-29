@@ -11,7 +11,7 @@ config_file = '/etc/bookie/config.json'
 drop = false
 
 opts = OptionParser.new do |opts|
-  opts.banner = "To do: usage instructions"
+  opts.banner = "bookie-create-tables [options]"
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
     config_file = file
@@ -21,7 +21,13 @@ opts = OptionParser.new do |opts|
     drop = true
   end
 end
-opts.parse!(ARGV)
+begin
+  opts.parse!(ARGV)
+rescue OptionParser::ParseError => e
+  puts e.message
+  puts opts
+  exit 1
+end
 
 config = Bookie::Config.new(config_file)
 config.connect

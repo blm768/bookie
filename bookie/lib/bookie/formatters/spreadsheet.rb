@@ -1,3 +1,5 @@
+require 'spreadsheet'
+
 module Bookie
   module Formatter
     module Spreadsheet
@@ -5,7 +7,11 @@ module Bookie
         s = workbook.worksheet("Summary") || workbook.create_worksheet(:name => "Summary")
           
         start = s.last_row_index
-        start += 2 if start > 0
+        if start == -1
+          start = 0
+        else
+          start += 2
+        end
         s.column(0).width = 20
         Formatter::SUMMARY_FIELD_LABELS.each_with_index do |value, index|
           row = s.row(start + index) 
@@ -18,8 +24,11 @@ module Bookie
         s = workbook.worksheet("Details") || workbook.create_worksheet(:name => "Details")
             
         start = s.last_row_index
-        start += 2 if start > 0
-        #s.column(0).width = 20
+        if start == -1
+          start = 0
+        else
+          start += 2
+        end
         s.row(start).concat(Formatter::DETAILS_FIELD_LABELS)
         (0 .. (Formatter::DETAILS_FIELD_LABELS.length - 1)).step do |i|
           s.column(i).width = 20
@@ -36,12 +45,16 @@ module Bookie
         s = workbook.worksheet("Warnings") || workbook.create_worksheet(:name => "Warnings")
             
         start = s.last_row_index
-        start += 2 if start > 0
+        if start == -1
+          start = 0
+        else
+          start += 2
+        end
         
-        index = start + 1
+        index = start
         each_non_response_warning(systems) do |system_name, warning|
           s.row(index).concat([system_name, warning])
-          ++index
+          index += 1
         end
       end
     end

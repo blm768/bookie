@@ -2,7 +2,7 @@
 
 require 'optparse'
 
-#For testing:
+#For development:
 $LOAD_PATH << 'lib'
 
 #To do: restore for production?
@@ -21,7 +21,7 @@ system_hostname = nil
 system_end_time = nil
 
 opts = OptionParser.new do |opts|
-  opts.banner = "To do: usage instructions"
+  opts.banner = "Usage: bookie-send [data-file] [options]"
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
     config_file = file
@@ -35,7 +35,13 @@ opts = OptionParser.new do |opts|
     system_end_time = Time.parse(time) if time
   end
 end
-opts.parse!(ARGV)
+begin
+  opts.parse!(ARGV)
+rescue OptionParser::ParseError => e
+  puts e.message
+  puts opts
+  exit 1
+end
 
 config = Bookie::Config.new(config_file)
 config.connect
@@ -44,14 +50,18 @@ system_hostname ||= config.hostname
 system_end_time ||= Time.now
 
 filename = ARGV[0]
-fail("No filename specified") unless filename
+fail("No operation specified") unless filename || will_decommission
 
-sender = Bookie::Sender::Sender.new(config)
+if filename
+  sender = Bookie::Sender::Sender.new(config)
+  sender.send_data(filename)
+end
 
-sender.send_data(filename)
-  if will_decommission
+if will_decommission
   system = Bookie::Database::System.lock.active.find_by_name(system_hostname)
   if system
+    #To do: warn if no file specified? (Entries that haven't been sent might be lost.)
+    #To do: ask for verification?
     system.decommission(system_end_time)
   else
     stderr.puts "No active system with hostname #{system_hostname}"

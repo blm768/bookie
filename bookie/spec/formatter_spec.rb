@@ -35,8 +35,8 @@ describe Bookie::Formatter::Formatter do
           'root',
           'test1',
           'Standalone',
-          Time.local(2012),
-          Time.local(2012) + 3600,
+          "2012-01-01 00:00:00",
+          "2012-01-01 01:00:00",
           '01:00:00',
           '00:01:40',
           '1024kb (avg)',
@@ -75,7 +75,8 @@ describe Bookie::Formatter::Formatter do
     Time.expects(:now).returns(Time.local(2013)).at_least_once
     count = 0
     @formatter.each_non_response_warning(Bookie::Database::System) do |system, warning|
-      warning.should match /^No jobs on record since [\d]{2,}-[\d]{2}-[\d]{2}$/
+      #Nasty, compressed expression to get the right date; only works for these 3 systems.
+      warning.should eql "No jobs on record since 2012-01-0#{[2, count + 1].min}"
       count += 1
     end
     count.should eql 3

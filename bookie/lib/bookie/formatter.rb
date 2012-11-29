@@ -54,7 +54,7 @@ module Bookie
           if job == nil
             yield system.name, "No jobs on record"
           elsif Time.now - job.end_time > @config.maximum_idle * 3600 * 24
-            yield system.name, "No jobs on record since #{job.end_time.to_date}"
+            yield system.name, "No jobs on record since #{job.end_time.getlocal.to_date}"
           end
         end
       end
@@ -64,7 +64,7 @@ module Bookie
           #To do: optimize?
           memory_stat_type = job.system.system_type.memory_stat_type
           if memory_stat_type == :unknown
-            memory_stat_type = nil
+            memory_stat_type = ''
           else
             memory_stat_type = " (#{memory_stat_type})"
           end
@@ -73,8 +73,8 @@ module Bookie
             job.user.group.name,
             job.system.name,
             job.system.system_type.name,
-            job.start_time,
-            job.end_time,
+            job.start_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
+            job.end_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
             Formatter.format_duration(job.end_time - job.start_time),
             Formatter.format_duration(job.cpu_time),
             "#{job.memory}kb#{memory_stat_type}",
