@@ -166,7 +166,7 @@ module Bookie
     class Group < ActiveRecord::Base
       has_many :users
       
-      def self.find_or_create(name, known_groups = nil)
+      def self.find_or_create!(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
           transaction do
@@ -185,7 +185,7 @@ module Bookie
     class User < ActiveRecord::Base
       belongs_to :group
       
-      def self.find_or_create(name, group, known_users = nil)
+      def self.find_or_create!(name, group, known_users = nil)
         #Determine if the user/group pair must be added to/retrieved from the database.
         user = known_users[[name, group]] if known_users
         unless user
@@ -235,7 +235,7 @@ module Bookie
       
       validates_presence_of :name, :memory_stat_type
       
-      def self.find_or_create(name, memory_stat_type)
+      def self.find_or_create!(name, memory_stat_type)
         sys_type = nil
         #To do: better assurance of correctness under concurrency
         #To do: handle name conflicts?
@@ -303,7 +303,7 @@ module Bookie
           t.integer :memory, :null => false, :limit => 8
         end
         change_table :systems do |t|
-          t.index :name
+          t.index [:name, :end_time], :unique => true
           t.index :start_time
           t.index :end_time
           t.index :system_type_id

@@ -208,14 +208,14 @@ describe Bookie::Database do
       
       it "creates the user if needed" do
         Bookie::Database::User.expects(:"create!").twice
-        user = Bookie::Database::User.find_or_create('me', @group)
-        user = Bookie::Database::User.find_or_create('me', @group, {})
+        user = Bookie::Database::User.find_or_create!('me', @group)
+        user = Bookie::Database::User.find_or_create!('me', @group, {})
       end
       
       it "returns the cached user if one exists" do
         user = Bookie::Database::User.find_by_name('root')
         known_users = {['root', user.group] => user}
-        Bookie::Database::User.find_or_create('root', user.group, known_users).should equal user
+        Bookie::Database::User.find_or_create!('root', user.group, known_users).should equal user
       end
       
       it "queries the database when this user is not cached" do
@@ -223,8 +223,8 @@ describe Bookie::Database do
         known_users = {}
         Bookie::Database::User.expects(:find_by_name_and_group_id).returns(user).twice
         Bookie::Database::User.expects(:"create!").never
-        Bookie::Database::User.find_or_create('root', user.group, known_users).should eql user
-        Bookie::Database::User.find_or_create('root', user.group, nil).should eql user
+        Bookie::Database::User.find_or_create!('root', user.group, known_users).should eql user
+        Bookie::Database::User.find_or_create!('root', user.group, nil).should eql user
         known_users.should include ['root', user.group]
       end
     end
@@ -234,13 +234,13 @@ describe Bookie::Database do
     describe :find_or_create do
       it "creates the group if needed" do
         Bookie::Database::Group.expects(:"create!")
-        Bookie::Database::Group.find_or_create('non_root')
+        Bookie::Database::Group.find_or_create!('non_root')
       end
       
       it "returns the cached group if one exists" do
         group = Bookie::Database::Group.find_by_name('root')
         known_groups = {'root' => group}
-        Bookie::Database::Group.find_or_create('root', known_groups).should equal group
+        Bookie::Database::Group.find_or_create!('root', known_groups).should equal group
       end
       
       it "queries the database when this group is not cached" do
@@ -248,8 +248,8 @@ describe Bookie::Database do
         known_groups = {}
         Bookie::Database::Group.expects(:find_by_name).returns(group).twice
         Bookie::Database::Group.expects(:"create!").never
-        Bookie::Database::Group.find_or_create('root', known_groups).should eql group
-        Bookie::Database::Group.find_or_create('root', nil).should eql group
+        Bookie::Database::Group.find_or_create!('root', known_groups).should eql group
+        Bookie::Database::Group.find_or_create!('root', nil).should eql group
         known_groups.should include 'root'
       end
     end
@@ -265,6 +265,8 @@ describe Bookie::Database do
       Bookie::Database::System.by_name('test2').length.should eql 1
       Bookie::Database::System.by_name('test3').length.should eql 1
     end
+    
+    it "creates systems if needed"
     
     it "correctly decommissions" do
       sys = Bookie::Database::System.active_systems.find_by_name('test1')

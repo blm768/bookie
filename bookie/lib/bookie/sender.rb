@@ -8,7 +8,7 @@ module Bookie
   module Sender
     #An object that sends data to the server
     class Sender
-      SystemConflictError = Class.new(Error)
+      SystemConflictError = Class.new(RuntimeError)
     
       #==Parameters
       #* config: an instance of Bookie::Config
@@ -27,7 +27,7 @@ module Bookie
         system_type = self.system_type
         #Make sure this machine is in the database.
         #To do: concurrency control
-        system = Bookie::Database::System.by_name(hostname).active_systems.first
+        system = Bookie::Database::System.active_systems.find_by_name(hostname)
         #Verify that this system's specs match those on file.
         if system
           unless system.name == hostname && system.system_type == system_type && system.cores == @config.cores && system.memory == @config.memory
@@ -36,11 +36,10 @@ module Bookie
   Please make sure that all previous systems with this hostname have been marked as decommissioned.")
           end
         else
-          #If the system doesn't exist, create it.
           system = Bookie::Database::System.create!(
             :name => hostname,
             :system_type => system_type,
-            :start_time => Time.now.utc,
+            :start_time => Time.now,
             :cores => @config.cores,
             :memory => @config.memory)
         end
@@ -69,9 +68,9 @@ module Bookie
           next if filtered?(job)
           db_job = job.to_model
           #Determine if the user/group pair must be added to/retrieved from the database.
-          user = Bookie::Database::User.find_or_create(
+          user = Bookie::Database::User.find_or_create!(
             job.user_name,
-            Bookie::Database::Group.find_or_create(job.group_name, known_groups),
+            Bookie::Database::Group.find_or_create!(job.group_name, known_groups),
             known_users)
           db_job.system = system
           db_job.user = user
@@ -81,7 +80,7 @@ module Bookie
       
       #To do: check for name collision issues?
       def system_type
-        Bookie::Database::SystemType.find_or_create(system_type_name, memory_stat_type)
+        Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
       end
       
       #Filters a job to see if it should be included in the final output

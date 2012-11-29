@@ -38,7 +38,7 @@ describe Bookie::Formatter::Stdout do
     m = IOMock.new
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
     @formatter.print_summary(@jobs.order(:start_time).limit(1), m)
-    m.buf.should eql <<eos
+    m.buf.should eql <<-eos
 Number of jobs:     1
 Total wall time:    01:00:00
 Total CPU time:     00:01:40
@@ -51,7 +51,7 @@ eos
   it "correctly formats non-response warnings" do
     m = IOMock.new
     @formatter.print_non_response_warnings(m)
-    m.buf.should eql <<eos
+    m.buf.should eql <<-eos
 Warning: No jobs on record since 2012-01-02 for test1
 Warning: No jobs on record since 2012-01-02 for test2
 Warning: No jobs on record since 2012-01-03 for test3
