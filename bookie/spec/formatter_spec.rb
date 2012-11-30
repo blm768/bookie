@@ -56,14 +56,16 @@ describe Bookie::Formatter::Formatter do
   end
   
   it "prints the correct summary fields" do
+    Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
     @formatter.print_summary(@jobs.limit(5), nil)
-    $field_values[0 .. 3].should eql [
-      5,
-      '05:00:00',
-      '00:08:20',
-      60.0,
-    ]
-    $field_values[4].should match /^[\d]{2,}:[\d]{2}:[\d]{2}$/
+    $field_values.should eql [5, "05:00:00", "00:08:20", "60.00%", "140:00:00", "0.10%", "1750000 kb", "0.00%"]
+    Bookie::Database::System.expects(:summary).returns(
+      :avail_cpu_time => 0,
+      :avail_memory_time => 0,
+      :avail_memory_avg => 0
+    )
+    @formatter.print_summary(@jobs.limit(0), nil)
+    $field_values.should eql [0, "00:00:00", "00:00:00", "0.00%", "00:00:00", "0.00%", "0 kb", "0.00%"]
   end
   
   it "forwards print_jobs to do_print_jobs" do

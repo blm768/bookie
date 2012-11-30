@@ -18,11 +18,11 @@ module Bookie
           "Number of jobs",
           "Total wall time",
           "Total CPU time",
-          "% Successful",
+          "Successful",
           "Available CPU time",
-          "% CPU time used",
+          "CPU time used",
           "Available memory (average)",
-          "% memory used (average)",
+          "Memory used (average)",
         ]
         DETAILS_FIELD_LABELS = [
           'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
@@ -40,11 +40,11 @@ module Bookie
           jobs_summary[:jobs],
           Formatter.format_duration(jobs_summary[:wall_time]),
           Formatter.format_duration(cpu_time),
-          jobs_summary[:successful] * 100,
+          '%.2f%%' % (jobs_summary[:successful] * 100),
           Formatter.format_duration(systems_summary[:avail_cpu_time]),
-          if avail_cpu_time == 0 then 0.0 else Float(cpu_time) / avail_cpu_time * 100 end,
-          nil,
-          if avail_memory_time == 0 then 0.0 else Float(memory_time) / avail_memory_time * 100 end
+          if avail_cpu_time == 0 then '0.00%' else '%.2f%%' % (Float(cpu_time) / avail_cpu_time * 100) end,
+          "#{Integer(systems_summary[:avail_memory_avg])} kb",
+          if avail_memory_time == 0 then '0.00%' else '%.2f%%' % (Float(memory_time) / avail_memory_time * 100) end
         ]
         do_print_summary(field_values, io)
       end

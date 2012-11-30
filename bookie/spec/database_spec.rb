@@ -277,16 +277,19 @@ describe Bookie::Database do
         @base_time = Time.local(2012)
         @systems = Bookie::Database::System
         @summary = Helpers::create_summaries(@systems, Time.local(2012))
-        @summary_wide = @systems.summary(Time.local(2012) - 100, Time.local(2012) + 3600 * 40 + 100)
+        @summary_wide = @systems.summary(Time.local(2012) - 100, Time.local(2012) + 3600 * 40 + 3600)
       end
       
       it "produces correct summaries" do
         system_total_wall_time = 3600 * (10 + 30 + 20 + 10)
         system_clipped_wall_time = 3600 * (10 + 15 + 5) - 1800
+        system_wide_wall_time = system_total_wall_time + 3600 * 3
         system_total_cpu_time = system_total_wall_time * 2
         clipped_cpu_time = system_clipped_wall_time * 2
+        system_wide_cpu_time = system_wide_wall_time * 2
         avg_mem = Float(1000000 * system_total_wall_time / (3600 * 40))
         clipped_avg_mem = Float(1000000 * system_clipped_wall_time / (3600 * 25))
+        wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 41)
         @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all][:avail_memory_avg].should eql avg_mem
@@ -296,6 +299,9 @@ describe Bookie::Database do
         @summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
         @summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000
         @summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
+        @summary_wide[:avail_cpu_time].should eql system_wide_cpu_time
+        @summary_wide[:avail_memory_time].should eql 1000000 * system_wide_wall_time
+        @summary_wide[:avail_memory_avg].should eql wide_avg_mem
         @summary[:empty][:avail_cpu_time].should eql 0
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0
