@@ -39,7 +39,7 @@ describe Bookie::Formatter::Formatter do
           "2012-01-01 01:00:00",
           '01:00:00',
           '00:01:40',
-          '1024kb (avg)',
+          '200kb (avg)',
           0,
         ]
     end
@@ -51,7 +51,7 @@ describe Bookie::Formatter::Formatter do
       end
     end
     @formatter.send(:fields_for_each_job, JobsMock) do |fields|
-      fields[8].should eql '1024kb'
+      fields[8].should eql '200kb'
     end
   end
   

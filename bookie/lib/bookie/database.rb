@@ -40,8 +40,9 @@ module Bookie
         where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
-      def self.by_time_range_inclusive(min, max)
-        where('start_time < ? AND end_time > ?', max, min)
+      def self.by_time_range_inclusive(min_time, max_time)
+        raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
+        where('start_time < ? AND end_time > ?', max_time, min_time)
       end
       
       #Should probably not be used with queries that filter by start/end time
@@ -227,15 +228,15 @@ module Bookie
         if min_time
           #To do: unit test.
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
+          raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
           #To consider: optimize as union of queries?
           systems = systems.where(
             'start_time < ? AND (end_time IS NULL OR end_time > ?)',
             max_time,
             min_time)
         end
-        n = 0
+
         systems.all.each do |system|
-          n += 1
           system_start_time = system.start_time
           system_end_time = system.end_time
           #Is there a time range constraint?
@@ -251,9 +252,22 @@ module Bookie
           avail_memory_time += system.memory * system_wall_time
         end
         
+        wall_time_range = 0
+        first_started_system = systems.order(:start_time).first
+        if first_started_system
+          last_ended_system = systems.where('end_time IS NULL').first
+          if last_ended_system
+            wall_time_range = (max_time || Time.now) - first_started_system.start_time
+          else
+            last_ended_system = systems.order('end_time DESC').first
+            wall_time_range = last_ended_system.end_time - first_started_system.start_time
+          end
+        end
+          
         {
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
+          :avail_memory_avg => if wall_time_range == 0 then 0.0 else Float(avail_memory_time) / wall_time_range end,
         }
       end
       

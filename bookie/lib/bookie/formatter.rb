@@ -21,6 +21,8 @@ module Bookie
           "% Successful",
           "Available CPU time",
           "% CPU time used",
+          "Available memory (average)",
+          "% memory used (average)",
         ]
         DETAILS_FIELD_LABELS = [
           'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
@@ -28,14 +30,21 @@ module Bookie
         ]
       
       def print_summary(jobs, io, start_time = nil, end_time = nil)
-        summary = jobs.summary(start_time, end_time)
+        jobs_summary = jobs.summary(start_time, end_time)
+        systems_summary = Bookie::Database::System.summary(start_time, end_time)
+        cpu_time = jobs_summary[:cpu_time]
+        avail_cpu_time = systems_summary[:avail_cpu_time]
+        memory_time = jobs_summary[:memory_time]
+        avail_memory_time = systems_summary[:avail_memory_time]
         field_values = [
-          summary[:jobs],
-          Formatter.format_duration(summary[:wall_time]),
-          Formatter.format_duration(summary[:cpu_time]),
-          summary[:successful] * 100,
-          Formatter.format_duration(summary[:total_cpu_time]),
-          summary[:used_cpu_time] * 100,
+          jobs_summary[:jobs],
+          Formatter.format_duration(jobs_summary[:wall_time]),
+          Formatter.format_duration(cpu_time),
+          jobs_summary[:successful] * 100,
+          Formatter.format_duration(systems_summary[:avail_cpu_time]),
+          if avail_cpu_time == 0 then 0.0 else Float(cpu_time) / avail_cpu_time * 100 end,
+          nil,
+          if avail_memory_time == 0 then 0.0 else Float(memory_time) / avail_memory_time * 100 end
         ]
         do_print_summary(field_values, io)
       end
