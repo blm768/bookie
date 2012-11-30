@@ -45,16 +45,17 @@ module Bookie
       end
       
       #Should probably not be used with queries that filter by start/end time
-      def self.summary(start_time = nil, end_time = nil)
+      def self.summary(min_time = nil, max_time = nil)
         jobs = self
-        if start_time
-          raise ArgumentError.new('End time must be specified with start time') unless end_time
-          jobs = jobs.by_time_range_inclusive(start_time, end_time)
+        if min_time
+          raise ArgumentError.new('Max time must be specified with min time') unless max_time
+          jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
         num_jobs = 0
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
+        memory_time = 0
         #To consider: job.end_time should be <= Time.now, but it might be good to check for that.
         #Maybe in a database consistency checker tool?
         #What if the system clock is off?
@@ -63,49 +64,45 @@ module Bookie
           num_jobs += 1
           job_start_time = job.start_time
           job_end_time = job.end_time
-          if start_time
-            job_start_time = [job_start_time, start_time].max
-            job_end_time = [job_end_time, end_time].min
+          if min_time
+            job_start_time = [job_start_time, min_time].max
+            job_end_time = [job_end_time, max_time].min
           end
           clipped_wall_time = job_end_time.to_i - job_start_time.to_i
           wall_time += clipped_wall_time
           if job.wall_time != 0
-            cpu_time += Integer(job.cpu_time * clipped_wall_time / job.wall_time)
+            cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
+            #To consider: what should I do about jobs that only report a max memory value?
+            memory_time += job.memory * clipped_wall_time
           end
           successful_jobs += 1 if job.exit_code == 0
-        end
-        
-        total_cpu_time = 0
-        #Find all the systems within the time range.
-        systems = Bookie::Database::System
-        if start_time
-          #To consider: optimize as union of queries?
-          systems = systems.where(
-            'start_time < ? AND (end_time IS NULL OR end_time > ?)',
-            end_time,
-            start_time)
-        end
-        systems.all.each do |system|
-          system_start_time = system.start_time
-          system_end_time = system.end_time
-          #Is there a date range constraint?
-          if start_time
-            system_start_time = [system_start_time, start_time].max
-            system_end_time = [system_end_time, end_time].min if system.end_time
-            system_end_time ||= end_time
-          else
-            system_end_time ||= Time.now
-          end
-          total_cpu_time += system.cores * (system_end_time.to_i - system_start_time.to_i)
         end
       
         return {
           :jobs => num_jobs,
+          #To consider: is this field even useful? It's really in job-seconds, not just seconds.
+          #What about one in just seconds (that considers gaps in activity)?
           :wall_time => wall_time,
           :cpu_time => cpu_time,
+          :memory_time => memory_time,
           :successful =>  if num_jobs == 0 then 0.0 else Float(successful_jobs) / num_jobs end,
-          :total_cpu_time => total_cpu_time,
-          :used_cpu_time => if total_cpu_time == 0 then 0.0 else Float(cpu_time) / total_cpu_time end,
+        }
+      end
+      
+      #To do: pass summaries in to prevent duplication? Make summary method?
+      def load_summary(min_time, max_time)
+        s = summary(min_time, max_time)
+        s2 = System.summary(min_time, max_time)
+        
+        cpu_time = s[:cpu_time]
+        memory_time = s[:memory_time]
+        
+        avail_cpu_time = s2[:avail_cpu_time]
+        avail_memory_time = s2[:avail_memory_time]
+        
+        return {
+          :used_cpu_time => if avail_cpu_time == 0 then 0.0 else Float(cpu_time) / avail_cpu_time end,
+          :used_memory   => if avail_memory_time == 0 then 0.0 else Float(memory_time) / avail_memory_time end,
         }
       end
       
@@ -219,6 +216,45 @@ module Bookie
       
       def self.by_name(name)
         where('name = ?', name)
+      end
+      
+      def self.summary(min_time = nil, max_time = nil)
+        #Sums that are actually returned
+        avail_cpu_time = 0
+        avail_memory_time = 0
+        #Find all the systems within the time range.
+        systems = System
+        if min_time
+          #To do: unit test.
+          raise ArgumentError.new('Max time must be specified with min time') unless max_time
+          #To consider: optimize as union of queries?
+          systems = systems.where(
+            'start_time < ? AND (end_time IS NULL OR end_time > ?)',
+            max_time,
+            min_time)
+        end
+        n = 0
+        systems.all.each do |system|
+          n += 1
+          system_start_time = system.start_time
+          system_end_time = system.end_time
+          #Is there a time range constraint?
+          if min_time
+            system_start_time = [system_start_time, min_time].max
+            system_end_time = [system_end_time, max_time].min if system.end_time
+            system_end_time ||= max_time
+          else
+            system_end_time ||= Time.now
+          end
+          system_wall_time = system_end_time.to_i - system_start_time.to_i
+          avail_cpu_time += system.cores * system_wall_time
+          avail_memory_time += system.memory * system_wall_time
+        end
+        
+        {
+          :avail_cpu_time => avail_cpu_time,
+          :avail_memory_time => avail_memory_time,
+        }
       end
       
       def decommission(end_time)

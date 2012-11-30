@@ -101,7 +101,7 @@ module Helpers
       job.start_time = base_time + 3600 * i
       job.wall_time = 3600
       job.cpu_time = 100
-      job.memory = (i + 1) * 1024
+      job.memory = 200
       job.exit_code = i & 1
       job.save!
     end

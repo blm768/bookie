@@ -1,5 +1,20 @@
 require 'spec_helper'
 
+module Helpers
+  def self.create_summaries(obj, base_time)
+    start_time_1 = base_time
+    end_time_1   = base_time + 3600 * 40
+    start_time_2 = base_time + 1800
+    end_time_2 = base_time + (36000 * 2 + 18000)
+    {
+      :all => obj.summary,
+      :all_constrained => obj.summary(start_time_1, end_time_1),
+      :clipped => obj.summary(start_time_2, end_time_2),
+      :empty => obj.summary(Time.at(0), Time.at(0)),
+    }
+  end
+end
+
 describe Bookie::Database do
   before(:all) do
     unless @generated
@@ -36,7 +51,6 @@ describe Bookie::Database do
     it "correctly filters by user" do
       jobs = @jobs.by_user_name('root').all
       jobs.length.should eql 10
-      jobs[0].memory.should eql 1024
       jobs[0].user.name.should eql "root"
       jobs = @jobs.by_user_name('test').order(:end_time).all
       jobs.length.should eql 20
@@ -136,52 +150,43 @@ describe Bookie::Database do
         Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
         @base_time = Time.local(2012)
         @jobs = Bookie::Database::Job
-        @summary = @jobs.summary
         @length = @jobs.all.length
-        start_time_1 = @base_time
-        end_time_1   = @base_time + 3600 * 40
-        @summary_1 = @jobs.summary(start_time_1, end_time_1)
-        start_time_2 = @base_time + 1800
-        end_time_2 = @base_time + (36000 * 2 + 18000)
-        @summary_clipped = @jobs.summary(start_time_2, end_time_2)
-        @summary_empty = @jobs.summary(Time.at(0), Time.at(0))
+        @summary = Helpers::create_summaries(@jobs, Time.local(2012))
       end
       
-      it "produces correct totals for jobs" do
-        @summary[:jobs].should eql @length
-        @summary[:wall_time].should eql @length * 3600
-        @summary[:cpu_time].should eql @length * 100
-        @summary[:successful].should eql 0.5
-        @summary_1[:jobs].should eql @length
-        @summary_1[:wall_time].should eql @length * 3600
-        @summary_1[:cpu_time].should eql @length * 100
-        @summary_1[:successful].should eql 0.5
-        clipped_jobs = @summary_clipped[:jobs]
+      it "produces correct summary totals" do
+        @summary[:all][:jobs].should eql @length
+        @summary[:all][:wall_time].should eql @length * 3600
+        @summary[:all][:cpu_time].should eql @length * 100
+        @summary[:all][:memory_time].should eql @length * 200 * 3600
+        @summary[:all][:successful].should eql 0.5
+        @summary[:all_constrained][:jobs].should eql @length
+        @summary[:all_constrained][:wall_time].should eql @length * 3600
+        @summary[:all_constrained][:cpu_time].should eql @length * 100
+        @summary[:all_constrained][:successful].should eql 0.5
+        clipped_jobs = @summary[:clipped][:jobs]
         clipped_jobs.should eql 25
-        @summary_clipped[:wall_time].should eql 25 * 3600 - 1800
-        @summary_clipped[:cpu_time].should eql clipped_jobs * 100 - 50
+        @summary[:clipped][:wall_time].should eql clipped_jobs * 3600 - 1800
+        @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
+        @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
       end
       
-      it "produces correct totals for systems" do
-        @summary[:total_cpu_time].should eql 3600 * (10 + 30 + 20 + 10) * 2
-        @summary_1[:total_cpu_time].should eql 3600 * (10 + 30 + 20 + 10) * 2
-        @summary_clipped[:total_cpu_time].should eql((3600 * (10 + 15 + 5) - 1800) * 2)
-      end
-      
+      #To do: restore somewhere.
+=begin
       it "produces correct usage percentages" do
         [@summary, @summary_1, @summary_clipped].each do |summary|
           summary[:used_cpu_time].should eql Float(summary[:cpu_time]) / summary[:total_cpu_time]
         end
       end
+=end
       
-      it "correctly handles summaries that contain no jobs" do
-        @summary_empty.should eql({
+      it "correctly handles summaries of empty sets" do
+        @summary[:empty].should eql({
             :jobs => 0,
             :wall_time => 0,
             :cpu_time => 0,
+            :memory_time => 0,
             :successful => 0.0,
-            :total_cpu_time => 0,
-            :used_cpu_time => 0.0
           })
       end
       
@@ -264,6 +269,30 @@ describe Bookie::Database do
       Bookie::Database::System.by_name('test1').length.should eql 2
       Bookie::Database::System.by_name('test2').length.should eql 1
       Bookie::Database::System.by_name('test3').length.should eql 1
+    end
+    
+    describe :summary do
+      before(:all) do
+        Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
+        @base_time = Time.local(2012)
+        @systems = Bookie::Database::System
+        @summary = Helpers::create_summaries(@systems, Time.local(2012))
+      end
+      
+      it "produces correct summaries" do
+        system_total_wall_time = 3600 * (10 + 30 + 20 + 10)
+        system_clipped_wall_time = 3600 * (10 + 15 + 5) - 1800
+        system_total_cpu_time = system_total_wall_time * 2
+        clipped_cpu_time = system_clipped_wall_time * 2
+        @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
+        @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
+        @summary[:all_constrained][:avail_cpu_time].should eql system_total_cpu_time
+        @summary[:all_constrained][:avail_memory_time].should eql 1000000 * system_total_wall_time
+        @summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
+        @summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000
+      end
+      
+      it "correctly handles summaries of empty sets"
     end
     
     it "creates systems if needed"
