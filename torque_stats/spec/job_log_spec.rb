@@ -45,15 +45,19 @@ describe TorqueStats::JobLog do
     @log.send(:parse_duration, "01:02:03").should eql 3723
   end
   
-  #To do: log warning on invalid line?
-  it "skips invalid lines" do
+  it "raises errors when lines are invalid" do
     log = TorqueStats::JobLog.new('snapshot/torque_invalid_lines')
-    n = 0
-    log.each_job do |job|
-      job.user_name.should eql "blm768"
-      n += 1
+    expect { log.each_job }.to raise_error(
+      TorqueStats::JobLog::InvalidLineError,
+      "Line 1 of file 'snapshot/torque_invalid_lines' is invalid."
+    )
+    (2 ... 3).each do |i|
+      log = TorqueStats::JobLog.new("snapshot/torque_invalid_lines_#{i}")
+      expect { log.each_job {} }.to raise_error(
+        TorqueStats::JobLog::InvalidLineError,
+        "Line 3 of file 'snapshot/torque_invalid_lines_#{i}' is invalid."
+      )
     end
-    n.should eql 1
   end
   
   it "correctly calculates the filename for a date" do

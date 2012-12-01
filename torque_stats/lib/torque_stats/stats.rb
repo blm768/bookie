@@ -35,21 +35,34 @@ module TorqueStats
       @file = File.open(filename)
     end
     
+    class InvalidLineError < RuntimeError
+      def initialize(filename, line_num)
+        super("Line #{line_num} of file '#{filename}' is invalid.")
+      end
+    end
+    
     #Yields each completed job to the given block
     def each_job
       @file.rewind
+      line_num = 0
       @file.each_line do |line|
+        line_num += 1
+        next if line.strip! == ''
+        puts line
         #Skip the timestamp.
         index = line.index(';')
-        next unless index
+        raise invalid_line_error(line_num) unless index
         
         #Find the event type.
         event_type = line[index + 1]
+        old_index = index
+        index = line.index(';', index + 1)
+        raise invalid_line_error(line_num) unless index == old_index + 2
         next unless event_type == ?E
         
         #Find the fields.
-        index = line.index(';', index + 3)
-        next unless index
+        index = line.index(';', index + 1)
+        raise invalid_line_error(line_num) unless index
         fields = line[index + 1 .. -1].split(' ')
         
         job = Job.new()
@@ -80,6 +93,11 @@ module TorqueStats
         yield job
       end
     end
+    
+    def invalid_line_error(line_num)
+      InvalidLineError.new(@filename, line_num)
+    end
+    protected :invalid_line_error
     
     #Parses a duration in HH:MM:SS format, returning seconds
     #To do: make class method?
