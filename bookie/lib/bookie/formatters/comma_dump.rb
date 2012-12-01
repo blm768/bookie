@@ -3,10 +3,6 @@ module Bookie
     module CommaDump
       def do_print_summary(field_values, file)
         Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
-          if value.is_a?(Float)
-            value = '%.2f' % value
-            value << "%" if label[0] == "%"
-          end
           file.puts "#{label}, #{value}"
         end
       end

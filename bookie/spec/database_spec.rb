@@ -305,6 +305,19 @@ describe Bookie::Database do
         @summary[:empty][:avail_cpu_time].should eql 0
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0
+        sys = mock()
+        sys.expects(:end_time).returns Time.now
+        q = mock()
+        q.expects(:first).returns(@systems.order(:start_time).first)
+        q2 = mock()
+        q2.expects(:first).returns(nil)
+        q3 = mock()
+        q3.expects(:first).returns(sys)
+        @systems.expects(:order).with(:start_time).returns(q).at_least_once
+        @systems.expects(:where).with('end_time IS NULL').returns(q2)
+        @systems.expects(:order).with('end_time DESC').returns(q3)
+        summary_all_systems_ended = @systems.summary
+        summary_all_systems_ended.should eql @summary[:all]
       end
     end
     

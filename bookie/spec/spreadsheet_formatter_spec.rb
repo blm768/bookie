@@ -28,6 +28,10 @@ class MockWorksheet
     @mock_rows[num] ||= []
   end
   
+  def mock_rows
+    @mock_rows
+  end
+  
   def column(num)
     @mock_columns[num] ||= MockColumn.new
   end
@@ -74,22 +78,28 @@ describe Bookie::Formatter::Spreadsheet do
     end
     w.row(0).should eql Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS
     w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
-      "2012-01-01 01:00:00", "01:00:00", "00:01:40", "1024kb (avg)", 0]
+      "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 0]
     w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
-      "2012-01-01 02:00:00", "01:00:00", "00:01:40", "2048kb (avg)", 1]
+      "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 1]
   end
   
   it "correctly formats summaries" do
+    Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
     m = MockWorkbook.new
     @formatter.print_summary(@jobs.limit(1), m)
     w = m.worksheet('Summary')
-    w.last_row_index.should eql 5
     w.column(0).width.should_not eql nil
-    Bookie::Formatter::Formatter::SUMMARY_FIELD_LABELS.each_with_index do |label, index|
-      w.row(index)[0].should eql label
-      #To do: make more specific?
-      w.row(index)[1].should_not eql nil
-    end
+    w.last_row_index.should eql 7
+    w.mock_rows.should eql [
+      ["Number of jobs", 1],
+      ["Total wall time", "01:00:00"],
+      ["Total CPU time", "00:01:40"],
+      ["Successful", "100.00%"],
+      ["Available CPU time", "140:00:00"],
+      ["CPU time used", "0.02%"],
+      ["Available memory (average)", "1750000 kb"],
+      ["Memory used (average)", "0.00%"],
+    ]
   end
   
   it "correctly formats non-response warnings" do
@@ -97,5 +107,10 @@ describe Bookie::Formatter::Spreadsheet do
     @formatter.print_non_response_warnings(m)
     w = m.worksheet('Warnings')
     w.last_row_index.should eql 2
+    w.mock_rows.should eql [
+      ["test1", "No jobs on record since 2012-01-01"],
+      ["test2", "No jobs on record since 2012-01-02"], 
+      ["test3", "No jobs on record since 2012-01-02"],
+    ]
   end
 end

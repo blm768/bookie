@@ -3,11 +3,7 @@ module Bookie
     module Stdout
       def do_print_summary(field_values, out = STDOUT)
         Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
-          if value.class == Float
-            value = '%.2f' % value
-            value << "%" if label[0] == "%"
-          end
-          out.printf("%-20.20s%s\n", "#{label}:", value)
+          out.printf("%-30.30s%s\n", "#{label}:", value)
         end
       end
       

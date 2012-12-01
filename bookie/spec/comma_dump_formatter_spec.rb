@@ -25,8 +25,8 @@ describe Bookie::Formatter::CommaDump do
     @formatter.print_jobs(@jobs.order(:start_time).limit(2), m)
     m.buf.should eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Exit code
-root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 1024kb (avg), 0
-test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 2048kb (avg), 1
+root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), 0
+test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 200kb (avg), 1
 eos
   end
   
@@ -38,9 +38,11 @@ eos
 Number of jobs, 1
 Total wall time, 01:00:00
 Total CPU time, 00:01:40
-% Successful, 100.00%
+Successful, 100.00%
 Available CPU time, 140:00:00
-% CPU time used, 0.02%
+CPU time used, 0.02%
+Available memory (average), 1750000 kb
+Memory used (average), 0.00%
 eos
   end
   

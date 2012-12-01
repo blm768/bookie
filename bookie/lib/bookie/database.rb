@@ -90,6 +90,7 @@ module Bookie
         }
       end
       
+=begin
       #To do: pass summaries in to prevent duplication? Make summary method?
       def load_summary(min_time, max_time)
         s = summary(min_time, max_time)
@@ -106,6 +107,7 @@ module Bookie
           :used_memory   => if avail_memory_time == 0 then 0.0 else Float(memory_time) / avail_memory_time end,
         }
       end
+=end
       
       #To consider: define this in other classes as well?
       def self.each_with_relations
@@ -261,6 +263,7 @@ module Bookie
           else
             last_ended_system = systems.order('end_time DESC').first
             wall_time_range = last_ended_system.end_time - first_started_system.start_time
+            puts wall_time_range
           end
         end
           
