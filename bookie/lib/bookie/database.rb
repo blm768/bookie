@@ -160,6 +160,16 @@ module Bookie
       
       validates_presence_of :user, :system, :cpu_time,
         :start_time, :wall_time, :memory, :exit_code
+       
+      validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
+        record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
+      end
+      
+      validates_each :start_time do |record, attr, value|
+        value = value.to_time if value.respond_to?(:to_time)
+        record.errors.add(attr, 'must be a time object') unless value.is_a?(Time)
+      end
+      
     end
     
     #ActiveRecord structure for a group
@@ -203,10 +213,6 @@ module Bookie
       
       validates_presence_of :group, :name
     end
-    
-    MEMORY_STAT_TYPE = {
-      :unknown => 0, :avg => 1, :max => 2,
-      0 => :unknown, 1 => :avg, 2 => :max}
     
     #ActiveRecord structure for a network system
     class System < ActiveRecord::Base
@@ -263,7 +269,6 @@ module Bookie
           else
             last_ended_system = systems.order('end_time DESC').first
             wall_time_range = last_ended_system.end_time - first_started_system.start_time
-            puts wall_time_range
           end
         end
           
@@ -280,7 +285,24 @@ module Bookie
       end
       
       validates_presence_of :name, :cores, :memory, :system_type, :start_time
+      
+      validates_each :cores, :memory do |record, attr, value|
+        record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
+      end
+      
+      validates_each :start_time do |record, attr, value|
+        value = value.to_time if value.respond_to?(:to_time)
+        record.errors.add(attr, 'must be a time object') unless value.is_a?(Time)
+      end
+      
+      validates_each :end_time do |record, attr, value|
+        record.errors.add(attr, 'must be at or after start time') if value && value < record.start_time
+      end
     end
+    
+    MEMORY_STAT_TYPE = {:unknown => 0, :avg => 1, :max => 2}
+    
+    MEMORY_STAT_TYPE_INVERSE = MEMORY_STAT_TYPE.invert
     
     #ActiveRecord structure for a system type
     class SystemType < ActiveRecord::Base
@@ -302,13 +324,19 @@ module Bookie
       end
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
+      #To do: unit test exceptions.
       def memory_stat_type
-        return MEMORY_STAT_TYPE[read_attribute(:memory_stat_type)]
+        type_code = read_attribute(:memory_stat_type)
+        raise 'Memory stat type must not be nil' if type_code == nil
+        type = MEMORY_STAT_TYPE_INVERSE[type_code]
+        raise "Unknown memory stat type code #{type_code}" unless type
+        type
       end
       
       def memory_stat_type=(type)
+        raise 'Memory stat type must not be nil' if type == nil
         type_code = MEMORY_STAT_TYPE[type]
-        raise "Unknown memory stat type #{type}" unless type_code
+        raise "Unknown memory stat type '#{type}'" unless type_code
         write_attribute(:memory_stat_type, type_code)
       end
     end

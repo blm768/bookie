@@ -48,7 +48,6 @@ module TorqueStats
       @file.each_line do |line|
         line_num += 1
         next if line.strip! == ''
-        puts line
         #Skip the timestamp.
         index = line.index(';')
         raise invalid_line_error(line_num) unless index

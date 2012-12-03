@@ -203,6 +203,40 @@ describe Bookie::Database do
         end
       end
     end
+    
+    it "validates fields" do
+      fields = {
+        :user => Bookie::Database::User.first,
+        :system => Bookie::Database::System.first,
+        :cpu_time => 100,
+        :start_time => Time.local(2012),
+        :wall_time => 1000,
+        :memory => 10000,
+        :exit_code => 0
+      }
+      
+      job = Bookie::Database::Job.new(fields)
+      job.valid?.should eql true
+      
+      fields.each_key do |field|
+        job = Bookie::Database::Job.new(fields)
+        job.method("#{field}=".intern).call(nil)
+        job.valid?.should eql false
+      end
+      
+      [:cpu_time, :wall_time, :memory].each do |field|
+        job = Bookie::Database::Job.new(fields)
+        m = job.method("#{field}=".intern)
+        m.call(-1)
+        job.valid?.should eql false
+        m.call(0)
+        job.valid?.should eql true
+      end
+      
+      job = Bookie::Database::Job.new(fields)
+      job.start_time = 0
+      job.valid?.should eql false
+    end
   end
   
   describe Bookie::Database::User do
@@ -233,6 +267,25 @@ describe Bookie::Database do
         known_users.should include ['root', user.group]
       end
     end
+    
+    it "validates fields" do
+      fields = {
+        :group => Bookie::Database::Group.first,
+        :name => 'test',
+      }
+      
+      Bookie::Database::User.new(fields).valid?.should eql true
+      
+      fields.each_key do |field|
+        user = Bookie::Database::User.new(fields)
+        user.method("#{field}=".intern).call(nil)
+        user.valid?.should eql false
+      end
+      
+      user = Bookie::Database::User.new(fields)
+      user.name = ''
+      user.valid?.should eql false
+    end
   end
   
   describe Bookie::Database::Group do
@@ -257,6 +310,15 @@ describe Bookie::Database do
         Bookie::Database::Group.find_or_create!('root', nil).should eql group
         known_groups.should include 'root'
       end
+    end
+    
+    it "validates the name field" do
+      group = Bookie::Database::Group.new(:name => nil)
+      group.valid?.should eql false
+      group.name = ''
+      group.valid?.should eql false
+      group.name = 'test'
+      group.valid?.should eql true
     end
   end
   
@@ -330,10 +392,53 @@ describe Bookie::Database do
       sys.end_time = nil
       sys.save!
     end
+    
+    it "validates fields" do
+      fields = {
+        :name => 'test',
+        :cores => 2,
+        :memory => 1000000,
+        :system_type => Bookie::Database::SystemType.first,
+        :start_time => Time.local(2012)
+      }
+      
+      Bookie::Database::System.new(fields).valid?.should eql true
+      
+      fields.each_key do |field|
+        system = Bookie::Database::System.new(fields)
+        system.method("#{field}=".intern).call(nil)
+        system.valid?.should eql false
+      end
+      
+      system = Bookie::Database::System.new(fields)
+      system.name = ''
+      system.valid?.should eql false
+      
+      [:cores, :memory].each do |field|
+        system = Bookie::Database::System.new(fields)
+        m = system.method("#{field}=".intern)
+        m.call(-1)
+        system.valid?.should eql false
+        m.call(0)
+        system.valid?.should eql true
+      end
+      
+      system = Bookie::Database::System.new(fields)
+      system.start_time = 0
+      system.valid?.should eql false
+      
+      system = Bookie::Database::System.new(fields)
+      system.end_time = Time.local(2012)
+      system.valid?.should eql true
+      system.end_time += 5
+      system.valid?.should eql true
+      system.end_time -= 10
+      system.valid?.should eql false
+    end
   end
   
   describe Bookie::Database::SystemType do
-    it "correctly maps memory type codes to/from symbols" do
+    it "correctly maps memory stat type codes to/from symbols" do
       systype = Bookie::Database::SystemType.new
       systype.memory_stat_type = :avg
       systype.memory_stat_type.should eql :avg
@@ -341,6 +446,24 @@ describe Bookie::Database do
       systype.memory_stat_type = :max
       systype.memory_stat_type.should eql :max
       systype.read_attribute(:memory_stat_type).should eql Bookie::Database::MEMORY_STAT_TYPE[:max]
+    end
+    
+    it "rejects unrecognized memory stat type codes" do
+      systype = Bookie::Database::SystemType.new
+      expect { systype.memory_stat_type = :invalid_type }.to raise_error("Unknown memory stat type 'invalid_type'")
+      systype.send(:write_attribute, :memory_stat_type, 10000)
+      expect { systype.memory_stat_type }.to raise_error("Unknown memory stat type code 10000")
+    end
+    
+    it "validates fields" do
+      systype = Bookie::Database::SystemType.new(:name => 'test')
+      expect { systype.valid? }.to raise_error('Memory stat type must not be nil')
+      systype.memory_stat_type = :unknown
+      systype.valid?.should eql true
+      systype.name = nil
+      systype.valid?.should eql false
+      systype.name = ''
+      systype.valid?.should eql false
     end
   end
 end
