@@ -138,14 +138,15 @@ module Bookie
         :password => self.password,
         :host     => self.server,
         :port     => self.port)
-      can_lock_tables = true
+      @can_lock_tables = true
       #To do: document this table's use?
       ActiveRecord::Base.connection.execute('CREATE TEMPORARY TABLE bookie_lock_probe(id int)')
       begin
         ActiveRecord::Base.connection.execute('LOCK TABLES bookie_lock_probe WRITE')
         ActiveRecord::Base.connection.execute('UNLOCK TABLES')
       rescue => e
-        can_lock_tables = false
+        warn 'Unable to lock tables; concurrency issues may result.'
+        @can_lock_tables = false
       ensure
         ActiveRecord::Base.connection.execute('DROP TABLE bookie_lock_probe')
       end

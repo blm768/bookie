@@ -4,7 +4,7 @@ require 'active_record'
 
 module Bookie
   #Contains ActiveRecord structures for the central database
-  module Database
+  module Database    
     #ActiveRecord structure for a completed job
     class Job < ActiveRecord::Base
       belongs_to :user
@@ -179,10 +179,8 @@ module Bookie
       def self.find_or_create!(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
-          transaction do
-            group = Bookie::Database::Group.lock.find_by_name(name)
-            group ||= Bookie::Database::Group.create!(:name => name)
-          end
+          group = find_by_name(name)
+          group ||= create!(:name => name)
           known_groups[name] = group if known_groups
         end
         group
