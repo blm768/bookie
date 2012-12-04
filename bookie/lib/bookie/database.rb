@@ -4,7 +4,27 @@ require 'active_record'
 
 module Bookie
   #Contains ActiveRecord structures for the central database
-  module Database    
+  module Database
+  
+    #Based on http://kseebaldt.blogspot.com/2007/11/synchronizing-using-active-record.html
+    class Lock < ActiveRecord::Base
+      def synchronize
+        transaction do
+          #Lock this record to be inaccessible to others until this transaction is completed.
+          self.class.lock.find(id)
+          yield
+        end
+      end
+      
+      @locks = {}
+      
+      def self.[](name)
+        @locks[name.intern] ||= find_by_name(name.to_s) or raise "Unable to find lock '${name}'"
+      end
+      
+      validates_presence_of :name
+    end
+  
     #ActiveRecord structure for a completed job
     class Job < ActiveRecord::Base
       belongs_to :user
@@ -179,8 +199,10 @@ module Bookie
       def self.find_or_create!(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
-          group = find_by_name(name)
-          group ||= create!(:name => name)
+          Lock[:groups].synchronize do
+            group = find_by_name(name)
+            group ||= create!(:name => name)
+          end
           known_groups[name] = group if known_groups
         end
         group
@@ -197,7 +219,7 @@ module Bookie
         #Determine if the user/group pair must be added to/retrieved from the database.
         user = known_users[[name, group]] if known_users
         unless user
-          transaction do
+          Lock[:users].synchronize do
             #Does the user already exist?
             user = Bookie::Database::User.lock.find_by_name_and_group_id(name, group.id)
             user ||= Bookie::Database::User.create!(
@@ -312,7 +334,7 @@ module Bookie
         sys_type = nil
         #To do: better assurance of correctness under concurrency
         #To do: handle name conflicts?
-        transaction do
+        Lock[:system_types].synchronize do
           sys_type = SystemType.lock.find_by_name(name)
           sys_type ||= create!(
             :name => name,
@@ -435,6 +457,25 @@ module Bookie
       end
     end
     
+    class CreateLocks < ActiveRecord::Migration
+      def up
+        create_table :locks do |t|
+          t.string :name
+        end
+        change_table :locks do |t|
+          t.index :name, :unique => true
+        end
+        
+        ['users', 'groups', 'systems', 'system_types'].each do |name|
+          Lock.create!(:name => name)
+        end
+      end
+        
+      def down
+        drop_table :locks
+      end
+    end
+    
     class << self;
       def create_tables
         CreateUsers.new.up
@@ -442,6 +483,7 @@ module Bookie
         CreateSystems.new.up
         CreateSystemTypes.new.up
         CreateJobs.new.up
+        CreateLocks.new.up
       end
       
       def drop_tables
@@ -450,6 +492,7 @@ module Bookie
         CreateSystems.new.down
         CreateSystemTypes.new.down
         CreateJobs.new.down
+        CreateLocks.new.down
       end
     end
   end
