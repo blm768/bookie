@@ -28,6 +28,15 @@ describe Bookie::Database do
     Bookie::Database::drop_tables
   end
   
+  describe Bookie::Database::Lock do
+    it "finds locks"
+    
+    #To consider: how to test the actual operation of the lock?
+    it "locks records"
+    
+    it "validates fields"
+  end
+  
   describe Bookie::Database::Job do
     before(:each) do
       @jobs = Bookie::Database::Job
@@ -383,14 +392,72 @@ describe Bookie::Database do
       end
     end
     
-    it "creates systems if needed"
-    
+    it "correctly creates systems when they don't exist" do
+      Bookie::Database::System.expects(:"create!")
+      begin
+        Bookie::Database::System.find_active_by_name_or_create!(:name => "abc")
+      rescue => e
+        puts e.message
+        puts e.backtrace.join("\n")
+      end
+    end
+
+    describe :'find_active_by_name_or_create!' do
+      before(:all) do
+        @FIELDS = {
+          :name => 'test',
+          :start_time => Time.local(2012),
+          :system_type => Bookie::Database::SystemType.first,
+          :cores => 2,
+          :memory => 1000000
+        }
+      end
+      
+      it "correctly creates systems when only old versions exist" do
+        create_fields = @FIELDS.dup
+        create_fields[:end_time] = Time.local(2012) + 1
+        sys = Bookie::Database::System.create!(create_fields)
+        begin
+          Bookie::Database::System.expects(:"create!")
+          Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+        ensure
+          sys.delete
+        end
+      end
+  
+      it "uses the existing active system" do
+        sys = Bookie::Database::System.create!(@FIELDS)
+        begin
+          Bookie::Database::System.expects(:"create!").never
+          Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+        ensure
+          sys.delete
+        end
+      end
+      
+      it "correctly detects conflicts" do
+        fields = @FIELDS.dup
+        fields[:cores] = 1
+        csys = Bookie::Database::System.create!(fields)
+        begin
+          expect {
+            Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+          }.to raise_error(Bookie::Database::System::SystemConflictError)
+        ensure
+          csys.delete
+        end
+      end
+    end
+
     it "correctly decommissions" do
       sys = Bookie::Database::System.active_systems.find_by_name('test1')
-      sys.decommission(sys.start_time + 3)
-      sys.end_time.should eql sys.start_time + 3
-      sys.end_time = nil
-      sys.save!
+      begin
+        sys.decommission(sys.start_time + 3)
+        sys.end_time.should eql sys.start_time + 3
+      ensure
+        sys.end_time = nil
+        sys.save!
+      end
     end
     
     it "validates fields" do
@@ -454,6 +521,8 @@ describe Bookie::Database do
       systype.send(:write_attribute, :memory_stat_type, 10000)
       expect { systype.memory_stat_type }.to raise_error("Unknown memory stat type code 10000")
     end
+    
+    it "creates the system type when needed"
     
     it "validates fields" do
       systype = Bookie::Database::SystemType.new(:name => 'test')

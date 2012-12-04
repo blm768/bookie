@@ -8,8 +8,6 @@ module Bookie
   module Sender
     #An object that sends data to the server
     class Sender
-      SystemConflictError = Class.new(RuntimeError)
-    
       #==Parameters
       #* config: an instance of Bookie::Config
       def initialize(config)
@@ -25,25 +23,13 @@ module Bookie
       def system
         hostname = @config.hostname
         system_type = self.system_type
-        #Make sure this machine is in the database.
-        #To do: concurrency control
-        system = Bookie::Database::System.active_systems.find_by_name(hostname)
-        #Verify that this system's specs match those on file.
-        if system
-          unless system.name == hostname && system.system_type == system_type && system.cores == @config.cores && system.memory == @config.memory
-            #To do: custom error class?
-            raise SystemConflictError.new("The specifications on record for '#{hostname}' do not match this system's specifications.
-  Please make sure that all previous systems with this hostname have been marked as decommissioned.")
-          end
-        else
-          system = Bookie::Database::System.create!(
-            :name => hostname,
-            :system_type => system_type,
-            :start_time => Time.now,
-            :cores => @config.cores,
-            :memory => @config.memory)
-        end
-        system
+        Bookie::Database::System.find_active_by_name_or_create!(
+          :name => hostname,
+          :system_type => system_type,
+          :start_time => Time.now,
+          :cores => @config.cores,
+          :memory => @config.memory
+        )
       end
       
       #Sends job data from the given file to the database server

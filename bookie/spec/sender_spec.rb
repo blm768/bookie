@@ -40,60 +40,6 @@ describe Bookie::Sender::Sender do
     @sender.filtered?(job).should eql false
   end
   
-  it "correctly creates systems when they don't exist" do
-    Bookie::Database::System.expects(:"create!")
-    sys = @sender.system
-  end
-  
-  it "correctly creates systems when only old versions exist" do
-    begin
-      sys = Bookie::Database::System.create!(
-        :name => @config.hostname,
-        :start_time => Time.now,
-        :end_time => Time.now + 1,
-        :system_type => @sender.system_type,
-        :cores => @config.cores - 1,
-        :memory => @config.memory)
-      Bookie::Database::System.expects(:"create!")
-      @sender.system
-    ensure
-      sys.delete
-    end
-    begin
-      Bookie::Database::System.unstub(:"create!")
-      sys = @sender.system
-      sys.decommission(Time.now + 1)
-      Bookie::Database::System.expects(:"create!")
-      @sender.system
-    ensure
-      sys.delete
-    end   
-  end
-  
-  it "uses the existing active system" do
-    begin
-      sys = @sender.system
-      Bookie::Database::System.expects(:"create!").never
-      sys = @sender.system
-    ensure
-      sys.delete
-    end
-  end
-  
-  it "correctly detects conflicts" do
-    begin
-      csys = Bookie::Database::System.create!(
-        :name => @config.hostname,
-        :system_type => @sender.system_type,
-        :start_time => Time.now,
-        :cores => @config.cores - 1,
-        :memory => @config.memory)
-      expect { @sender.system }.to raise_error
-    ensure
-      csys.delete
-    end
-  end
-  
   it "correctly sends jobs" do
     old_excluded = @config.excluded_users
     @config.excluded_users = Set.new

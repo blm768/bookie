@@ -236,6 +236,8 @@ module Bookie
     
     #ActiveRecord structure for a network system
     class System < ActiveRecord::Base
+      SystemConflictError = Class.new(RuntimeError)
+      
       has_many :jobs
       belongs_to :system_type
       
@@ -245,6 +247,26 @@ module Bookie
       
       def self.by_name(name)
         where('name = ?', name)
+      end
+      
+      def self.find_active_by_name_or_create!(values)
+        name = values[:name]
+        Lock[:systems].synchronize do
+          puts name
+          system = active_systems.find_by_name(name)
+          puts system
+          if system
+            values.each do |key, value|
+              #To consider: this also compares the names, which is unnecessary.
+              unless system.send(key) == value
+                raise SystemConflictError.new("The specifications on record for '#{name}' do not match this system's specifications.
+  Please make sure that all previous systems with this hostname have been marked as decommissioned.")
+              end
+            end
+          end
+          values[:start_time] ||= Time.now
+          system ||= create!(values)
+        end
       end
       
       def self.summary(min_time = nil, max_time = nil)
