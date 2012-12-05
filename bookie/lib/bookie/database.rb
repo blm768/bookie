@@ -110,25 +110,6 @@ module Bookie
         }
       end
       
-=begin
-      #To do: pass summaries in to prevent duplication? Make summary method?
-      def load_summary(min_time, max_time)
-        s = summary(min_time, max_time)
-        s2 = System.summary(min_time, max_time)
-        
-        cpu_time = s[:cpu_time]
-        memory_time = s[:memory_time]
-        
-        avail_cpu_time = s2[:avail_cpu_time]
-        avail_memory_time = s2[:avail_memory_time]
-        
-        return {
-          :used_cpu_time => if avail_cpu_time == 0 then 0.0 else Float(cpu_time) / avail_cpu_time end,
-          :used_memory   => if avail_memory_time == 0 then 0.0 else Float(memory_time) / avail_memory_time end,
-        }
-      end
-=end
-      
       #To consider: define this in other classes as well?
       def self.each_with_relations
         transaction do
@@ -376,7 +357,6 @@ module Bookie
       end
       
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
-      #To do: unit test exceptions.
       def memory_stat_type
         type_code = read_attribute(:memory_stat_type)
         raise 'Memory stat type must not be nil' if type_code == nil

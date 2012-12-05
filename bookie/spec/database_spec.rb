@@ -39,7 +39,12 @@ describe Bookie::Database do
     end
     
     #To do: how to test the actual operation of the lock?
-    it "locks records"
+    it "locks records" do
+      lock = mock()
+      lock.expects(:find)
+      Bookie::Database::Lock.expects(:lock).returns(lock)
+      Bookie::Database::Lock.first.synchronize {}
+    end
     
     it "validates fields" do
       lock = Bookie::Database::Lock.new
@@ -144,6 +149,9 @@ describe Bookie::Database do
       jobs.length.should eql 2
       jobs = @jobs.by_time_range_inclusive(Time.at(0), Time.at(3))
       jobs.length.should eql 0
+      expect {
+        @jobs.by_time_range_inclusive(Time.local(2012), Time.local(2012) - 1)
+      }.to raise_error('Max time must be greater than or equal to min time')
     end
     
     it "correctly chains filters" do
@@ -195,15 +203,6 @@ describe Bookie::Database do
         @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
       end
       
-      #To do: restore somewhere.
-=begin
-      it "produces correct usage percentages" do
-        [@summary, @summary_1, @summary_clipped].each do |summary|
-          summary[:used_cpu_time].should eql Float(summary[:cpu_time]) / summary[:total_cpu_time]
-        end
-      end
-=end
-      
       it "correctly handles summaries of empty sets" do
         @summary[:empty].should eql({
             :jobs => 0,
@@ -225,6 +224,15 @@ describe Bookie::Database do
           job.wall_time = wall_time
           job.save!
         end
+      end
+      
+      it "validates arguments" do
+        expect {
+          @jobs.summary(Time.local(2012), nil)
+        }.to raise_error('Max time must be specified with min time')
+        expect {
+          @jobs.summary(Time.local(2012), Time.local(2012) - 1)
+        }.to raise_error('Max time must be greater than or equal to min time')
       end
     end
     
@@ -405,6 +413,15 @@ describe Bookie::Database do
         summary_all_systems_ended = @systems.summary
         summary_all_systems_ended.should eql @summary[:all]
       end
+      
+      it "validates arguments" do
+        expect {
+          @systems.summary(Time.local(2012), nil)
+        }.to raise_error('Max time must be specified with min time')
+        expect {
+          @systems.summary(Time.local(2012), Time.local(2012) - 1)
+        }.to raise_error('Max time must be greater than or equal to min time')
+      end
     end
     
     it "correctly creates systems when they don't exist" do
@@ -528,6 +545,7 @@ describe Bookie::Database do
     it "rejects unrecognized memory stat type codes" do
       systype = Bookie::Database::SystemType.new
       expect { systype.memory_stat_type = :invalid_type }.to raise_error("Unrecognized memory stat type 'invalid_type'")
+      expect { systype.memory_stat_type = nil }.to raise_error 'Memory stat type must not be nil'
       systype.send(:write_attribute, :memory_stat_type, 10000)
       expect { systype.memory_stat_type }.to raise_error("Unrecognized memory stat type code 10000")
     end

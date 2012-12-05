@@ -64,7 +64,6 @@ module Bookie
         end
       end
       
-      #To do: check for name collision issues?
       def system_type
         Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
       end
