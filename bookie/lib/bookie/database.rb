@@ -19,7 +19,7 @@ module Bookie
       @locks = {}
       
       def self.[](name)
-        @locks[name.intern] ||= find_by_name(name.to_s) or raise "Unable to find lock '#{name}'"
+        @locks[name.to_sym] ||= find_by_name(name.to_s) or raise "Unable to find lock '#{name}'"
       end
       
       validates_presence_of :name

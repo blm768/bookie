@@ -551,7 +551,15 @@ describe Bookie::Database do
       end
     end
     
-    it "uses the existing type"
+    it "uses the existing type" do
+      systype = Bookie::Database::SystemType.create!(:name => 'test', :memory_stat_type => :avg)
+      begin
+        Bookie::Database::SystemType.expects(:'create!').never
+        Bookie::Database::SystemType.find_or_create!('test', :avg)
+      ensure
+        systype.delete
+      end
+    end
     
     it "validates fields" do
       systype = Bookie::Database::SystemType.new(:name => 'test')
