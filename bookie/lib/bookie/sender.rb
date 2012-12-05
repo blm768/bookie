@@ -54,30 +54,13 @@ module Bookie
           next if filtered?(job)
           db_job = job.to_model
           #Determine if the user/group pair must be added to/retrieved from the database.
-          user = nil
-          with_lock(:users, :groups) do
-            user = Bookie::Database::User.find_or_create!(
-              job.user_name,
-              Bookie::Database::Group.find_or_create!(job.group_name, known_groups),
-              known_users)
-          end
+          user = Bookie::Database::User.find_or_create!(
+            job.user_name,
+            Bookie::Database::Group.find_or_create!(job.group_name, known_groups),
+            known_users)
           db_job.system = system
           db_job.user = user
           db_job.save!
-        end
-      end
-      
-      def with_lock(*tables)
-        unless false && @config.can_lock_tables
-          yield
-          return
-        end
-        puts "Locking table"
-        ActiveRecord::Base.connection.execute("LOCK TABLES #{tables.join(' ')} WRITE")
-        begin
-          yield
-        ensure
-          ActiveRecord::Base.connection.execute('UNLOCK TABLES')
         end
       end
       

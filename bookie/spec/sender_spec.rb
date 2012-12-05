@@ -58,13 +58,9 @@ describe Bookie::Sender::Sender do
   
   it "refuses to send jobs when jobs already have been sent from a file" do
     exception = nil
-    begin
+    expect {
       @sender.send_data('snapshot/torque_generated')
-    rescue => e
-      exception = e
-    end
-    e.should_not eql nil
-    e.message.should match /Jobs already exist in the database for the date [\d-]+./
+    }.to raise_error(/^Jobs already exist in the database for the date [\d]{4}-[\d]{2}-[\d]{2}.$/)
   end
   
   it "handles missing files" do

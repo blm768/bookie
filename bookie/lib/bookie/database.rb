@@ -19,7 +19,7 @@ module Bookie
       @locks = {}
       
       def self.[](name)
-        @locks[name.intern] ||= find_by_name(name.to_s) or raise "Unable to find lock '${name}'"
+        @locks[name.intern] ||= find_by_name(name.to_s) or raise "Unable to find lock '#{name}'"
       end
       
       validates_presence_of :name
@@ -221,7 +221,7 @@ module Bookie
         unless user
           Lock[:users].synchronize do
             #Does the user already exist?
-            user = Bookie::Database::User.lock.find_by_name_and_group_id(name, group.id)
+            user = Bookie::Database::User.find_by_name_and_group_id(name, group.id)
             user ||= Bookie::Database::User.create!(
               :name => name,
               :group => group)
@@ -250,23 +250,23 @@ module Bookie
       end
       
       def self.find_active_by_name_or_create!(values)
+        system = nil
         name = values[:name]
         Lock[:systems].synchronize do
-          puts name
           system = active_systems.find_by_name(name)
-          puts system
           if system
-            values.each do |key, value|
+            [:cores, :memory, :system_type].each do |key|
               #To consider: this also compares the names, which is unnecessary.
-              unless system.send(key) == value
+              unless system.send(key) == values[key]
                 raise SystemConflictError.new("The specifications on record for '#{name}' do not match this system's specifications.
   Please make sure that all previous systems with this hostname have been marked as decommissioned.")
               end
             end
+          else
+            system = create!(values)
           end
-          values[:start_time] ||= Time.now
-          system ||= create!(values)
         end
+        system
       end
       
       def self.summary(min_time = nil, max_time = nil)
@@ -354,13 +354,23 @@ module Bookie
       
       def self.find_or_create!(name, memory_stat_type)
         sys_type = nil
-        #To do: better assurance of correctness under concurrency
-        #To do: handle name conflicts?
         Lock[:system_types].synchronize do
-          sys_type = SystemType.lock.find_by_name(name)
-          sys_type ||= create!(
-            :name => name,
-            :memory_stat_type => memory_stat_type)
+          sys_type = SystemType.find_by_name(name)
+          if sys_type
+            unless sys_type.memory_stat_type == memory_stat_type
+              type_code = MEMORY_STAT_TYPE[memory_stat_type]
+              if type_code == nil
+                raise "Unrecognized memory stat type '#{memory_stat_type}'"
+              else
+                raise "The recorded memory stat type for system type '#{name}' does not match the required type of #{type_code}"
+              end
+            end
+          else
+            sys_type = create!(
+              :name => name,
+              :memory_stat_type => memory_stat_type
+            )
+          end
         end
         sys_type
       end
@@ -371,14 +381,14 @@ module Bookie
         type_code = read_attribute(:memory_stat_type)
         raise 'Memory stat type must not be nil' if type_code == nil
         type = MEMORY_STAT_TYPE_INVERSE[type_code]
-        raise "Unknown memory stat type code #{type_code}" unless type
+        raise "Unrecognized memory stat type code #{type_code}" unless type
         type
       end
       
       def memory_stat_type=(type)
         raise 'Memory stat type must not be nil' if type == nil
         type_code = MEMORY_STAT_TYPE[type]
-        raise "Unknown memory stat type '#{type}'" unless type_code
+        raise "Unrecognized memory stat type '#{type}'" unless type_code
         write_attribute(:memory_stat_type, type_code)
       end
     end

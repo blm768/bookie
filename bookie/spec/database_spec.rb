@@ -29,12 +29,27 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::Lock do
-    it "finds locks"
+    it "finds locks" do
+      Lock = Bookie::Database::Lock
+      Lock[:users].should_not eql nil
+      Lock[:users].name.should eql 'users'
+      Lock[:groups].should_not eql nil
+      Lock[:groups].name.should eql 'groups'
+      expect { Lock[:dummy] }.to raise_error("Unable to find lock 'dummy'")
+    end
     
-    #To consider: how to test the actual operation of the lock?
+    #To do: how to test the actual operation of the lock?
     it "locks records"
     
-    it "validates fields"
+    it "validates fields" do
+      lock = Bookie::Database::Lock.new
+      lock.name = nil
+      lock.valid?.should eql false
+      lock.name = ''
+      lock.valid?.should eql false
+      lock.name = 'test'
+      lock.valid?.should eql true
+    end
   end
   
   describe Bookie::Database::Job do
@@ -394,12 +409,7 @@ describe Bookie::Database do
     
     it "correctly creates systems when they don't exist" do
       Bookie::Database::System.expects(:"create!")
-      begin
-        Bookie::Database::System.find_active_by_name_or_create!(:name => "abc")
-      rescue => e
-        puts e.message
-        puts e.backtrace.join("\n")
-      end
+      Bookie::Database::System.find_active_by_name_or_create!(:name => "abc")
     end
 
     describe :'find_active_by_name_or_create!' do
@@ -517,12 +527,31 @@ describe Bookie::Database do
     
     it "rejects unrecognized memory stat type codes" do
       systype = Bookie::Database::SystemType.new
-      expect { systype.memory_stat_type = :invalid_type }.to raise_error("Unknown memory stat type 'invalid_type'")
+      expect { systype.memory_stat_type = :invalid_type }.to raise_error("Unrecognized memory stat type 'invalid_type'")
       systype.send(:write_attribute, :memory_stat_type, 10000)
-      expect { systype.memory_stat_type }.to raise_error("Unknown memory stat type code 10000")
+      expect { systype.memory_stat_type }.to raise_error("Unrecognized memory stat type code 10000")
     end
     
-    it "creates the system type when needed"
+    it "creates the system type when needed" do
+      Bookie::Database::SystemType.expects(:'create!')
+      Bookie::Database::SystemType.find_or_create!('test', :avg)
+    end
+    
+    it "raises an error if the existing type has the wrong memory stat type" do
+      systype = Bookie::Database::SystemType.create!(:name => 'test', :memory_stat_type => :max)
+      begin
+        expect {
+          Bookie::Database::SystemType.find_or_create!('test', :avg)
+        }.to raise_error("The recorded memory stat type for system type 'test' does not match the required type of 1")
+        expect {
+          Bookie::Database::SystemType.find_or_create!('test', :unrecognized)
+        }.to raise_error("Unrecognized memory stat type 'unrecognized'")
+      ensure
+        systype.delete
+      end
+    end
+    
+    it "uses the existing type"
     
     it "validates fields" do
       systype = Bookie::Database::SystemType.new(:name => 'test')
