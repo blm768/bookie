@@ -3,7 +3,7 @@ if ENV['COVERAGE']
   SimpleCov.start
 end
 
-require 'mocha_standalone'
+require 'mocha/api'
 
 RSpec.configure do |config|
   config.mock_with(:mocha)

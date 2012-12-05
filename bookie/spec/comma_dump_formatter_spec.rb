@@ -33,7 +33,7 @@ eos
   it "correctly formats summaries" do
     m = IOMock.new
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(1), m)
+    @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, m)
     m.buf.should eql <<-eos
 Number of jobs, 1
 Total wall time, 01:00:00

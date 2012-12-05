@@ -86,7 +86,7 @@ describe Bookie::Formatter::Spreadsheet do
   it "correctly formats summaries" do
     Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
     m = MockWorkbook.new
-    @formatter.print_summary(@jobs.limit(1), m)
+    @formatter.print_summary(@jobs.limit(1), Bookie::Database::System, m)
     w = m.worksheet('Summary')
     w.column(0).width.should_not eql nil
     w.last_row_index.should eql 7

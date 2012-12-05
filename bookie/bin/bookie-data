@@ -8,8 +8,9 @@ $LOAD_PATH << 'lib'
 require 'bookie/formatter'
 
 jobs = Bookie::Database::Job
+systems = Bookie::Database::System
 
-config_file = '/etc/bookie/config.json'
+config_filename = '/etc/bookie/config.json'
 include_details = false
 
 output_type = :stdout
@@ -24,11 +25,24 @@ t_min = nil
 t_max = nil
 
 #Process arguments
+
+#The first run only gets the configuration filename
+ARGV.each_with_index do |value, i|
+  if value == '-c' || value == '--config'
+    v = ARGV[i + 1]
+    #If the argument is missing, ignore it; OptionParser will catch it later.
+    config_filename = v if v
+  end
+end
+
+config = Bookie::Config.new(config_filename)
+config.connect
+
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-data [options]"
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
-    config_file = file
+    #This is just here so it shows up in the message.
   end
   
   opts.on('-d', '--details', "include full details") do
@@ -45,11 +59,18 @@ opts = OptionParser.new do |opts|
   
   opts.on('-s', '--system HOSTNAME', "filter by system") do |hostname|
     jobs = jobs.by_system_name(hostname)
+    systems = systems.by_name(hostname)
     # jobs = System.find_by_name(hostname).jobs
   end
   
   opts.on('-t', '--type TYPE', "filter by system type") do |type|
-    jobs = jobs.by_system_type(type)
+    t = Bookie::Database::SystemType.find_by_name(type)
+    unless t
+      STDERR.puts "Unknown system type '#{type}'"
+      exit 1
+    end
+    jobs = jobs.by_system_type(t)
+    systems = systems.by_system_type(t)
   end
   
   opts.on('-r', '--time BEGIN END', "filter by a time range") do |t_begin, t_end|
@@ -81,16 +102,13 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-config = Bookie::Config.new(config_file)
-config.connect
-
 formatter = Bookie::Formatter::Formatter.new(config, output_type)
 
 #To do: ensure that the query isn't performed twice?
-formatter.print_summary(jobs, output_file, t_min, t_max)
+formatter.print_summary(jobs, systems, output_file, t_min, t_max)
 formatter.print_non_response_warnings(output_file)
 jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
-formatter.print_jobs(jobs, output_file) if include_details
+formatter.print_jobs(jobs, systems, output_file) if include_details
 
 if output_file
   output_file.send(save_method, filename) if save_method

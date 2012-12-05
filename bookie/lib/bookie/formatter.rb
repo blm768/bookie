@@ -29,9 +29,9 @@ module Bookie
           'CPU time', 'Memory usage', 'Exit code'
         ]
       
-      def print_summary(jobs, io, start_time = nil, end_time = nil)
+      def print_summary(jobs, systems, io, start_time = nil, end_time = nil)
         jobs_summary = jobs.summary(start_time, end_time)
-        systems_summary = Bookie::Database::System.summary(start_time, end_time)
+        systems_summary = systems.summary(start_time, end_time)
         cpu_time = jobs_summary[:cpu_time]
         avail_cpu_time = systems_summary[:avail_cpu_time]
         memory_time = jobs_summary[:memory_time]

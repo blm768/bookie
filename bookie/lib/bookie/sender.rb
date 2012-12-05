@@ -34,6 +34,8 @@ module Bookie
       
       #Sends job data from the given file to the database server
       def send_data(filename)
+        raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
+      
         system = self.system
         
         known_users = {}

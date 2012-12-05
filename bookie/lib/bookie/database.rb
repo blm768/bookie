@@ -230,6 +230,10 @@ module Bookie
         where('name = ?', name)
       end
       
+      def self.by_system_type(sys_type)
+        where('system_type_id = ?', sys_type.id)
+      end
+      
       def self.find_active_by_name_or_create!(values)
         system = nil
         name = values[:name]

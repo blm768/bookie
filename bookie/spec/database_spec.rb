@@ -365,6 +365,13 @@ describe Bookie::Database do
       Bookie::Database::System.by_name('test3').length.should eql 1
     end
     
+    it "correctly filters by system type" do
+      ['Standalone', 'TORQUE cluster'].each do |type|
+        t = Bookie::Database::SystemType.find_by_name(type)
+        Bookie::Database::System.by_system_type(t).length.should eql 2
+      end
+    end
+    
     describe :summary do
       before(:all) do
         Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
