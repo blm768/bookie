@@ -17,7 +17,7 @@ describe Bookie::Formatter::Stdout do
   end
   
   after(:all) do
-    FileUtils.rm('spec/test.sqlite')
+    FileUtils.rm('test.sqlite')
   end
   
   it "correctly formats jobs" do

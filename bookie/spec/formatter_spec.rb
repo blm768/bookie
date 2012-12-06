@@ -21,7 +21,7 @@ describe Bookie::Formatter::Formatter do
   end
   
   after(:all) do
-    FileUtils.rm('spec/test.sqlite')
+    FileUtils.rm('test.sqlite')
   end
   
   it "correctly formats durations" do

@@ -2,7 +2,7 @@
   "Database type" : "sqlite3",
   "Server"        : "localhost",
   "Port"          : 8080,
-  "Database"      : "spec/test.sqlite",
+  "Database"      : "test.sqlite",
   "Username"      : "blm768",
   "Password"      : "test",
   "Excluded users": ["root"],
