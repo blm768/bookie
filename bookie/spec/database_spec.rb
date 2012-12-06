@@ -38,12 +38,22 @@ describe Bookie::Database do
       expect { Lock[:dummy] }.to raise_error("Unable to find lock 'dummy'")
     end
     
-    #To do: how to test the actual operation of the lock?
     it "locks records" do
-      lock = mock()
-      lock.expects(:find)
-      Bookie::Database::Lock.expects(:lock).returns(lock)
-      Bookie::Database::Lock.first.synchronize {}
+      lock = Bookie::Database::Lock[:users]
+      thread = nil
+      lock.synchronize do
+        thread = Thread.new {
+          t = Time.now
+          ActiveRecord::Base.connection_pool.with_connection do
+            lock.synchronize do
+              Bookie::Database::User.first
+            end
+          end
+          (Time.now - t).should >= 0.5
+        }
+        sleep(1)
+      end
+      thread.join
     end
     
     it "validates fields" do

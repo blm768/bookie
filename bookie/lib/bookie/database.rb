@@ -300,7 +300,6 @@ module Bookie
             else
               #No; find the system that was brought down last.
               last_ended_system = systems.order('end_time DESC').first
-              puts last_ended_system
               wall_time_range = last_ended_system.end_time - first_started_system.start_time
             end
           end
