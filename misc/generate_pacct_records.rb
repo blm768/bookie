@@ -5,7 +5,7 @@ require 'pacct'
 filename = 'snapshot/pacct_generated'
 log = Pacct::Log.new(filename, "wb")
 
-count = 100
+count = 1000
 
 #hostnames = ['test1', 'test2', 'test3']
 users = ['root', 'bin', 'daemon']

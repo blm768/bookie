@@ -6,7 +6,7 @@
   "Username"      : "root",
   "Password"      : "test",
   "Hostname"      : "localhost",
-  "System type"   : "standalone",
+  "System type"   : "torque_cluster",
   "Cores"         : 4,
   "Memory"        : 1000000000
 }

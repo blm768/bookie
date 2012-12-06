@@ -261,7 +261,6 @@ module Bookie
         #Find all the systems within the time range.
         systems = System
         if min_time
-          #To do: unit test.
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
           raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
           #To consider: optimize as union of queries?

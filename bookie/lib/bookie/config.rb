@@ -8,7 +8,7 @@ require 'set'
 module Bookie
   #Holds database configuration, etc. for Bookie components
   #
-  #==Configuration format (To do: update!)
+  #==Configuration format
   #The configuration file is a JSON file with the following fields:
   #* "Database type": the type of database to be used
   #  - Defaults to "mysql2"
@@ -23,10 +23,14 @@ module Bookie
   #  - Defaults to ""
   #* "Excluded users": an array of usernames to be excluded from the database (optional)
   #* "System type": The type of system
-  #  - "Standalone": a standalone machine
-  #  - "TORQUE cluster": the head of a TORQUE cluster
+  #  - "standalone": a standalone machine
+  #  - "torque_cluster": the head of a TORQUE cluster
   #  - Other values are possible depending on which sender plugins are installed.
+  #    - Look in bookie/senders for a list.
   #* "Hostname": the system's hostname (required)
+  #* "Maximum idle": the maximum number of days that a system can be idle without a warning being produced
+  #* "Cores": the number of cores in the system
+  #* "Memory": the amount of memory (in KB) in the system
   class Config
     #The database type
     #
@@ -46,24 +50,16 @@ module Bookie
     attr_accessor :password
     #A set containing the names of users to be excluded
     attr_accessor :excluded_users
+    #The system type
+    attr_accessor :system_type
     #The system's hostname
     attr_accessor :hostname
     #The number of days a system can fail to post job entries before a warning is made
     attr_accessor :maximum_idle
     #The number of cores on the system
     attr_accessor :cores
-    
-    #The system type
-    def system_type
-      raise "No system type specified" unless @system_type
-      @system_type
-    end
-    
-    
     #The RAM (in KB) in the system
-    def memory
-      @memory ||= @stats.memory[:total]
-    end
+    attr_accessor :memory
        
     #==Parameters
     #* filename: the name of the JSON file from which to load the configuration settings
@@ -112,8 +108,8 @@ module Bookie
       raise 'Memory not specified' unless @memory
       verify_type(@memory, 'Memory', Integer)
       
-      @maximum_idle = data['Maximum idle time'] || 3
-      verify_type(@maximum_idle, 'Maximum idle time', Integer)
+      @maximum_idle = data['Maximum idle'] || 3
+      verify_type(@maximum_idle, 'Maximum idle', Integer)
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match
