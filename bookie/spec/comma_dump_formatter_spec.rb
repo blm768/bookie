@@ -33,16 +33,16 @@ eos
   it "correctly formats summaries" do
     m = IOMock.new
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, m)
+    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System, m)
     m.buf.should eql <<-eos
-Number of jobs, 1
-Total wall time, 01:00:00
-Total CPU time, 00:01:40
-Successful, 100.00%
+Number of jobs, 5
+Total wall time, 05:00:00
+Total CPU time, 00:08:20
+Successful, 60.0000%
 Available CPU time, 140:00:00
-CPU time used, 0.02%
+CPU time used, 0.0992%
 Available memory (average), 1750000 kb
-Memory used (average), 0.00%
+Memory used (average), 0.0014%
 eos
   end
   

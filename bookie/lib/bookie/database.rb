@@ -270,7 +270,7 @@ module Bookie
             max_time,
             min_time)
         end
-
+        
         systems.all.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
@@ -288,14 +288,21 @@ module Bookie
         end
         
         wall_time_range = 0
-        first_started_system = systems.order(:start_time).first
-        if first_started_system
-          last_ended_system = systems.where('end_time IS NULL').first
-          if last_ended_system
-            wall_time_range = (max_time || Time.now) - first_started_system.start_time
-          else
-            last_ended_system = systems.order('end_time DESC').first
-            wall_time_range = last_ended_system.end_time - first_started_system.start_time
+        if min_time
+          wall_time_range = max_time - min_time
+        else
+          first_started_system = systems.order(:start_time).first
+          if first_started_system
+            #Is there a system still active?
+            last_ended_system = systems.where('end_time IS NULL').first
+            if last_ended_system
+              wall_time_range = Time.now - first_started_system.start_time
+            else
+              #No; find the system that was brought down last.
+              last_ended_system = systems.order('end_time DESC').first
+              puts last_ended_system
+              wall_time_range = last_ended_system.end_time - first_started_system.start_time
+            end
           end
         end
           

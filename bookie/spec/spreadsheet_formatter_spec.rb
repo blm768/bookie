@@ -86,19 +86,19 @@ describe Bookie::Formatter::Spreadsheet do
   it "correctly formats summaries" do
     Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
     m = MockWorkbook.new
-    @formatter.print_summary(@jobs.limit(1), Bookie::Database::System, m)
+    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System, m)
     w = m.worksheet('Summary')
     w.column(0).width.should_not eql nil
     w.last_row_index.should eql 7
     w.mock_rows.should eql [
-      ["Number of jobs", 1],
-      ["Total wall time", "01:00:00"],
-      ["Total CPU time", "00:01:40"],
-      ["Successful", "100.00%"],
+      ["Number of jobs", 5],
+      ["Total wall time", "05:00:00"],
+      ["Total CPU time", "00:08:20"],
+      ["Successful", "60.0000%"],
       ["Available CPU time", "140:00:00"],
-      ["CPU time used", "0.02%"],
+      ["CPU time used", "0.0992%"],
       ["Available memory (average)", "1750000 kb"],
-      ["Memory used (average)", "0.00%"],
+      ["Memory used (average)", "0.0014%"],
     ]
   end
   

@@ -374,11 +374,11 @@ describe Bookie::Database do
     
     describe :summary do
       before(:all) do
-        Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
+        Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
         @base_time = Time.local(2012)
         @systems = Bookie::Database::System
         @summary = Helpers::create_summaries(@systems, Time.local(2012))
-        @summary_wide = @systems.summary(Time.local(2012) - 100, Time.local(2012) + 3600 * 40 + 3600)
+        @summary_wide = @systems.summary(Time.local(2012) - 3600, Time.local(2012) + 3600 * 40 + 3600)
       end
       
       it "produces correct summaries" do
@@ -389,8 +389,8 @@ describe Bookie::Database do
         clipped_cpu_time = system_clipped_wall_time * 2
         system_wide_cpu_time = system_wide_wall_time * 2
         avg_mem = Float(1000000 * system_total_wall_time / (3600 * 40))
-        clipped_avg_mem = Float(1000000 * system_clipped_wall_time / (3600 * 25))
-        wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 41)
+        clipped_avg_mem = Float(1000000 * system_clipped_wall_time) / (3600 * 25 - 1800)
+        wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 42)
         @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all][:avail_memory_avg].should eql avg_mem
@@ -406,19 +406,27 @@ describe Bookie::Database do
         @summary[:empty][:avail_cpu_time].should eql 0
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0
-        sys = mock()
-        sys.expects(:end_time).returns Time.now
-        q = mock()
-        q.expects(:first).returns(@systems.order(:start_time).first)
-        q2 = mock()
-        q2.expects(:first).returns(nil)
-        q3 = mock()
-        q3.expects(:first).returns(sys)
-        @systems.expects(:order).with(:start_time).returns(q).at_least_once
-        @systems.expects(:where).with('end_time IS NULL').returns(q2)
-        @systems.expects(:order).with('end_time DESC').returns(q3)
-        summary_all_systems_ended = @systems.summary
-        summary_all_systems_ended.should eql @summary[:all]
+        begin
+          @systems.all.each do |system|
+            unless system.id == 1
+              system.end_time = Time.now
+              system.save!
+            end
+          end
+          summary_all_systems_ended = @systems.summary()
+          summary_all_systems_ended.should eql @summary[:all]
+          summary_all_systems_ended = @systems.summary(Time.local(2012), Time.now + 3600)
+          s2 = @summary[:all].dup
+          s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
+          summary_all_systems_ended.should eql s2
+        ensure
+          @systems.all.each do |system|
+            unless system.id == 1
+              system.end_time = nil
+              system.save!
+            end
+          end
+        end
       end
       
       it "validates arguments" do
