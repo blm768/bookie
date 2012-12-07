@@ -15,12 +15,6 @@ module Bookie
           out.printf Formatter::FORMAT_STRING, *fields
         end
       end
-      
-      def do_print_non_response_warnings(systems, out = STDOUT)
-        each_non_response_warning(systems) do |system_name, warning|
-          out.puts "Warning: #{warning} for #{system_name}"
-        end
-      end
     end
   end
 end

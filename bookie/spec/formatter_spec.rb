@@ -72,25 +72,4 @@ describe Bookie::Formatter::Formatter do
     @formatter.expects(:do_print_jobs)
     @formatter.print_jobs(nil, nil)
   end
-  
-  it "produces correct non-response warnings" do
-    Time.expects(:now).returns(Time.local(2013)).at_least_once
-    count = 0
-    @formatter.each_non_response_warning(Bookie::Database::System) do |system, warning|
-      #Nasty, compressed expression to get the right date; only works for these 3 systems.
-      warning.should eql "No jobs on record since 2012-01-0#{[2, count + 1].min}"
-      count += 1
-    end
-    count.should eql 3
-    #Simulates the case where a system has no jobs recorded
-    Bookie::Database::Job.any_instance.expects(:"==").with(nil).returns(true).at_least_once
-    @formatter.each_non_response_warning(Bookie::Database::System) do |system, warning|
-      warning.should eql 'No jobs on record'
-    end
-  end
-  
-  it "forwards print_non_response_warnings do do_print_non_response_warnings" do
-    @formatter.expects(:do_print_non_response_warnings).with(Bookie::Database::System, nil)
-    @formatter.print_non_response_warnings(nil)
-  end
 end

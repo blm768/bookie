@@ -1,4 +1,4 @@
-#/usr/bin/env ruby
+#!/usr/bin/env ruby
 
 require 'rubygems'
 
@@ -28,9 +28,8 @@ begin
   group = Bookie::Database::Group.create!(:name => 'test')
   user = Bookie::Database::User.create!(:name => 'test', :group => group)
   
-  n = 1000
+  n = 1000000
   
-  mem_old = memory_usage
   start_time = Time.local(2012)
   n.times do |i|
     start_time += 1
@@ -44,8 +43,12 @@ begin
       :exit_code => 0
     )
   end
+  #GC::Profiler.enable
+  old_mem = GC.stat[:heap_used]
   jobs = Bookie::Database::Job.all
-  puts "Memory for #{n} jobs: #{memory_usage - mem_old}kb"
+  puts "Memory for #{n} jobs: #{GC.stat[:heap_used] - old_mem}"
+  #puts GC::Profiler.result
+  #GC::Profiler.disable
 ensure
   FileUtils.rm('test.sqlite')
 end

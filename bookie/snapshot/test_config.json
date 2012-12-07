@@ -10,5 +10,5 @@
   "Hostname"      : "localhost",
   "Cores"         : 8,
   "Memory"        : 8000000,
-  "Maximum idle time" : 5
+  "Maximum idle"  : 5
 }

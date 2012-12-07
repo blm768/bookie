@@ -101,16 +101,4 @@ describe Bookie::Formatter::Spreadsheet do
       ["Memory used (average)", "0.0014%"],
     ]
   end
-  
-  it "correctly formats non-response warnings" do
-    m = MockWorkbook.new
-    @formatter.print_non_response_warnings(m)
-    w = m.worksheet('Warnings')
-    w.last_row_index.should eql 2
-    w.mock_rows.should eql [
-      ["test1", "No jobs on record since 2012-01-01"],
-      ["test2", "No jobs on record since 2012-01-02"], 
-      ["test3", "No jobs on record since 2012-01-02"],
-    ]
-  end
 end

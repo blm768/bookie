@@ -13,12 +13,6 @@ module Bookie
           file.puts fields.join(', ')
         end
       end
-      
-      def do_print_non_response_warnings(systems, file)
-        each_non_response_warning(systems) do |system_name, warning|
-          file.puts "#{system_name}, #{warning}"
-        end
-      end
     end
   end
 end

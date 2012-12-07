@@ -45,14 +45,4 @@ Available memory (average), 1750000 kb
 Memory used (average), 0.0014%
 eos
   end
-  
-  it "correctly formats non-response warnings" do
-    m = IOMock.new
-    @formatter.print_non_response_warnings(m)
-    m.buf.should eql <<-eos
-test1, No jobs on record since 2012-01-01
-test2, No jobs on record since 2012-01-02
-test3, No jobs on record since 2012-01-02
-eos
-  end
 end

@@ -28,16 +28,6 @@ module Bookie
           index += 1
         end
       end
-      
-      def do_print_non_response_warnings(systems, workbook)
-        s = workbook.worksheet("Warnings") || workbook.create_worksheet(:name => "Warnings")
-        
-        index = 0
-        each_non_response_warning(systems) do |system_name, warning|
-          s.row(index).concat([system_name, warning])
-          index += 1
-        end
-      end
     end
   end
 end

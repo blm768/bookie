@@ -53,21 +53,6 @@ module Bookie
         do_print_jobs(jobs, io)
       end
       
-      def print_non_response_warnings(io)
-        do_print_non_response_warnings(Bookie::Database::System, io)
-      end
-      
-      def each_non_response_warning(systems)
-        systems.active_systems.all.each do |system|
-          job = Bookie::Database::Job.where('system_id = ?', system.id).order('end_time DESC').first
-          if job == nil
-            yield system.name, "No jobs on record"
-          elsif Time.now - job.end_time > @config.maximum_idle * 3600 * 24
-            yield system.name, "No jobs on record since #{job.end_time.getlocal.to_date}"
-          end
-        end
-      end
-      
       def fields_for_each_job(jobs)
         jobs.each_with_relations do |job|
           #To do: optimize?

@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'date'
 
 #To do: check failure cases (invalid records?)
-describe TorqueStats::JobLog do
+describe Torque::JobLog do
   before(:each) do
     TorqueStats::torque_root = 'snapshot'
     @log = TorqueStats::JobLog.new('snapshot/torque')
