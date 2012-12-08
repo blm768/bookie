@@ -81,6 +81,9 @@ module Bookie
       ##
       #For each job, yields an array containing the field values to be used when printing a table of jobs
       #
+      #call-seq:
+      #  fields_for_each_job(jobs) { |fields| ... }
+      #
       #===Examples
       #  formatter.fields_for_each_job(jobs) do |fields|
       #    Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS.zip(fields) do |label, field|
@@ -112,6 +115,10 @@ module Bookie
       end
       protected :fields_for_each_job
       
+      ##
+      #Formats a duration in HH:MM:SS format
+      #
+      #<tt>dur</tt> should be a number in seconds.
       def self.format_duration(dur)
         dur = Integer(dur)
         hours = dur / 3600

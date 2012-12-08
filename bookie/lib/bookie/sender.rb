@@ -6,10 +6,13 @@ require 'logger'
 
 module Bookie
   module Sender
-    #An object that sends data to the server
+    ##
+    #An object that sends data to the database
     class Sender
-      #==Parameters
-      #* config: an instance of Bookie::Config
+      ##
+      #Creates a new Sender
+      #
+      #<tt>config</tt> should be an instance of Bookie::Config.
       def initialize(config)
         @config = config
         t = @config.system_type
@@ -17,9 +20,11 @@ module Bookie
         extend Bookie::Sender.const_get(t.camelize)
       end
       
+      ##
       #Retrieves the System object with which the jobs will be associated, creating it if it does not exist
-      #
+      #--
       #To consider: caching?
+      #++
       def system
         hostname = @config.hostname
         system_type = self.system_type
@@ -32,6 +37,7 @@ module Bookie
         )
       end
       
+      ##
       #Sends job data from the given file to the database server
       def send_data(filename)
         raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
@@ -70,16 +76,19 @@ module Bookie
         Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
       end
       
-      #Filters a job to see if it should be included in the final output
+      ##
+      #Returns whether a job should be filtered from the results
       #
-      #Returns either the given job or nil
       def filtered?(job)
         @config.excluded_users.include?job.user_name
       end
     end
     
+    ##
+    #This module is mixed into various job classes used internally by senders.
     module ModelHelpers
-      #Converts the client's internal job type to a Bookie::Database::Job
+      ##
+      #Converts the object to a Bookie::Database::Job
       def to_model()
         db_job = Bookie::Database::Job.new
         db_job.start_time = self.start_time
