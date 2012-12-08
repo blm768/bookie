@@ -6,8 +6,13 @@ module Bookie
   #Contains ActiveRecord structures for the central database
   module Database
   
+    ##
+    #Represents a lock on a table
+    #
     #Based on http://kseebaldt.blogspot.com/2007/11/synchronizing-using-active-record.html
     class Lock < ActiveRecord::Base
+      ##
+      #Acquires the lock, runs the given block, and releases the lock when finished
       def synchronize
         transaction do
           #Lock this record to be inaccessible to others until this transaction is completed.
@@ -18,6 +23,8 @@ module Bookie
       
       @locks = {}
       
+      ##
+      #Returns a lock by name
       def self.[](name)
         @locks[name.to_sym] ||= find_by_name(name.to_s) or raise "Unable to find lock '#{name}'"
       end
@@ -25,47 +32,82 @@ module Bookie
       validates_presence_of :name
     end
   
-    #ActiveRecord structure for a completed job
+    ##
+    #A reported job
+    #
+    #The various filter methods can be chained to produce more complex queries.
+    #
+    #===Examples
+    #  Bookie::Database::Job.by_user_name('root').by_system_name('localhost').find_each do |job|
+    #    puts job.inspect
+    #  end
+    #
     class Job < ActiveRecord::Base
       belongs_to :user
       belongs_to :system
       
+      ##
+      #The time at which the job ended
       def end_time
         return start_time + wall_time
       end
       
+      ##
+      #Filters by user name
       def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
       end
 
+      ##
+      #Filters by system name
       def self.by_system_name(system_name)
         joins(:system).where('systems.name = ?', system_name)
       end
       
+      ##
+      #Filters by group name
       def self.by_group_name(group_name)
         group = Group.find_by_name(group_name)
         return joins(:user).where('group_id = ?', group.id) if group
         limit(0)
       end
       
+      ##
+      #Filters by system type
       def self.by_system_type(system_type)
         joins(:system).where('system_type_id = ?', system_type.id)
       end
       
+      ##
+      #Filters by a range of start times
       def self.by_start_time_range(start_min, start_max)
         where('? <= start_time AND start_time < ?', start_min, start_max)
       end
       
+      ##
+      #Filters by a range of end times
       def self.by_end_time_range(end_min, end_max)
         where('? <= end_time AND end_time < ?', end_min, end_max)
       end
       
+      ##
+      #Finds all jobs whose running intervals overlap the given time range
       def self.by_time_range_inclusive(min_time, max_time)
         raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
         where('start_time < ? AND end_time > ?', max_time, min_time)
       end
       
-      #Should probably not be used with queries that filter by start/end time
+      ##
+      #Produces a summary of the jobs in the given time interval
+      #
+      #Returns a hash with the following fields:
+      #- <tt>:jobs</tt>: the number of jobs in the interval
+      #- <tt>:wall_time</tt>: the sum of all the jobs' wall times
+      #- <tt>:cpu_time</tt>: the total CPU time used
+      #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
+      #- <tt>:successful</tt>: the proportion of jobs that completed successfully
+      #
+      #This method should probably not be used with other queries that filter by start/end time.
       def self.summary(min_time = nil, max_time = nil)
         jobs = self
         if min_time
@@ -110,7 +152,10 @@ module Bookie
         }
       end
       
-      #To consider: define this in other classes as well?
+      ##
+      #Yields each job, pre-loading its relations to reduce the need for extra queries
+      #
+      #Relations are not cached between calls.
       def self.each_with_relations
         transaction do
           users = {}
@@ -173,10 +218,15 @@ module Bookie
       
     end
     
-    #ActiveRecord structure for a group
+    ##
+    #A group
     class Group < ActiveRecord::Base
       has_many :users
       
+      ##
+      #Finds a group by name, creating it if it doesn't exist
+      #
+      #If <tt>known_groups</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
       def self.find_or_create!(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
@@ -196,6 +246,10 @@ module Bookie
     class User < ActiveRecord::Base
       belongs_to :group
       
+      ##
+      #Finds a user by name and group, creating it if it doesn't exist
+      #
+      #If <tt>known_users</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
       def self.find_or_create!(name, group, known_users = nil)
         #Determine if the user/group pair must be added to/retrieved from the database.
         user = known_users[[name, group]] if known_users
@@ -215,25 +269,40 @@ module Bookie
       validates_presence_of :group, :name
     end
     
-    #ActiveRecord structure for a network system
+    ##
+    #A system on the network
     class System < ActiveRecord::Base
+      ##
+      #Raised when a system's specifications are different from those of the active system in the database
       SystemConflictError = Class.new(RuntimeError)
       
       has_many :jobs
       belongs_to :system_type
       
+      ##
+      #Finds all systems that are active (i.e. all systems with NULL values for end_time)
       def self.active_systems
         where('end_time IS NULL')
       end
       
+      ##
+      #Filters by name
       def self.by_name(name)
         where('name = ?', name)
       end
       
+      ##
+      #Filters by system type
       def self.by_system_type(sys_type)
         where('system_type_id = ?', sys_type.id)
       end
       
+      ##
+      #Finds the active system for a given name, creating it if it doesn't exist
+      #
+      #<tt>values</tt> should contain a list of fields, including the name, in the format that would normally be passed to System.create!.
+      #
+      #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
       def self.find_active_by_name_or_create!(values)
         system = nil
         name = values[:name]
@@ -254,7 +323,15 @@ module Bookie
         system
       end
       
+      ##
+      #Produces a summary of all the systems for the given time interval
+      #
+      #Returns a hash with the following fields:
+      #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
+      #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
+      #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
       def self.summary(min_time = nil, max_time = nil)
+        current_time = Time.now
         #Sums that are actually returned
         avail_cpu_time = 0
         avail_memory_time = 0
@@ -279,7 +356,7 @@ module Bookie
             system_end_time = [system_end_time, max_time].min if system.end_time
             system_end_time ||= max_time
           else
-            system_end_time ||= Time.now
+            system_end_time ||= current_time
           end
           system_wall_time = system_end_time.to_i - system_start_time.to_i
           avail_cpu_time += system.cores * system_wall_time
@@ -295,7 +372,7 @@ module Bookie
             #Is there a system still active?
             last_ended_system = systems.where('end_time IS NULL').first
             if last_ended_system
-              wall_time_range = Time.now - first_started_system.start_time
+              wall_time_range = current_time - first_started_system.start_time
             else
               #No; find the system that was brought down last.
               last_ended_system = systems.order('end_time DESC').first
@@ -311,6 +388,10 @@ module Bookie
         }
       end
       
+      ##
+      #Decommissions the given system, setting its end time to <tt>end_time</tt>
+      #
+      #This should be called any time a system is brought down or its specifications are changed.
       def decommission(end_time)
         self.end_time = end_time
         self.save!
@@ -332,16 +413,30 @@ module Bookie
       end
     end
     
+    ##
+    #Maps memory stat type names to their database codes
+    #
+    #- <tt>:unknown => 0</tt>
+    #- <tt>:avg => 1</tt>
+    #- <tt>:max => 2</tt>
+    #
     MEMORY_STAT_TYPE = {:unknown => 0, :avg => 1, :max => 2}
     
+    ##
+    #The inverse of MEMORY_STAT_TYPE
     MEMORY_STAT_TYPE_INVERSE = MEMORY_STAT_TYPE.invert
     
-    #ActiveRecord structure for a system type
+    #A system type
     class SystemType < ActiveRecord::Base
       has_many :systems
       
       validates_presence_of :name, :memory_stat_type
       
+      ##
+      #Finds a system type by name and memory stat type, creating it if it doesn't exist
+      #
+      #It is an error to attempt to create two types with the same name but different memory stat types.
+      #
       def self.find_or_create!(name, memory_stat_type)
         sys_type = nil
         Lock[:system_types].synchronize do
@@ -365,6 +460,11 @@ module Bookie
         sys_type
       end
       
+      ##
+      #Returns the memory stat type as a symbol
+      #
+      #See Bookie::Database::MEMORY_STAT_TYPE for possible values.
+      #
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
       def memory_stat_type
         type_code = read_attribute(:memory_stat_type)
@@ -374,6 +474,10 @@ module Bookie
         type
       end
       
+      ##
+      #Sets the memory stat type
+      #
+      #<tt>type</tt> should be a symbol.
       def memory_stat_type=(type)
         raise 'Memory stat type must not be nil' if type == nil
         type_code = MEMORY_STAT_TYPE[type]
@@ -382,138 +486,148 @@ module Bookie
       end
     end
   
-    class CreateUsers < ActiveRecord::Migration
-      def up
-        create_table :users do |t|
-          t.string :name, :null => false
-          t.references :group, :null => false
-        end
-        change_table :users do |t|
-          t.index [:name, :group_id], :unique => true
-        end
-      end
-      
-      def down
-        drop_table :users
-      end
-    end
-    
-    class CreateGroups < ActiveRecord::Migration
-      def up
-        create_table :groups do |t|
-          t.string :name, :null => false
-        end
-        change_table :groups do |t|
-          t.index :name, :unique => true
-        end
-      end
-      
-      def down
-        drop_table :groups
-      end
-    end
-    
-    class CreateSystems < ActiveRecord::Migration
-      def up
-        create_table :systems do |t|
-          t.string :name, :null => false
-          t.references :system_type, :null => false
-          t.datetime :start_time, :null => false
-          t.datetime :end_time
-          t.integer :cores, :null => false
-          #To consider: replace with a float? (more compact)
-          t.integer :memory, :null => false, :limit => 8
-        end
-        change_table :systems do |t|
-          t.index [:name, :end_time], :unique => true
-          t.index :start_time
-          t.index :end_time
-          t.index :system_type_id
-        end
-      end
-      
-      def down
-        drop_table :systems
-      end
-    end
-    
-    class CreateSystemTypes < ActiveRecord::Migration
-      def up
-        create_table :system_types do |t|
-          t.string :name, :null => false
-          t.integer :memory_stat_type, :limit => 1, :null => false
-        end
-        change_table :system_types do |t|
-          t.index :name, :unique => true
-        end
-      end
-      
-      def down
-        drop_table :system_types
-      end
-    end
-    
-    class CreateJobs < ActiveRecord::Migration
-      def up
-        create_table :jobs do |t|
-          t.references :user, :null => false
-          t.references :system, :null => false
-          t.datetime :start_time, :null => false
-          t.datetime :end_time, :null => false
-          t.integer :wall_time, :null => false
-          t.integer :cpu_time, :null => false
-          t.integer :memory, :null => false
-          t.integer :exit_code, :null => false
-        end
-        change_table :jobs do |t|
-          t.index :user_id
-          t.index :system_id
-          t.index :start_time
-          t.index :end_time
-        end
-      end
-    
-      def down
-        drop_table :jobs
-      end
-    end
-    
-    class CreateLocks < ActiveRecord::Migration
-      def up
-        create_table :locks do |t|
-          t.string :name
-        end
-        change_table :locks do |t|
-          t.index :name, :unique => true
+    ##
+    #Database migrations
+    module Migration 
+      class CreateUsers < ActiveRecord::Migration
+        def up
+          create_table :users do |t|
+            t.string :name, :null => false
+            t.references :group, :null => false
+          end
+          change_table :users do |t|
+            t.index [:name, :group_id], :unique => true
+          end
         end
         
-        ['users', 'groups', 'systems', 'system_types'].each do |name|
-          Lock.create!(:name => name)
+        def down
+          drop_table :users
         end
       end
+      
+      class CreateGroups < ActiveRecord::Migration
+        def up
+          create_table :groups do |t|
+            t.string :name, :null => false
+          end
+          change_table :groups do |t|
+            t.index :name, :unique => true
+          end
+        end
         
-      def down
-        drop_table :locks
-      end
-    end
-    
-    class << self;
-      def create_tables
-        CreateUsers.new.up
-        CreateGroups.new.up
-        CreateSystems.new.up
-        CreateSystemTypes.new.up
-        CreateJobs.new.up
-        CreateLocks.new.up
+        def down
+          drop_table :groups
+        end
       end
       
-      def drop_tables
-        CreateUsers.new.down
-        CreateGroups.new.down
-        CreateSystems.new.down
-        CreateSystemTypes.new.down
-        CreateJobs.new.down
-        CreateLocks.new.down
+      class CreateSystems < ActiveRecord::Migration
+        def up
+          create_table :systems do |t|
+            t.string :name, :null => false
+            t.references :system_type, :null => false
+            t.datetime :start_time, :null => false
+            t.datetime :end_time
+            t.integer :cores, :null => false
+            #To consider: replace with a float? (more compact)
+            t.integer :memory, :null => false, :limit => 8
+          end
+          change_table :systems do |t|
+            t.index [:name, :end_time], :unique => true
+            t.index :start_time
+            t.index :end_time
+            t.index :system_type_id
+          end
+        end
+        
+        def down
+          drop_table :systems
+        end
+      end
+      
+      class CreateSystemTypes < ActiveRecord::Migration
+        def up
+          create_table :system_types do |t|
+            t.string :name, :null => false
+            t.integer :memory_stat_type, :limit => 1, :null => false
+          end
+          change_table :system_types do |t|
+            t.index :name, :unique => true
+          end
+        end
+        
+        def down
+          drop_table :system_types
+        end
+      end
+      
+      class CreateJobs < ActiveRecord::Migration
+        def up
+          create_table :jobs do |t|
+            t.references :user, :null => false
+            t.references :system, :null => false
+            t.datetime :start_time, :null => false
+            t.datetime :end_time, :null => false
+            t.integer :wall_time, :null => false
+            t.integer :cpu_time, :null => false
+            t.integer :memory, :null => false
+            t.integer :exit_code, :null => false
+          end
+          change_table :jobs do |t|
+            t.index :user_id
+            t.index :system_id
+            t.index :start_time
+            t.index :end_time
+          end
+        end
+      
+        def down
+          drop_table :jobs
+        end
+      end
+      
+      class CreateLocks < ActiveRecord::Migration
+        def up
+          create_table :locks do |t|
+            t.string :name
+          end
+          change_table :locks do |t|
+            t.index :name, :unique => true
+          end
+          
+          ['users', 'groups', 'systems', 'system_types'].each do |name|
+            Lock.create!(:name => name)
+          end
+        end
+          
+        def down
+          drop_table :locks
+        end
+      end
+    
+      class << self;
+        ##
+        #Brings up all migrations
+        def up
+          CreateUsers.new.up
+          CreateGroups.new.up
+          CreateSystems.new.up
+          CreateSystemTypes.new.up
+          CreateJobs.new.up
+          CreateLocks.new.up
+        end
+        
+        ##
+        #Brings down all migrations
+        #
+        #Warning: this will destroy all data!
+        def down
+          CreateUsers.new.down
+          CreateGroups.new.down
+          CreateSystems.new.down
+          CreateSystemTypes.new.down
+          CreateJobs.new.down
+          CreateLocks.new.down
+        end
       end
     end
   end

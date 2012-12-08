@@ -13,7 +13,7 @@ end
 
 describe Bookie::Formatter::Formatter do
   before(:all) do
-    Bookie::Database::create_tables
+    Bookie::Database::Migration.up
     Helpers::generate_database
     Bookie::Formatter::Formatter.any_instance.stubs(:require)
     @formatter = Bookie::Formatter::Formatter.new(@config, :mock)

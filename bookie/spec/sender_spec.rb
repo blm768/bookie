@@ -13,7 +13,7 @@ end
 
 describe Bookie::Sender::Sender do
   before(:all) do
-    Bookie::Database::create_tables
+    Bookie::Database::Migration.up
   end
   
   after(:all) do

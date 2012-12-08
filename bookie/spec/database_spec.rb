@@ -18,14 +18,14 @@ end
 describe Bookie::Database do
   before(:all) do
     unless @generated
-      Bookie::Database::create_tables
+      Bookie::Database::Migration.up
       Helpers::generate_database
       @generated = true
     end
   end
   
   after(:all) do
-    Bookie::Database::drop_tables
+    Bookie::Database::Migration.down
   end
   
   describe Bookie::Database::Lock do

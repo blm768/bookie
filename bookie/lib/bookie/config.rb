@@ -61,8 +61,8 @@ module Bookie
     #The RAM (in KB) in the system
     attr_accessor :memory
        
-    #==Parameters
-    #* filename: the name of the JSON file from which to load the configuration settings
+    ##
+    #Creates a new Config object using values from the provided JSON file
     def initialize(filename)
       file = File.open(filename)
       data = JSON::parse(file.read)

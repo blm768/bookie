@@ -5,7 +5,19 @@ require 'spreadsheet'
 
 module Bookie
   module Formatter
+    ##
+    #Takes jobs from the database and creates summaries and tables in various output formats.
     class Formatter
+      ##
+      #Creates a new Formatter object
+      #
+      #<tt>config</tt> should be an instance of Bookie::Config.
+      #<tt>formatter</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
+      #
+      #===Examples
+      #  config = Bookie::Config.new('config.json')
+      #  #Uses the spreadsheet formatter from 'bookie/formatters/spreadsheet'
+      #  formatter = Bookie::Formatter::Formatter.new(config, :spreadsheet)
       def initialize(config, formatter)
         @config = config
         #Needed for symbol arguments
@@ -14,6 +26,8 @@ module Bookie
         extend Bookie::Formatter.const_get(formatter.camelize)
       end
       
+      ##
+      #An array containing the labels for each field in a summary
       SUMMARY_FIELD_LABELS = [
           "Number of jobs",
           "Total wall time",
@@ -24,11 +38,20 @@ module Bookie
           "Available memory (average)",
           "Memory used (average)",
         ]
+        
+        ##
+        #An array containing the labels for each field in a details table
         DETAILS_FIELD_LABELS = [
           'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
           'CPU time', 'Memory usage', 'Exit code'
         ]
       
+      ##
+      #Prints a summary of <tt>jobs</tt> and <tt>systems</tt> to <tt>io</tt>
+      #
+      #Use start_time and end_time to filter the jobs by a time range.
+      #
+      #It is probably not a good idea to apply any time-based filters to <tt>jobs</tt> or <tt>systems</tt> beforehand.
       def print_summary(jobs, systems, io, start_time = nil, end_time = nil)
         jobs_summary = jobs.summary(start_time, end_time)
         systems_summary = systems.summary(start_time, end_time)
@@ -49,10 +72,21 @@ module Bookie
         do_print_summary(field_values, io)
       end
       
+      ##
+      #Prints a table containing all details of <tt>jobs</tt> to <tt>io</tt>
       def print_jobs(jobs, io)
         do_print_jobs(jobs, io)
       end
       
+      ##
+      #For each job, yields an array containing the field values to be used when printing a table of jobs
+      #
+      #===Examples
+      #  formatter.fields_for_each_job(jobs) do |fields|
+      #    Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS.zip(fields) do |label, field|
+      #      puts "#{label}: #{field}"
+      #    end
+      #  end
       def fields_for_each_job(jobs)
         jobs.each_with_relations do |job|
           #To do: optimize?
@@ -77,8 +111,6 @@ module Bookie
         end
       end
       protected :fields_for_each_job
-      
-      FORMAT_STRING = "%-15.15s %-15.15s %-20.20s %-20.20s %-26.25s %-26.25s %-12.10s %-12.10s %-20.20s %-11.11s\n"
       
       def self.format_duration(dur)
         dur = Integer(dur)

@@ -10,7 +10,7 @@ end
 
 describe Bookie::Formatter::CommaDump do
   before(:all) do
-    Bookie::Database::create_tables
+    Bookie::Database::Migration.up
     Helpers::generate_database
     @formatter = Bookie::Formatter::Formatter.new(@config, :comma_dump)
     @jobs = Bookie::Database::Job

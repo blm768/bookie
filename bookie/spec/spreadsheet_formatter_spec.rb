@@ -57,7 +57,7 @@ end
 
 describe Bookie::Formatter::Spreadsheet do
   before(:all) do
-    Bookie::Database::create_tables
+    Bookie::Database::Migration.up
     Helpers::generate_database
     @formatter = Bookie::Formatter::Formatter.new(@config, :spreadsheet)
     @jobs = Bookie::Database::Job

@@ -10,7 +10,7 @@ end
 
 describe Bookie::Formatter::Stdout do
   before(:all) do
-    Bookie::Database::create_tables
+    Bookie::Database::Migration.up
     Helpers::generate_database
     @formatter = Bookie::Formatter::Formatter.new(@config, :stdout)
     @jobs = Bookie::Database::Job
