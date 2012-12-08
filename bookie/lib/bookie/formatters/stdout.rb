@@ -1,5 +1,5 @@
 module Bookie
-  module Formatter
+  module Formatters
     module Stdout
       def do_print_summary(field_values, out = STDOUT)
         Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|

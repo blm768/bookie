@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 module Bookie
-  module Formatter
+  module Formatters
     module Mock
       def do_print_summary(field_values, io)
         #A bit of an ugly hack, but .should doesn't work here.
@@ -11,12 +11,12 @@ module Bookie
   end
 end
 
-describe Bookie::Formatter::Formatter do
+describe Bookie::Formatter do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    Bookie::Formatter::Formatter.any_instance.stubs(:require)
-    @formatter = Bookie::Formatter::Formatter.new(@config, :mock)
+    Bookie::Formatter.any_instance.stubs(:require)
+    @formatter = Bookie::Formatter.new(@config, :mock)
     @jobs = Bookie::Database::Job
   end
   
@@ -25,7 +25,7 @@ describe Bookie::Formatter::Formatter do
   end
   
   it "correctly formats durations" do
-    Bookie::Formatter::Formatter.format_duration(3600 * 6 + 60 * 5 + 4).should eql '06:05:04'
+    Bookie::Formatter.format_duration(3600 * 6 + 60 * 5 + 4).should eql '06:05:04'
   end
   
   it "correctly calculates fields for jobs" do

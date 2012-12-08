@@ -1,7 +1,7 @@
 require 'spreadsheet'
 
 module Bookie
-  module Formatter
+  module Formatters
     module Spreadsheet
       def do_print_summary(field_values, workbook)
         s = workbook.worksheet("Summary") || workbook.create_worksheet(:name => "Summary")

@@ -1,18 +1,18 @@
 require 'spec_helper'
 
 module Bookie
-  module Formatter
+  module Formatters
     module Stdout
     
     end
   end
 end
 
-describe Bookie::Formatter::Stdout do
+describe Bookie::Formatters::Stdout do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    @formatter = Bookie::Formatter::Formatter.new(@config, :stdout)
+    @formatter = Bookie::Formatter.new(@config, :stdout)
     @jobs = Bookie::Database::Job
   end
   

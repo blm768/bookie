@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 module Bookie
-  module Formatter
+  module Formatters
     module Spreadsheet
 
     end
@@ -55,11 +55,11 @@ class MockColumn
   end
 end
 
-describe Bookie::Formatter::Spreadsheet do
+describe Bookie::Formatters::Spreadsheet do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    @formatter = Bookie::Formatter::Formatter.new(@config, :spreadsheet)
+    @formatter = Bookie::Formatter.new(@config, :spreadsheet)
     @jobs = Bookie::Database::Job
   end
   
@@ -72,11 +72,11 @@ describe Bookie::Formatter::Spreadsheet do
     @formatter.print_jobs(@jobs.limit(2), m)
     w = m.worksheet('Details')
     w.last_row_index.should eql 2
-    w.mock_columns.length.should eql Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS.length
+    w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
     w.mock_columns.each do |col|
       col.width.should_not eql nil
     end
-    w.row(0).should eql Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS
+    w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
     w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
       "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 0]
     w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",

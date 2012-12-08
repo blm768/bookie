@@ -102,7 +102,7 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-formatter = Bookie::Formatter::Formatter.new(config, output_type)
+formatter = Bookie::Formatter.new(config, output_type)
 
 #To do: ensure that the query isn't performed twice?
 formatter.print_summary(jobs, systems, output_file, t_min, t_max)

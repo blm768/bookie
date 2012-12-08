@@ -1,18 +1,18 @@
 require 'spec_helper'
 
 module Bookie
-  module Formatter
+  module Formatters
     module CommaDump
     
     end
   end
 end
 
-describe Bookie::Formatter::CommaDump do
+describe Bookie::Formatters::CommaDump do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    @formatter = Bookie::Formatter::Formatter.new(@config, :comma_dump)
+    @formatter = Bookie::Formatter.new(@config, :comma_dump)
     @jobs = Bookie::Database::Job
   end
   
