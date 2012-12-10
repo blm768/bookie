@@ -1,5 +1,7 @@
 module Bookie
   module Formatters
+    ##
+    #Formats data in a human-readable text format intended to be send to standard output
     module Stdout
       def open(filename)
         if filename

@@ -72,6 +72,8 @@ module Bookie
         end
       end
       
+      ##
+      #The name of the Bookie::Database::SystemType that systems using this sender will have
       def system_type
         Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
       end

@@ -59,6 +59,8 @@ module Torque
       @file = File.open(filename)
     end
     
+    ##
+    #Raised when a line in the file is invalid
     class InvalidLineError < RuntimeError
       def initialize(filename, line_num)
         super("Line #{line_num} of file '#{filename}' is invalid.")

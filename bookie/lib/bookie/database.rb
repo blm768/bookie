@@ -414,7 +414,7 @@ module Bookie
     end
     
     ##
-    #Maps memory stat type names to their database codes
+    #A hash mapping memory stat type names to their database codes
     #
     #- <tt>:unknown => 0</tt>
     #- <tt>:avg => 1</tt>

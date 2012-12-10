@@ -1,5 +1,7 @@
 module Bookie
   module Formatters
+    ##
+    #Formats data as a CSV file
     module CommaDump
       def open(filename)
         @file = File.open(filename)

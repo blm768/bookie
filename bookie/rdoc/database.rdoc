@@ -1,0 +1,52 @@
+=Database tables
+
+==users
+Holds all users who have executed jobs
+
+If a user changes groups, a new entry is created with the same username but a different group.
+The old entry is retained so that older records have access to it.
+
+===Fields
+- name (varchar): the user's name
+- group (foreign key): the user's group
+
+==groups
+Holds all groups that have executed jobs
+
+===Fields
+- name(varchar): the group name
+
+==systems
+Holds all systems that have reported jobs
+
+If a system's specifications are changed, it must be marked as decommissioned and allowed to create a new entry with the updated specifications. There may only be one active system (with a non-NULL end_time) for each hostname at a time.
+
+===Fields
+- name (varchar): the system's name (i.e. hostname)
+- system_type (foreign key): the system's type
+- start_time (time): the time at which the system became active
+- end_time (time): the time at which the system was decommissioned (may be NULL)
+- cores (integer): the number of cores on the system
+- memory (integer): the memory (in KB) that the system contains
+
+==system_types
+Holds all system types
+
+===Fields
+- name (varchar): the name of the type
+- memory_stat_type (integer): a code representing the type of memory statistic that the machine enters in the database (i.e. maximum, average, etc.)
+
+==jobs
+Holds all jobs that have been reported
+
+===Fields
+- user (foreign key): the user who executed the job
+- system (foreign key): the system on which the job was executed
+- start_time (time): the time that the job started
+- end_time (time): the time that the job ended
+- wall_time (integer): the number of seconds that the job executed
+  - With the start_time and end_time fields, this is somewhat redundant, but it could be useful for queries.
+- cpu_time (integer): the number of seconds of CPU time used by the job
+- memory (integer): the memory (in KB) used by the job
+  - The exact meaning is dependent on the system type's memory_stat_type field
+- exit_code (integer): the job's exit code

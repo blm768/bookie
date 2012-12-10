@@ -15,8 +15,6 @@ module Bookie
         end
       end
       
-      ##
-      #The name of the Bookie::Database::SystemType to be used or created
       def system_type_name
         "Standalone"
       end

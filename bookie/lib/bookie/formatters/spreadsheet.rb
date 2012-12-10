@@ -2,6 +2,8 @@ require 'spreadsheet'
 
 module Bookie
   module Formatters
+    ##
+    #Formats data as a Microsoft Excel spreadsheet
     module Spreadsheet
       def open(filename)
         @filename = filename
