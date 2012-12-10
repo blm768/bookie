@@ -3,7 +3,11 @@ require 'spec_helper'
 module Bookie
   module Formatters
     module Mock
-      def do_print_summary(field_values, io)
+      def open(filename)
+      
+      end
+      
+      def do_print_summary(field_values)
         #A bit of an ugly hack, but .should doesn't work here.
         $field_values = field_values
       end
@@ -16,7 +20,7 @@ describe Bookie::Formatter do
     Bookie::Database::Migration.up
     Helpers::generate_database
     Bookie::Formatter.any_instance.stubs(:require)
-    @formatter = Bookie::Formatter.new(@config, :mock)
+    @formatter = Bookie::Formatter.new(:mock)
     @jobs = Bookie::Database::Job
   end
   
@@ -57,19 +61,19 @@ describe Bookie::Formatter do
   
   it "prints the correct summary fields" do
     Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System, nil)
+    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
     $field_values.should eql [5, "05:00:00", "00:08:20", "60.0000%", "140:00:00", "0.0992%", "1750000 kb", "0.0014%"]
     Bookie::Database::System.expects(:summary).returns(
       :avail_cpu_time => 0,
       :avail_memory_time => 0,
       :avail_memory_avg => 0
     )
-    @formatter.print_summary(@jobs.limit(0), Bookie::Database::System, nil)
+    @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012), Time.local(2012))
     $field_values.should eql [0, "00:00:00", "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
   end
   
   it "forwards print_jobs to do_print_jobs" do
     @formatter.expects(:do_print_jobs)
-    @formatter.print_jobs(nil, nil)
+    @formatter.print_jobs(nil)
   end
 end

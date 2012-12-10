@@ -10,19 +10,18 @@ module Bookie
     ##
     #Creates a new Formatter object
     #
-    #<tt>config</tt> should be an instance of Bookie::Config.
-    #<tt>formatter</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
+    #<tt>type</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
     #
     #===Examples
     #  config = Bookie::Config.new('config.json')
     #  #Uses the spreadsheet formatter from 'bookie/formatters/spreadsheet'
     #  formatter = Bookie::Formatter::Formatter.new(config, :spreadsheet)
-    def initialize(config, formatter)
-      @config = config
+    def initialize(type, filename = nil)
       #Needed for symbol arguments
-      formatter = formatter.to_s
-      require "bookie/formatters/#{formatter}"
-      extend Bookie::Formatters.const_get(formatter.camelize)
+      type = type.to_s
+      require "bookie/formatters/#{type}"
+      extend Bookie::Formatters.const_get(type.camelize)
+      self.open(filename)
     end
     
     ##
@@ -51,7 +50,7 @@ module Bookie
     #Use start_time and end_time to filter the jobs by a time range.
     #
     #It is probably not a good idea to apply any time-based filters to <tt>jobs</tt> or <tt>systems</tt> beforehand.
-    def print_summary(jobs, systems, io, start_time = nil, end_time = nil)
+    def print_summary(jobs, systems, start_time = nil, end_time = nil)
       jobs_summary = jobs.summary(start_time, end_time)
       systems_summary = systems.summary(start_time, end_time)
       cpu_time = jobs_summary[:cpu_time]
@@ -68,13 +67,13 @@ module Bookie
         "#{Integer(systems_summary[:avail_memory_avg])} kb",
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
-      do_print_summary(field_values, io)
+      do_print_summary(field_values)
     end
     
     ##
-    #Prints a table containing all details of <tt>jobs</tt> to <tt>io</tt>
-    def print_jobs(jobs, io)
-      do_print_jobs(jobs, io)
+    #Prints a table containing all details of <tt>jobs</tt>
+    def print_jobs(jobs)
+      do_print_jobs(jobs)
     end
     
     ##

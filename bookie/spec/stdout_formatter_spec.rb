@@ -12,8 +12,13 @@ describe Bookie::Formatters::Stdout do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    @formatter = Bookie::Formatter.new(@config, :stdout)
     @jobs = Bookie::Database::Job
+  end
+  
+  before(:each) do
+    @m = IOMock.new
+    File.expects(:open).returns(@m)
+    @formatter = Bookie::Formatter.new(:stdout, 'mock.out')
   end
   
   after(:all) do
@@ -21,9 +26,8 @@ describe Bookie::Formatters::Stdout do
   end
   
   it "correctly formats jobs" do
-    m = IOMock.new
-    @formatter.print_jobs(@jobs.order(:start_time).limit(2), m)
-    m.buf.should eql \
+    @formatter.print_jobs(@jobs.order(:start_time).limit(2))
+    @m.buf.should eql \
       "User            Group           System               System type          Start " +
       "time                 End time                   Wall time    CPU time     Memory" +
       " usage         Exit code  \n----------------------------------------------------" +
@@ -37,10 +41,9 @@ describe Bookie::Formatters::Stdout do
   end
   
   it "correctly formats summaries" do
-    m = IOMock.new
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System, m)
-    m.buf.should eql <<-eos
+    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+    @m.buf.should eql <<-eos
 Number of jobs:               5
 Total wall time:              05:00:00
 Total CPU time:               00:08:20
