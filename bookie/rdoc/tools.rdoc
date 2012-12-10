@@ -1,4 +1,41 @@
 =Command-line utilities
 
-==<tt>bookie-data</tt>
+==Standard options
+Unless otherwise specified, every tool accepts these options:
+- <tt>-c CONFIG_FILE</tt>: specifies a configuration file to use
 
+==<tt>bookie-data</tt>
+Retrieves summaries and other data from the database
+
+===Usage
+<tt>bookie-data [options]</tt>
+
+In addition to the standard options, the following options are available:
+
+- <tt>-d, --details</tt>: include a list of all jobs in the data set
+- <tt>-u, --user NAME</tt>: filter by username
+- <tt>-g, --group NAME</tt>: filter by group
+- <tt>-s, --system HOSTNAME</tt>: filter by system")
+- <tt>-t, --type TYPE</tt>: filter by system type
+- <tt>-r, --time BEGIN,END</tt>: filter by a time range
+- <tt>-o, --output-file FILENAME</tt>: send formatted output to FILENAME
+  
+  The following formats are supported:
+  - CSV (*.csv)
+  - Microsoft Excel (*.xls)
+
+==<tt>bookie-send</tt>
+Sends data to the database and decommissions systems
+
+===Usage
+<tt>bookie-send [filename] [options]</tt>
+
+If <tt>filename</tt> is specified, the contents of that file will be sent to the database.
+
+In addition to the standard options, the following options are available:
+
+===Decommissioning systems
+Whenever a system is taken off the network, it should be marked in the database as
+decommissioned so it is not factored into the calculations for total available resources.
+This should also be done when a system's specifications (number of CPUs, etc.) change so
+that a new entry with the correct specifications can be generated.
