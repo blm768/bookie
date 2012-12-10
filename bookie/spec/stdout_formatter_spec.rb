@@ -25,8 +25,16 @@ describe Bookie::Formatters::Stdout do
     FileUtils.rm('test.sqlite')
   end
   
+  it "correctly opens files" do
+    f = Bookie::Formatter.new(:stdout)
+    f.instance_variable_get(:'@io').should eql STDOUT
+    File.expects(:open).with('mock.out')
+    f = Bookie::Formatter.new(:stdout, 'mock.out')
+  end
+  
   it "correctly formats jobs" do
     @formatter.print_jobs(@jobs.order(:start_time).limit(2))
+    @formatter.flush
     @m.buf.should eql \
       "User            Group           System               System type          Start " +
       "time                 End time                   Wall time    CPU time     Memory" +
@@ -43,6 +51,7 @@ describe Bookie::Formatters::Stdout do
   it "correctly formats summaries" do
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
     @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+    @formatter.flush
     @m.buf.should eql <<-eos
 Number of jobs:               5
 Total wall time:              05:00:00

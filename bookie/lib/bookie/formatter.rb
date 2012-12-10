@@ -77,6 +77,14 @@ module Bookie
     end
     
     ##
+    #Flushes all output
+    #
+    #Should always be called after the desired information has been written
+    def flush()
+      do_flush() if self.respond_to?(:do_flush)
+    end
+    
+    ##
     #For each job, yields an array containing the field values to be used when printing a table of jobs
     #
     #call-seq:

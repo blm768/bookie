@@ -44,7 +44,7 @@ describe Bookie::Sender::Sender do
     old_excluded = @config.excluded_users
     @config.excluded_users = Set.new
     begin
-      @sender.send_data('snapshot/torque')
+      @sender.send_data('snapshot/torque_large')
       count = 0
       Bookie::Database::Job.each_with_relations do |job|
         job.system.name.should eql @config.hostname
@@ -59,7 +59,7 @@ describe Bookie::Sender::Sender do
   it "refuses to send jobs when jobs already have been sent from a file" do
     exception = nil
     expect {
-      @sender.send_data('snapshot/torque')
+      @sender.send_data('snapshot/torque_large')
     }.to raise_error(/^Jobs already exist in the database for the date [\d]{4}-[\d]{2}-[\d]{2}.$/)
   end
   

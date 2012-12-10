@@ -15,7 +15,7 @@ end
 config = Bookie::Config.new('../bookie/snapshot/test_config.json')
 config.connect
 
-Bookie::Database::create_tables
+Bookie::Database::Migration.up
 begin
   sys_t = Bookie::Database::SystemType.create!(:name => 'Test', :memory_stat_type => :avg)
   sys = Bookie::Database::System.create!(
@@ -28,7 +28,7 @@ begin
   group = Bookie::Database::Group.create!(:name => 'test')
   user = Bookie::Database::User.create!(:name => 'test', :group => group)
   
-  n = 1000000
+  n = 100000
   
   start_time = Time.local(2012)
   n.times do |i|

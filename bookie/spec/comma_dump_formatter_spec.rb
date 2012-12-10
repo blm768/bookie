@@ -12,18 +12,27 @@ describe Bookie::Formatters::CommaDump do
   before(:all) do
     Bookie::Database::Migration.up
     Helpers::generate_database
-    @formatter = Bookie::Formatter.new(@config, :comma_dump)
     @jobs = Bookie::Database::Job
+  end
+  
+  before(:each) do
+    @m = IOMock.new
+    File.expects(:open).returns(@m)
+    @formatter = Bookie::Formatter.new(:comma_dump, 'test.csv')
   end
   
   after(:all) do
     FileUtils.rm('test.sqlite')
   end
   
+  it "correctly opens files" do
+    File.expects(:open).with('test.csv')
+    f = Bookie::Formatter::new(:comma_dump, 'test.csv')
+  end
+  
   it "correctly formats jobs" do
-    m = IOMock.new
-    @formatter.print_jobs(@jobs.order(:start_time).limit(2), m)
-    m.buf.should eql <<-eos
+    @formatter.print_jobs(@jobs.order(:start_time).limit(2))
+    @m.buf.should eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Exit code
 root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), 0
 test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 200kb (avg), 1
@@ -31,10 +40,9 @@ eos
   end
   
   it "correctly formats summaries" do
-    m = IOMock.new
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System, m)
-    m.buf.should eql <<-eos
+    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+    @m.buf.should eql <<-eos
 Number of jobs, 5
 Total wall time, 05:00:00
 Total CPU time, 00:08:20

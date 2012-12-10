@@ -14,12 +14,7 @@ config_filename = '/etc/bookie/config.json'
 include_details = false
 
 output_type = :stdout
-#Filename (needs to be stored for Spreadsheet)
 filename = nil
-output_file = STDOUT
-#The method to be called on output_file to save it
-#Usually nil
-save_method = nil
 
 t_min = nil
 t_max = nil
@@ -83,11 +78,8 @@ opts = OptionParser.new do |opts|
     case filename
     when /\.xls$/
       output_type = :spreadsheet
-      output_file = Spreadsheet::Workbook.new
-      save_method = :write
     when /\.csv$/
       output_type = :comma_dump
-      output_file = File.open(filename, "w")
     else
       $stderr.puts "Unrecognized output file extension"
       exit 1
@@ -102,14 +94,10 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-formatter = Bookie::Formatter.new(config, output_type)
+formatter = Bookie::Formatter.new(output_type, filename)
 
 #To do: ensure that the query isn't performed twice?
-formatter.print_summary(jobs, systems, output_file, t_min, t_max)
-formatter.print_non_response_warnings(output_file)
+formatter.print_summary(jobs, systems, t_min, t_max)
 jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
-formatter.print_jobs(jobs, systems, output_file) if include_details
-
-if output_file
-  output_file.send(save_method, filename) if save_method
-end
+formatter.print_jobs(jobs) if include_details
+formatter.flush

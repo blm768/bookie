@@ -3,7 +3,7 @@ require 'date'
 
 f = File.open('snapshot/torque_generated', 'w')
 
-count = 1000
+count = 100
 
 hostnames = ['test1', 'test2', 'test3']
 users = ['abc1', 'abc2', 'abc3']
