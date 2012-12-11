@@ -1,7 +1,6 @@
-require 'torque_stats'
 
 module Bookie
-  module Sender
+  module Senders
     module TorqueCluster
       #Yields each job in the log
       def each_job(filename)
@@ -22,6 +21,8 @@ module Bookie
   end
 end
 
+##
+#Contains tools for working with TORQUE data
 module Torque
   #Represents a completed job
   class Job
@@ -67,6 +68,7 @@ module Torque
       end
     end
     
+    ##
     #Yields each completed job to the given block
     def each_job
       @file.rewind
@@ -119,13 +121,18 @@ module Torque
       end
     end
     
+    ##
+    #Creates an InvalidLineError associated with this object's file
     def invalid_line_error(line_num)
       InvalidLineError.new(@filename, line_num)
     end
     protected :invalid_line_error
     
+    ##
     #Parses a duration in HH:MM:SS format, returning seconds
+    #--
     #To do: make class method?
+    #++
     def parse_duration(str)
       hours, minutes, seconds = *str.split(':').map!{ |s| Integer(s) }
       return hours * 3600 + minutes * 60 + seconds
@@ -133,16 +140,13 @@ module Torque
     protected :parse_duration
     
     def self.filename_for_date(date)
-      File.join(TorqueStats::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
+      File.join(Torque::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
     end
   end
   
   class << self;
     #The TORQUE root directory (usually the value of the environment variable TORQUEROOT)
     attr_accessor :torque_root
-    
-    def filename_for_date(date)
-    end
   end
   #To consider: make class variable? Constant?
   @torque_root = ENV['TORQUEROOT'] || '/var/spool/torque'
@@ -150,6 +154,6 @@ end
 
 module Torque
   class Job
-    include Bookie::Sender::ModelHelpers
+    include Bookie::ModelHelpers
   end
 end

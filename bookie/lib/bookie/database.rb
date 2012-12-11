@@ -4,6 +4,8 @@ require 'active_record'
 
 module Bookie
   #Contains ActiveRecord structures for the central database
+  #
+  #For a list of fields in the various models, see {Database Tables}[link:rdoc/database_rdoc.html]
   module Database
   
     ##

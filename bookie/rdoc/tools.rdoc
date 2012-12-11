@@ -3,6 +3,7 @@
 ==Standard options
 Unless otherwise specified, every tool accepts these options:
 - <tt>-c CONFIG_FILE</tt>: specifies a configuration file to use
+  - The default location of the configuration file is <tt>/etc/bookie/config.json</tt>.
 
 ==<tt>bookie-data</tt>
 Retrieves summaries and other data from the database

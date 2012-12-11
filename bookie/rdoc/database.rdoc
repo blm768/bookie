@@ -1,4 +1,4 @@
-=Database tables
+=Database Tables
 
 ==users
 Holds all users who have executed jobs

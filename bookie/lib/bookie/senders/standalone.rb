@@ -2,7 +2,7 @@ require 'fileutils'
 require 'pacct'
 
 module Bookie
-  module Sender
+  module Senders
     ##
     #Returns data from a standalone Linux system
     module Standalone
@@ -32,6 +32,6 @@ module Pacct
   ##
   #Originates from the <tt>pacct</tt> gem; redefined here to include Bookie::Sender::ModelHelpers
   class Entry
-    include Bookie::Sender::ModelHelpers
+    include Bookie::ModelHelpers
   end
 end

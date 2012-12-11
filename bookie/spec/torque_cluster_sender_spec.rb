@@ -1,7 +1,5 @@
 require 'spec_helper'
 
-require 'torque_stats'
-
 #Stubbed out for now so the 'describe' line works
 module Bookie
   module Senders
@@ -24,7 +22,7 @@ end
 describe Bookie::Senders::TorqueCluster do
   before(:all) do
     config = Bookie::Config.new('snapshot/test_config.json')
-    @sender = Bookie::Sender::Sender.new(config)
+    @sender = Bookie::Sender.new(config)
   end
   
   it "correctly yields jobs" do

@@ -11,7 +11,7 @@ class JobStub
   attr_accessor :exit_code
 end
 
-describe Bookie::Sender::Sender do
+describe Bookie::Sender do
   before(:all) do
     Bookie::Database::Migration.up
   end
@@ -21,7 +21,7 @@ describe Bookie::Sender::Sender do
   end
   
   before(:each) do
-    @sender = Bookie::Sender::Sender.new(@config)
+    @sender = Bookie::Sender.new(@config)
     @job = JobStub.new
     @job.user_name = "root"
     @job.group_name = "root"
@@ -68,7 +68,7 @@ describe Bookie::Sender::Sender do
   end
 end
 
-describe Bookie::Sender::ModelHelpers do
+describe Bookie::ModelHelpers do
   before(:all) do
     @job = JobStub.new
     @job.user_name = "root"
@@ -77,7 +77,7 @@ describe Bookie::Sender::ModelHelpers do
     @job.wall_time = 3
     @job.cpu_time = 2
     @job.memory = 300
-    @job.extend(Bookie::Sender::ModelHelpers)
+    @job.extend(Bookie::ModelHelpers)
   end
   
   it "correctly converts jobs to database objects" do

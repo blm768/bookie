@@ -6,31 +6,8 @@ require 'logger'
 require 'set'
 
 module Bookie
+  ##
   #Holds database configuration, etc. for Bookie components
-  #
-  #==Configuration format
-  #The configuration file is a JSON file with the following fields:
-  #* "Database type": the type of database to be used
-  #  - Defaults to "mysql2"
-  #  - Corresponds to ActiveRecord database adapter name
-  #* "Server": the hostname of the server (required)
-  #* "Port": the port on which to connect to the server (optional)
-  #* "Database": the name of the database to use
-  #  - Defaults to "bookie"
-  #* "Username": the username for the database
-  #  - Defaults to "root"
-  #* "Password": the password for the database
-  #  - Defaults to ""
-  #* "Excluded users": an array of usernames to be excluded from the database (optional)
-  #* "System type": The type of system
-  #  - "standalone": a standalone machine
-  #  - "torque_cluster": the head of a TORQUE cluster
-  #  - Other values are possible depending on which sender plugins are installed.
-  #    - Look in bookie/senders for a list.
-  #* "Hostname": the system's hostname (required)
-  #* "Maximum idle": the maximum number of days that a system can be idle without a warning being produced
-  #* "Cores": the number of cores in the system
-  #* "Memory": the amount of memory (in KB) in the system
   class Config
     #The database type
     #
