@@ -1,6 +1,8 @@
 
 module Bookie
   module Senders
+    ##
+    #Returns data from a TORQUE cluster log
     module TorqueCluster
       #Yields each job in the log
       def each_job(filename)
@@ -139,6 +141,8 @@ module Torque
     end
     protected :parse_duration
     
+    ##
+    #Converts a date to the name of the file holding entries for that date
     def self.filename_for_date(date)
       File.join(Torque::torque_root, 'server_priv', 'accounting', date.strftime("%Y%m%d"))
     end
