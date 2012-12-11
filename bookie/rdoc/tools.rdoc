@@ -11,7 +11,6 @@ Retrieves summaries and other data from the database
 <tt>bookie-data [options]</tt>
 
 In addition to the standard options, the following options are available:
-
 - <tt>-d, --details</tt>: include a list of all jobs in the data set
 - <tt>-u, --user NAME</tt>: filter by username
 - <tt>-g, --group NAME</tt>: filter by group
@@ -33,9 +32,23 @@ Sends data to the database and decommissions systems
 If <tt>filename</tt> is specified, the contents of that file will be sent to the database.
 
 In addition to the standard options, the following options are available:
+- <tt>--decommission [HOSTNAME [TIME]]</tt>: Marks the system with the given <tt>hostname</tt>
+  as decommissioned by setting its end time to the given <tt>time</tt>. The <tt>hostname</tt>
+  and the <tt>time</tt> default to the current system's hostname and the current time, respectively.
+
+A <tt>filename</tt> and/or <tt>--decommission</tt> flag must be provided. Omitting both is
+an error.
 
 ===Decommissioning systems
 Whenever a system is taken off the network, it should be marked in the database as
 decommissioned so it is not factored into the calculations for total available resources.
 This should also be done when a system's specifications (number of CPUs, etc.) change so
 that a new entry with the correct specifications can be generated.
+
+==<tt>bookie-create-tables</tt>
+Creates and destroys the database tables that the other programs use
+
+In addition to the standard options, the following options are available:
+- <tt>--drop</tt>: drops all tables, prompting the use for confirmation first
+
+If the <tt>--drop</tt> argument is not supplied, the tables are created instead.

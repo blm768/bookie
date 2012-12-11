@@ -27,7 +27,7 @@ opts = OptionParser.new do |opts|
     config_file = file
   end
   
-  opts.on("--decommission [HOSTNAME] [TIME]",
+  opts.on("--decommission [HOSTNAME [TIME]]",
   String, String,
   "Decommission the system with the given hostname, recording the given time as its end time") do |hostname, time|
     will_decommission = true
