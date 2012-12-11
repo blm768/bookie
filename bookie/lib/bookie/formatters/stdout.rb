@@ -17,7 +17,7 @@ module Bookie
         end
       end
       
-      def do_print_jobs(jobs, out = STDOUT)
+      def do_print_jobs(jobs)
         #To consider: optimize by moving out of the function?
         format_string = "%-15.15s %-15.15s %-20.20s %-20.20s %-26.25s %-26.25s %-12.10s %-12.10s %-20.20s %-11.11s\n"
         heading = sprintf(format_string, *Formatter::DETAILS_FIELD_LABELS)

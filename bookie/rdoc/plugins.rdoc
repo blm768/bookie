@@ -1,3 +1,60 @@
 =Plugins
 
+All Bookie plugins are modules that are dynamically included into Bookie's classes.
 
+==Senders
+A sender plugin provides a data source for a Bookie::Sender object.
+
+All sender plugins are stored under <tt>bookie/senders</tt>.
+
+Sender plugins contain the following methods:
+[each_job(filename) { |job| ... }]
+  Yields each job in the given file
+  
+  The job object may be of any class, but it must have the following attributes:
+  - <tt>user_name</tt>: the name of the user who ran the job
+  - <tt>group_name</tt>: the group name of the user who ran the job
+  - <tt>start_time</tt>: the job's start time
+  - <tt>wall_time</tt>: the job's elapsed wall time
+  - <tt>cpu_time</tt>: the job's used CPU time
+  - <tt>memory</tt>: the job's used memory (See <tt>memory_stat_type</tt> below.)
+  - <tt>exit_code</tt>: the job's exit code
+  
+  The job class should also include the Bookie::ModelHelpers module or provide an equivalent
+  to_model method.
+
+[memory_stat_type()]
+  The type of memory statistic that is present in this system's job records
+  
+  Should be one of :max, :avg, or :unknown
+
+[system_type_name()]
+  The name of the system type that jobs from this system will have
+  
+  For example, the <tt>'standalone'</tt> sender plugin has a <tt>system_type_name</tt>
+  of "Standalone".
+
+==Formatters
+A formatter plugin takes information from a Bookie::Formatter object and formats it.
+
+All formatter plugins are stored under <tt>bookie/formatters</tt>.
+
+Formatter plugins contain the following methods:
+[open(filename)]
+  Called at object creation; should be used to open files, etc.
+
+[do_print_summary(field_values)]
+  Prints the contents of <tt>field_values</tt>, which is an array of values
+  
+  The labels for the values can be found in the array Bookie::Formatter::SUMMARY_FIELD_LABELS.
+  
+[do_print_jobs(jobs)]
+  Prints a list of all jobs in the query
+  
+  To obtain an array of data fields for each job, this method should call
+  Bookie::Formatter#fields_for_each_job(jobs), which will yield each job's fields to the
+  given block. The labels for these fields are in Bookie::Formatter::DETAILS_FIELD_LABELS.
+
+[do_flush()]
+  This method is optional. If the output needs to be flushed somehow after being written,
+  the code to do so should be placed here.
