@@ -98,7 +98,6 @@ module Bookie
     #  end
     def fields_for_each_job(jobs)
       jobs.each_with_relations do |job|
-        #To do: optimize?
         memory_stat_type = job.system.system_type.memory_stat_type
         if memory_stat_type == :unknown
           memory_stat_type = ''
