@@ -33,7 +33,7 @@ describe Bookie::Formatter do
   end
   
   it "correctly calculates fields for jobs" do
-    @formatter.send(:fields_for_each_job, @jobs.limit(1)) do |fields|
+    @formatter.send(:fields_for_each_job, @jobs.limit(1).all) do |fields|
       fields.should eql [
           'root',
           'root',
@@ -47,31 +47,34 @@ describe Bookie::Formatter do
           0,
         ]
     end
-    class JobsMock
-      def self.each_with_relations
-        job = Bookie::Database::Job.first
-        job.system.system_type.memory_stat_type = :unknown
-        yield job
-      end
-    end
-    @formatter.send(:fields_for_each_job, JobsMock) do |fields|
+    jobs = [Bookie::Database::Job.first]
+    jobs[0].system.system_type.memory_stat_type = :unknown
+    @formatter.send(:fields_for_each_job, jobs) do |fields|
       fields[8].should eql '200kb'
     end
   end
   
-  it "prints the correct summary fields" do
-    Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
-    @formatter.flush
-    $field_values.should eql [5, "05:00:00", "00:08:20", "60.0000%", "140:00:00", "0.0992%", "1750000 kb", "0.0014%"]
-    Bookie::Database::System.expects(:summary).returns(
-      :avail_cpu_time => 0,
-      :avail_memory_time => 0,
-      :avail_memory_avg => 0
-    )
-    @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012), Time.local(2012))
-    @formatter.flush
-    $field_values.should eql [0, "00:00:00", "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
+  describe "#print_summary" do
+    it "prints the correct summary fields" do
+      Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
+      @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+      @formatter.flush
+      $field_values.should eql [5, "05:00:00", "00:08:20", "60.0000%", "140:00:00", "0.0992%", "1750000 kb", "0.0014%"]
+      Bookie::Database::System.expects(:summary).returns(
+        :avail_cpu_time => 0,
+        :avail_memory_time => 0,
+        :avail_memory_avg => 0
+      )
+      @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012), Time.local(2012))
+      @formatter.flush
+      $field_values.should eql [0, "00:00:00", "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
+    end
+    
+    it "returns the summary objects" do
+      s1, s2 = @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System.limit(0))
+      s1[:jobs].length.should eql 1
+      s2[:avail_memory_time].should eql 0
+    end
   end
   
   it "forwards print_jobs to do_print_jobs" do

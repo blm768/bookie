@@ -182,7 +182,7 @@ describe Bookie::Database do
       jobs[0].user.group.name.should eql "default"
     end
     
-    describe :each_with_relations do
+    describe "::each_with_relations" do
       it "loads all relations" do
         jobs = Bookie::Database::Job.limit(5)
         relations = {}
@@ -197,7 +197,7 @@ describe Bookie::Database do
       end
     end
     
-    describe :summary do
+    describe "::summary" do
       before(:all) do
         Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
         @base_time = Time.local(2012)
@@ -207,16 +207,16 @@ describe Bookie::Database do
       end
       
       it "produces correct summary totals" do
-        @summary[:all][:jobs].should eql @length
+        @summary[:all][:jobs].length.should eql @length
         @summary[:all][:wall_time].should eql @length * 3600
         @summary[:all][:cpu_time].should eql @length * 100
         @summary[:all][:memory_time].should eql @length * 200 * 3600
         @summary[:all][:successful].should eql 0.5
-        @summary[:all_constrained][:jobs].should eql @length
+        @summary[:all_constrained][:jobs].length.should eql @length
         @summary[:all_constrained][:wall_time].should eql @length * 3600
         @summary[:all_constrained][:cpu_time].should eql @length * 100
         @summary[:all_constrained][:successful].should eql 0.5
-        clipped_jobs = @summary[:clipped][:jobs]
+        clipped_jobs = @summary[:clipped][:jobs].length
         clipped_jobs.should eql 25
         @summary[:clipped][:wall_time].should eql clipped_jobs * 3600 - 1800
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
@@ -225,7 +225,7 @@ describe Bookie::Database do
       
       it "correctly handles summaries of empty sets" do
         @summary[:empty].should eql({
-            :jobs => 0,
+            :jobs => [],
             :wall_time => 0,
             :cpu_time => 0,
             :memory_time => 0,
@@ -292,7 +292,7 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::User do
-    describe :find_or_create do
+    describe "::find_or_create" do
       before(:each) do
         @group = Bookie::Database::Group.find_by_name('admin')
       end
@@ -341,7 +341,7 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::Group do
-    describe :find_or_create do
+    describe "::find_or_create" do
       it "creates the group if needed" do
         Bookie::Database::Group.expects(:"create!")
         Bookie::Database::Group.find_or_create!('non_root')
@@ -392,7 +392,7 @@ describe Bookie::Database do
       end
     end
     
-    describe :summary do
+    describe "::summary" do
       before(:all) do
         Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
         @base_time = Time.local(2012)
@@ -464,7 +464,7 @@ describe Bookie::Database do
       Bookie::Database::System.find_active_by_name_or_create!(:name => "abc")
     end
 
-    describe :'find_active_by_name_or_create!' do
+    describe "::find_active_by_name_or_create!" do
       before(:all) do
         @FIELDS = {
           :name => 'test',

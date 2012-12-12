@@ -46,6 +46,9 @@ decommissioned so it is not factored into the calculations for total available r
 This should also be done when a system's specifications (number of CPUs, etc.) change so
 that a new entry with the correct specifications can be generated.
 
+===Memory requirements
+Under testing, the memory usage appears to be about 4MB for every 50,000 jobs processed.
+
 ==<tt>bookie-create-tables</tt>
 Creates and destroys the database tables that the other programs use
 

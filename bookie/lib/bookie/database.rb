@@ -103,7 +103,7 @@ module Bookie
       #Produces a summary of the jobs in the given time interval
       #
       #Returns a hash with the following fields:
-      #- <tt>:jobs</tt>: the number of jobs in the interval
+      #- <tt>:jobs</tt>: an array of all jobs in the interval
       #- <tt>:wall_time</tt>: the sum of all the jobs' wall times
       #- <tt>:cpu_time</tt>: the total CPU time used
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
@@ -125,7 +125,8 @@ module Bookie
         #Maybe in a database consistency checker tool?
         #What if the system clock is off?
         #Also consider a check for system start times.
-        jobs.all.each do |job|
+        jobs = jobs.all
+        jobs.each do |job|
           num_jobs += 1
           job_start_time = job.start_time
           job_end_time = job.end_time
@@ -144,7 +145,7 @@ module Bookie
         end
       
         return {
-          :jobs => num_jobs,
+          :jobs => jobs,
           #To consider: is this field even useful? It's really in job-seconds, not just seconds.
           #What about one in just seconds (that considers gaps in activity)?
           :wall_time => wall_time,

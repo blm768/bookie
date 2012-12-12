@@ -97,7 +97,7 @@ end
 formatter = Bookie::Formatter.new(output_type, filename)
 
 #To do: ensure that the query isn't performed twice?
-formatter.print_summary(jobs, systems, t_min, t_max)
+jobs_summary = formatter.print_summary(jobs, systems, t_min, t_max)
 jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
-formatter.print_jobs(jobs) if include_details
+formatter.print_jobs(jobs_summary[:jobs]) if include_details
 formatter.flush

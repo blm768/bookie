@@ -50,6 +50,10 @@ module Bookie
     #Use start_time and end_time to filter the jobs by a time range.
     #
     #It is probably not a good idea to apply any time-based filters to <tt>jobs</tt> or <tt>systems</tt> beforehand.
+    #
+    #Both <tt>jobs</tt> and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
+    #
+    #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
     def print_summary(jobs, systems, start_time = nil, end_time = nil)
       jobs_summary = jobs.summary(start_time, end_time)
       systems_summary = systems.summary(start_time, end_time)
@@ -58,7 +62,7 @@ module Bookie
       memory_time = jobs_summary[:memory_time]
       avail_memory_time = systems_summary[:avail_memory_time]
       field_values = [
-        jobs_summary[:jobs],
+        jobs_summary[:jobs].length,
         Formatter.format_duration(jobs_summary[:wall_time]),
         Formatter.format_duration(cpu_time),
         '%.4f%%' % (jobs_summary[:successful] * 100),
@@ -68,10 +72,13 @@ module Bookie
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
       do_print_summary(field_values)
+      return jobs_summary, systems_summary
     end
     
     ##
     #Prints a table containing all details of <tt>jobs</tt>
+    #
+    #<tt>jobs</tt> should be an array.
     def print_jobs(jobs)
       do_print_jobs(jobs)
     end
@@ -90,6 +97,8 @@ module Bookie
     #call-seq:
     #  fields_for_each_job(jobs) { |fields| ... }
     #
+    #<tt>jobs</tt> should be an array of Bookie::Database::Job objects.
+    #
     #===Examples
     #  formatter.fields_for_each_job(jobs) do |fields|
     #    Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS.zip(fields) do |label, field|
@@ -97,7 +106,7 @@ module Bookie
     #    end
     #  end
     def fields_for_each_job(jobs)
-      jobs.each_with_relations do |job|
+      Bookie::Database::Job.each_with_relations(jobs) do |job|
         memory_stat_type = job.system.system_type.memory_stat_type
         if memory_stat_type == :unknown
           memory_stat_type = ''
