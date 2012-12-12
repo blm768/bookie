@@ -13,6 +13,17 @@ module Helpers
       :empty => obj.summary(Time.at(0), Time.at(0)),
     }
   end
+  
+  def test_relations(job, relations)
+    rels = [job.user, job.user.group, job.system, job.system.system_type]
+    rels.each do |r|
+      if relations.include?(r)
+        old_r = relations[r]
+        old_r.should eql r
+      end
+      relations[r] = r
+    end
+  end
 end
 
 describe Bookie::Database do
@@ -173,16 +184,15 @@ describe Bookie::Database do
     
     describe :each_with_relations do
       it "loads all relations" do
+        jobs = Bookie::Database::Job.limit(5)
         relations = {}
-        Bookie::Database::Job.limit(5).each_with_relations do |job|
-          rels = [job.user, job.user.group, job.system, job.system.system_type]
-          rels.each do |r|
-            if relations.include?(r)
-              old_r = relations[r]
-              old_r.should equal r
-            end
-            relations[r] = r
-          end
+        jobs.each_with_relations do |job|
+          test_relations(job, relations)
+        end
+        relations = {}
+        jobs = jobs.all
+        Bookie::Database::Job.each_with_relations(jobs) do |job|
+          test_relations(job, relations)
         end
       end
     end

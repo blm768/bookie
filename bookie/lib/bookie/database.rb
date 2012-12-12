@@ -158,13 +158,28 @@ module Bookie
       #Yields each job, pre-loading its relations to reduce the need for extra queries
       #
       #Relations are not cached between calls.
-      def self.each_with_relations
+      #
+      #If the <tt>jobs</tt> parameter is supplied, it should be an array on which the operation will be applied.
+      #Otherwise, the operations will be performed on the object through which this method is called.
+      #
+      #Examples:
+      #  jobs = Bookie::Database::Job.by_user_name('root')
+      #  jobs.each_with_relations do |job|
+      #    #Do something...
+      #  end
+      #  jobs = jobs.all
+      #  Bookie::Database::Job.each_with_relations(jobs) do |job|
+      #    #Same as above, but uses an array from a previously run query
+      #  end
+      #  
+      def self.each_with_relations(jobs = nil)
+        jobs ||= all
         transaction do
           users = {}
           groups = {}
           systems = {}
           system_types = {}
-          all.each do |job|
+          jobs.each do |job|
             system = systems[job.system_id]
             if system
               job.system = system

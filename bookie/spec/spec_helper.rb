@@ -10,7 +10,14 @@ require 'mocha/api'
 
 require 'bookie'
 
+#Predefined here so config can see it
+module Helpers
+  
+end
+
 RSpec.configure do |config|
+  config.include Helpers
+
   config.mock_with(:mocha)
   
   config.before(:all) do
