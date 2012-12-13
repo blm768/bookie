@@ -107,5 +107,5 @@ describe Torque::JobLog do
     Torque::JobLog.filename_for_date(Date.new(2012, 1, 3)).should eql Torque::torque_root + '/server_priv/accounting/20120103'
   end
   
-  #To do: unit test torque_root
+  #To consider: unit test torque_root's value?
 end

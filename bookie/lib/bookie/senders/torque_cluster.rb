@@ -96,7 +96,7 @@ module Torque
         
         job = Job.new()
         
-        #To do: make sure all fields are present?
+        #To consider: make sure all fields are present?
         fields.each do |field|
           key, value = *field.split('=')
           case key
@@ -133,7 +133,7 @@ module Torque
     ##
     #Parses a duration in HH:MM:SS format, returning seconds
     #--
-    #To do: make class method?
+    #To consider: make class method?
     #++
     def parse_duration(str)
       hours, minutes, seconds = *str.split(':').map!{ |s| Integer(s) }

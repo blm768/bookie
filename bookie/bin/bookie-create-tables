@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 #For development
-$LOAD_PATH << 'lib'
+#$LOAD_PATH << 'lib'
 
 require 'optparse'
 
@@ -33,10 +33,10 @@ config = Bookie::Config.new(config_file)
 config.connect
 
 if drop
-  $stdout.write "Are you sure? This will destroy all tables in the database. "
+  STDOUT.write "Are you sure? This will destroy all tables in the database. "
   response = nil
   until response
-    response = $stdin.gets.chomp
+    response = STDIN.gets.chomp
     case response
     when "YES"
       Bookie::Database::Migration.down
