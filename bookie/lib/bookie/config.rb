@@ -46,23 +46,18 @@ module Bookie
       file.close
       
       @db_type = data['Database type']
-      raise 'No database type specified' unless @db_type
       verify_type(@db_type, 'Database type', String)
       
       @server = data['Server']
-      raise "No database server specified" unless @server
       verify_type(@server, 'Server', String)
       @port = data['Port']
       verify_type(@port, 'Port', Integer) unless @port == nil
       
       @database = data['Database']
-      raise 'No database specified' unless @database
       verify_type(@database, 'Database', String)
       @username = data['Username']
-      raise 'No database username specified' unless @database
       verify_type(@username, 'Username', String)
       @password = data['Password']
-      raise 'No database password specified' unless @password
       verify_type(@password, 'Password', String)
       
       excluded_users_array = data['Excluded users'] || []
@@ -70,19 +65,15 @@ module Bookie
       @excluded_users = Set.new(excluded_users_array)
       
       @system_type = data['System type']
-      raise 'No system type specified' unless @system_type
       verify_type(@system_type, 'System type', String)
       
       @hostname = data['Hostname']
-      raise "No hostname specified" unless @hostname
       verify_type(@hostname, 'Hostname', String)
       
       @cores = data['Cores']
-      raise 'Number of cores not specified' unless @cores
       verify_type(@cores, 'Cores', Integer)
       
       @memory = data['Memory']
-      raise 'Memory not specified' unless @memory
       verify_type(@memory, 'Memory', Integer)
       
       @maximum_idle = data['Maximum idle'] || 3
@@ -91,6 +82,9 @@ module Bookie
     
     #Verifies that a field is of the correct type, raising an error if the type does not match
     def verify_type(value, name, type)
+      if value == nil
+        raise "Field \"#{name}\" must have a non-null value."
+      end
       raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class <= type
     end
     

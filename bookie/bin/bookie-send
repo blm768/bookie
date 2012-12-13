@@ -78,6 +78,7 @@ if will_decommission
       end
     else
       stderr.puts "No active system with hostname #{system_hostname}"
+      exit 1
     end
   end
 end

@@ -12,6 +12,10 @@ module Bookie
     #Represents a lock on a table
     #
     #Based on http://kseebaldt.blogspot.com/2007/11/synchronizing-using-active-record.html
+    #
+    #This should probably not be called within a transaction block; the lock might not be released
+    #until the outer transaction completes, and if it is released before then, there might be
+    #concurrency issues.
     class Lock < ActiveRecord::Base
       ##
       #Acquires the lock, runs the given block, and releases the lock when finished
@@ -245,6 +249,8 @@ module Bookie
       #Finds a group by name, creating it if it doesn't exist
       #
       #If <tt>known_groups</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
+      #
+      #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       def self.find_or_create!(name, known_groups = nil)
         group = known_groups[name] if known_groups
         unless group
@@ -268,6 +274,8 @@ module Bookie
       #Finds a user by name and group, creating it if it doesn't exist
       #
       #If <tt>known_users</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
+      #
+      #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       def self.find_or_create!(name, group, known_users = nil)
         #Determine if the user/group pair must be added to/retrieved from the database.
         user = known_users[[name, group]] if known_users
@@ -321,6 +329,8 @@ module Bookie
       #<tt>values</tt> should contain a list of fields, including the name, in the format that would normally be passed to System.create!.
       #
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
+      #
+      #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       def self.find_active_by_name_or_create!(values)
         system = nil
         name = values[:name]
@@ -455,6 +465,7 @@ module Bookie
       #
       #It is an error to attempt to create two types with the same name but different memory stat types.
       #
+      #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       def self.find_or_create!(name, memory_stat_type)
         sys_type = nil
         Lock[:system_types].synchronize do

@@ -39,7 +39,7 @@ describe Bookie::Config do
     fields.keys.each do |key|
       removed = fields.delete(key)
       JSON.stubs(:parse).returns(fields)
-      expect { Bookie::Config.new('snapshot/default.json') }.to raise_error
+      expect { Bookie::Config.new('snapshot/default.json') }.to raise_error(/^Field "[\w ]+" must have a non-null value.$/)
       fields[key] = removed
     end
     JSON.stubs(:parse).returns(fields)

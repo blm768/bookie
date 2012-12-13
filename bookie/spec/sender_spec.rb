@@ -64,7 +64,7 @@ describe Bookie::Sender do
   end
   
   it "handles missing files" do
-    expect { @sender.send_data('snapshot/abc') }.to raise_error
+    expect { @sender.send_data('snapshot/abc') }.to raise_error("File 'snapshot/abc' does not exist.")
   end
 end
 
