@@ -18,7 +18,7 @@ In addition to the standard options, the following options are available:
 - <tt>-s, --system HOSTNAME</tt>: filter by system")
 - <tt>-t, --type TYPE</tt>: filter by system type
 - <tt>-r, --time BEGIN,END</tt>: filter by a time range
-- <tt>-o, --output-file FILENAME</tt>: send formatted output to FILENAME
+- <tt>-o, --output-file FILENAME</tt>: send formatted output to FILENAME (output format inferred from extension)
   
   The following formats are supported:
   - CSV (*.csv)

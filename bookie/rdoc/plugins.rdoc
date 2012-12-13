@@ -34,6 +34,10 @@ Sender plugins contain the following methods:
   For example, the <tt>'standalone'</tt> sender plugin has a <tt>system_type_name</tt>
   of "Standalone".
 
+===Included sender plugins
+- <tt>standalone</tt>: processes data from standalone Linux machines using acct(5)-formatted files (i.e. pacct)
+- <tt>torque_cluster</tt>: processes data from TORQUE logs ($TORQUEROOT/server_priv/accounting/YYYYMMDD)
+
 ==Formatters
 A formatter plugin takes information from a Bookie::Formatter object and formats it.
 
@@ -58,3 +62,8 @@ Formatter plugins contain the following methods:
 [do_flush()]
   This method is optional. If the output needs to be flushed somehow after being written,
   the code to do so should be placed here.
+
+===Included formatter plugins
+- <tt>stdout</tt>: the default formatter; prints data on standard output
+- <tt>comma_dump</tt>: outputs data in CSV format
+- <tt>spreadsheet</tt>: outputs data in Microsoft Excel (*.xls) format
