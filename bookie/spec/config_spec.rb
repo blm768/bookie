@@ -16,7 +16,6 @@ describe Bookie::Config do
     config.hostname.should eql "localhost"
     config.cores.should eql 8
     config.memory.should eql 8000000
-    config.maximum_idle.should eql 5
     config.system_type.should eql 'torque_cluster'
   end
   

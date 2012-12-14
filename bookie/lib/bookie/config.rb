@@ -31,8 +31,6 @@ module Bookie
     attr_accessor :system_type
     #The system's hostname
     attr_accessor :hostname
-    #The number of days a system can fail to post job entries before a warning is made
-    attr_accessor :maximum_idle
     #The number of cores on the system
     attr_accessor :cores
     #The RAM (in KB) in the system
@@ -75,9 +73,6 @@ module Bookie
       
       @memory = data['Memory']
       verify_type(@memory, 'Memory', Integer)
-      
-      @maximum_idle = data['Maximum idle'] || 3
-      verify_type(@maximum_idle, 'Maximum idle', Integer)
     end
     
     #Verifies that a field is of the correct type, raising an error if the type does not match
