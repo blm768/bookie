@@ -9,5 +9,5 @@
   "System type"   : "torque_cluster",
   "Hostname"      : "localhost",
   "Cores"         : 8,
-  "Memory"        : 8000000,
+  "Memory"        : 8000000
 }

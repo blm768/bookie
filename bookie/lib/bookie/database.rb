@@ -400,14 +400,17 @@ module Bookie
             #Is there a system still active?
             last_ended_system = systems.where('end_time IS NULL').first
             if last_ended_system
-              wall_time_range = current_time - first_started_system.start_time
+              wall_time_range = current_time.to_i - first_started_system.start_time.to_i
             else
               #No; find the system that was brought down last.
               last_ended_system = systems.order('end_time DESC').first
-              wall_time_range = last_ended_system.end_time - first_started_system.start_time
+              wall_time_range = last_ended_system.end_time.to_i - first_started_system.start_time.to_i
             end
           end
         end
+        
+        puts avail_memory_time
+        puts wall_time_range
           
         {
           :avail_cpu_time => avail_cpu_time,

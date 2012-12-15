@@ -3,7 +3,7 @@
 require 'optparse'
 
 #For development:
-#$LOAD_PATH << 'lib'
+$LOAD_PATH << 'lib'
 
 #To consider: restore for production?
 =begin
