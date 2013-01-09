@@ -49,7 +49,7 @@ describe Bookie::Database do
       expect { Lock[:dummy] }.to raise_error("Unable to find lock 'dummy'")
     end
     
-    it "locks records" do
+    it "locks records (will probably fail if the testing DB doesn't support row locks)" do
       lock = Bookie::Database::Lock[:users]
       thread = nil
       lock.synchronize do

@@ -30,7 +30,6 @@ describe Bookie::Config do
     
     dconfig.port.should eql nil
     dconfig.excluded_users.should eql Set.new([]) 
-    dconfig.maximum_idle.should eql 3
   end
   
   it 'correctly handles missing fields' do
