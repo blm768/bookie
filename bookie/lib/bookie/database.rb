@@ -14,7 +14,7 @@ module Bookie
     #Based on http://kseebaldt.blogspot.com/2007/11/synchronizing-using-active-record.html
     #
     #This should probably not be called within a transaction block; the lock might not be released
-    #until the outer transaction completes, and if it is released before then, there might be
+    #until the outer transaction completes, and even if it is released before then, there might be
     #concurrency issues.
     class Lock < ActiveRecord::Base
       ##
@@ -408,9 +408,6 @@ module Bookie
             end
           end
         end
-        
-        puts avail_memory_time
-        puts wall_time_range
           
         {
           :avail_cpu_time => avail_cpu_time,
