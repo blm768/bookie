@@ -16,7 +16,9 @@ end
 require 'bookie/sender'
 
 config_file = '/etc/bookie/config.json'
+will_create = false
 will_decommission = false
+system_start_time = nil
 system_hostname = nil
 system_end_time = nil
 
@@ -25,6 +27,12 @@ opts = OptionParser.new do |opts|
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
     config_file = file
+  end
+  
+  opts.on("--create [TIME]",
+  "Create an entry for this system, recording the given time as its start time") do |time|
+    will_create = true
+    system_start_time = Time.parse(time) if time
   end
   
   opts.on("--decommission [HOSTNAME [TIME]]",
@@ -46,11 +54,8 @@ end
 config = Bookie::Config.new(config_file)
 config.connect
 
-system_hostname ||= config.hostname
-system_end_time ||= Time.now
-
 filename = ARGV[0]
-fail("No operation specified") unless filename || will_decommission
+fail("No operation specified") unless filename || will_create || will_decommission
 
 if filename
   sender = Bookie::Sender.new(config)
@@ -58,6 +63,8 @@ if filename
 end
 
 if will_decommission
+  system_hostname ||= config.hostname
+  system_end_time ||= Time.now
   Bookie::Database::Lock[:systems].synchronize do
     system = Bookie::Database::System.active_systems.find_by_name(system_hostname)
     if system
@@ -81,4 +88,23 @@ if will_decommission
       exit 1
     end
   end
+end
+
+if will_create
+  system_start_time ||= Time.now
+  Bookie::Database::Lock[:systems].synchronize do
+    system = Bookie::Database::System.active_systems.find_by_name(config.hostname)
+    if system
+      stderr.puts "An active system is already in the database with hostname '#{config.hostname}'."
+      exit 1
+    end
+  end
+  Bookie::Database::System.create!(
+    :name => config.hostname,
+    :system_type => Bookie::Sender.new(config).system_type,
+    :start_time => system_start_time,
+    :end_time => nil,
+    :cores => config.cores,
+    :memory => config.memory
+  )
 end
