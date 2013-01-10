@@ -115,12 +115,11 @@ module Bookie
       #
       #This method should probably not be used with other queries that filter by start/end time.
       def self.summary(min_time = nil, max_time = nil)
-        jobs = self
+        jobs = []
         if min_time
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
           jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
-        num_jobs = 0
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
@@ -129,8 +128,8 @@ module Bookie
         #Maybe in a database consistency checker tool?
         #What if the system clock is off?
         #Also consider a check for system start times.
-        jobs.each_with_relations do |job|
-          num_jobs += 1
+        self.each_with_relations do |job|
+          jobs << job
           job_start_time = job.start_time
           job_end_time = job.end_time
           if min_time
@@ -154,7 +153,7 @@ module Bookie
           :wall_time => wall_time,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful =>  if num_jobs == 0 then 0.0 else Float(successful_jobs) / num_jobs end,
+          :successful =>  if jobs.length == 0 then 0.0 else Float(successful_jobs) / jobs.length end,
         }
       end
       
