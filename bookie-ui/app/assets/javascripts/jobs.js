@@ -1,17 +1,25 @@
+function nextElement(node) {
+  var next = node.nextSibling
+  while(next.nodeType != 1) {
+    next = next.nextSibling
+  }
+  return next
+}
+
+//Sets the visibility of a filter's "extra" fields
+function setFormExtrasVisibility(filter) {
+  var opt = filter.options[filter.selectedIndex]
+  var filter_extras = nextElement(filter)
+  if(opt.value == 'none') {
+    filter_extras.style.display = 'none'
+    document.getElementById(filter.id + '_value').value = ''
+  } else {
+    filter_extras.style.display = 'inline'
+  }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
-  var filter_type = document.getElementById('filter_type')
-  function setVisibility() {
-    var opt = filter_type.options[filter_type.selectedIndex]
-    var filter_extras = document.getElementById('filter_extras')
-    if(opt.value == 'none') {
-      filter_extras.style.display = 'none'
-      document.getElementById('filter_value').value = ''
-    } else {
-      filter_extras.style.display = 'inline'
-    }
-  }
+  var filter0 = document.getElementById('filter0')
   //This should be addEventListener(), but Safari doesn't like that. I have no idea why.
-  filter_type.onchange = setVisibility
-  setVisibility()
+  filter0.onchange = function() { setFormExtrasVisibility(filter0) }
 }, false);

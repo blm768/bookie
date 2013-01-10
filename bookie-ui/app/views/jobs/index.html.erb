@@ -27,8 +27,12 @@
       <th>% CPU time used</th>
       <td><%= "%.2f%%" % (@jobs_summary[:cpu_time] * 100) %></td>
     </tr>
+    <tr>
+      <th>Available memory (average)</th>
+      <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
+    </tr>
   </table>
-  <% #if false %>
+  <% if false %>
     <table id="details">
       <caption>Details</caption>
       <tr>
@@ -58,14 +62,14 @@
         </tr>
       <% end %>
     </table>
-  <% #end %>
+  <% end %>
 </div>
 
 <div id="controls">
   <h2>Filters</h2>
   <%= form_tag("/jobs", :method => "get") do %>
     <%= label_tag(:filter_type, "Filter by:") %>
-    <%= select_tag(:filter_type, options({
+    <%= select_tag(:filter0, options({
         :none => "",
         :user => "User",
         :group => "Group",
@@ -74,15 +78,9 @@
         :system => "System"},
         @last_filter).html_safe) %>
     </select>
-    <span id="filter_extras">
-      <%= text_field_tag(:filter_value, @last_filter_value) %>
+    <span class="filter_extras">
+      <%= text_field_tag(:filter0_value, @last_filter_value) %>
     </span>
-    <label for="sort_type">Sort by:</label>
-    <%= select_tag(:sort, options({
-      :none => "",
-      :date => "Date",
-      :wall_time => "Wall time"},
-      @last_sort).html_safe) %> 
     <%= submit_tag("Submit") %>
   <% end %>
 </div>

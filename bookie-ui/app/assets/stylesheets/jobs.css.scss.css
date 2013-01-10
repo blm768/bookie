@@ -69,6 +69,6 @@ div#controls input[type=submit] {
   clear: both;
   width: 7em;
 }
-#filter_extras {
+.filter_extras {
   display: none;
 }
