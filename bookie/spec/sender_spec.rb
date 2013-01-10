@@ -13,7 +13,16 @@ end
 
 describe Bookie::Sender do
   before(:all) do
+    base_time = Time.new(2012)
     Bookie::Database::Migration.up
+    Bookie::Database::System.create!(
+      :name => 'localhost',
+      :system_type => Bookie::Sender.new(@config).system_type,
+      :start_time => base_time,
+      :end_time => nil,
+      :cores => @config.cores,
+      :memory => @config.memory,
+    )
   end
   
   after(:all) do

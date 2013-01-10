@@ -324,14 +324,14 @@ module Bookie
       end
       
       ##
-      #Finds the active system for a given name, creating it if it doesn't exist
+      #Finds the active system for a given hostname
       #
       #<tt>values</tt> should contain a list of fields, including the name, in the format that would normally be passed to System.create!.
       #
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
       #
       #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
-      def self.find_active_by_name_or_create!(values)
+      def self.find_active(values)
         system = nil
         name = values[:name]
         Lock[:systems].synchronize do
@@ -345,7 +345,7 @@ module Bookie
               end
             end
           else
-            system = create!(values)
+            raise "There is no active system with hostname '#{values[:name]}' in the database."
           end
         end
         system

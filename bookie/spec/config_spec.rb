@@ -29,7 +29,7 @@ describe Bookie::Config do
     dconfig = Bookie::Config.new('snapshot/default.json')
     
     dconfig.port.should eql nil
-    dconfig.excluded_users.should eql Set.new([]) 
+    dconfig.excluded_users.should eql Set.new([])
   end
   
   it 'correctly handles missing fields' do

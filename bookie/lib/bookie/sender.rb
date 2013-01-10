@@ -20,14 +20,14 @@ module Bookie
     end
     
     ##
-    #Retrieves the System object with which the jobs will be associated, creating it if it does not exist
+    #Retrieves the System object with which the jobs will be associated
     #--
     #To consider: caching?
     #++
     def system
       hostname = @config.hostname
       system_type = self.system_type
-      Bookie::Database::System.find_active_by_name_or_create!(
+      Bookie::Database::System.find_active(
         :name => hostname,
         :system_type => system_type,
         :start_time => Time.now,

@@ -458,13 +458,8 @@ describe Bookie::Database do
         }.to raise_error('Max time must be greater than or equal to min time')
       end
     end
-    
-    it "correctly creates systems when they don't exist" do
-      Bookie::Database::System.expects(:"create!")
-      Bookie::Database::System.find_active_by_name_or_create!(:name => "abc")
-    end
 
-    describe "::find_active_by_name_or_create!" do
+    describe "::find_active" do
       before(:all) do
         @FIELDS = {
           :name => 'test',
@@ -475,23 +470,23 @@ describe Bookie::Database do
         }
       end
       
-      it "correctly creates systems when only old versions exist" do
+      it "raises an error if no versions or only old versions of this system exist" do
         create_fields = @FIELDS.dup
         create_fields[:end_time] = Time.local(2012) + 1
         sys = Bookie::Database::System.create!(create_fields)
         begin
-          Bookie::Database::System.expects(:"create!")
-          Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+          expect {
+            Bookie::Database::System.find_active(@FIELDS)
+          }.to raise_error("There is no active system with hostname 'test' in the database.")
         ensure
           sys.delete
         end
       end
   
-      it "uses the existing active system" do
+      it "finds the existing active system" do
         sys = Bookie::Database::System.create!(@FIELDS)
         begin
-          Bookie::Database::System.expects(:"create!").never
-          Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+          Bookie::Database::System.find_active(@FIELDS).should eql sys
         ensure
           sys.delete
         end
@@ -503,7 +498,7 @@ describe Bookie::Database do
         csys = Bookie::Database::System.create!(fields)
         begin
           expect {
-            Bookie::Database::System.find_active_by_name_or_create!(@FIELDS)
+            Bookie::Database::System.find_active(@FIELDS)
           }.to raise_error(Bookie::Database::System::SystemConflictError)
         ensure
           csys.delete
