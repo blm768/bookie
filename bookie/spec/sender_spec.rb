@@ -21,7 +21,7 @@ describe Bookie::Sender do
       :start_time => base_time,
       :end_time => nil,
       :cores => @config.cores,
-      :memory => @config.memory,
+      :memory => @config.memory
     )
   end
   

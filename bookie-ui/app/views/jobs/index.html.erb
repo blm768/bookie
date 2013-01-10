@@ -5,30 +5,30 @@
     <caption>Summary</caption>
     <tr>
       <th>Number of jobs</th>
-      <td><%= @summary[:jobs] %></td>
+      <td><%= @jobs_summary[:jobs].length %></td>
     </tr>
     <tr>
       <th>Total wall time</th>
-      <td><%= @summary[:wall_time] %> seconds</td>
+      <td><%= @jobs_summary[:wall_time] %> seconds</td>
     </tr>
     <tr>
       <th>Total CPU time</th>
-      <td><%= @summary[:cpu_time] %> seconds</td>
+      <td><%= @jobs_summary[:cpu_time] %> seconds</td>
     </tr>
     <tr>
       <th>% Successful</th>
-      <td><%= "%.2f%%" % (@summary[:success] * 100) %></td>
+      <td><%= "%.2f%%" % (@jobs_summary[:successful] * 100) %></td>
     </tr>
     <tr>
       <th>Available CPU time</th>
-      <td><%= @summary[:total_cpu_time] %></td>
+      <td><%= @systems_summary[:avail_cpu_time] %></td>
     </tr>
     <tr>
       <th>% CPU time used</th>
-      <td><%= "%.2f%%" % (@summary[:used_cpu_time] * 100) %></td>
+      <td><%= "%.2f%%" % (@jobs_summary[:cpu_time] * 100) %></td>
     </tr>
   </table>
-  <% if false %>
+  <% #if false %>
     <table id="details">
       <caption>Details</caption>
       <tr>
@@ -43,7 +43,7 @@
         <th>Memory</th>
         <th>Exit code</th>
       </tr>
-      <% @jobs.each do |job| %>
+      <% @jobs_summary[:jobs].each do |job| %>
         <tr>
           <td><%= job.user.name %></td>
           <td><%= job.user.group.name %></td>
@@ -58,7 +58,7 @@
         </tr>
       <% end %>
     </table>
-  <% end %>
+  <% #end %>
 </div>
 
 <div id="controls">

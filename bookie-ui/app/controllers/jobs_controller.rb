@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'bookie'
 
 require 'date'
 
@@ -10,18 +9,23 @@ end
 class JobsController < ApplicationController
   def index
     #To do: optimize as local variable?
-    @jobs = Bookie::Database::Job
+    jobs = Bookie::Database::Job
+    @systems = Bookie::Database::System
+        
+    summary_start_time = nil
+    summary_end_time = nil
+    
     val = params[:filter_value]
     val = val.strip if val
     case params[:filter_type]
     when 'start_time'
       
     when 'system'
-      @jobs = Bookie::Filter::by_system(@jobs, val)
+      jobs = jobs.by_system_name(params[:filter_value])
       @last_filter = :server
       @last_filter_value = val
     when 'user'
-      @jobs = Bookie::Filter::by_user(@jobs, val)
+      jobs = Bookie::Filter::by_user(jobs, val)
       @last_filter = :user
       @last_filter_value = val
     when 'group'
@@ -43,9 +47,8 @@ class JobsController < ApplicationController
       @last_sort = :wall_time
     end
     
-    @jobs = @jobs
-    
-    @summary = Bookie::Summary::summary(@jobs)
+    @jobs_summary = jobs.summary(summary_start_time, summary_end_time)
+    @systems_summary = @systems.summary(summary_start_time, summary_end_time)
     
     render :template => 'jobs/index'
   end

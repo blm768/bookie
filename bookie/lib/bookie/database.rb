@@ -129,8 +129,7 @@ module Bookie
         #Maybe in a database consistency checker tool?
         #What if the system clock is off?
         #Also consider a check for system start times.
-        jobs = jobs.all
-        jobs.each do |job|
+        jobs.each_with_relations do |job|
           num_jobs += 1
           job_start_time = job.start_time
           job_end_time = job.end_time
