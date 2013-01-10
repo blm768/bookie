@@ -68,9 +68,9 @@
 <div id="controls">
   <h2>Filters</h2>
   <%= form_tag("/jobs", :method => "get") do %>
-    <%= label_tag(:filter_type, "Filter by:") %>
-    <%= select_tag(:filter0, options({
-        :none => "",
+    <span id = "filters"></span>
+    <%= select_tag(:add_filter, options({
+        :none => "Add filter",
         :user => "User",
         :group => "Group",
         :start_time => "Start time",
@@ -78,9 +78,6 @@
         :system => "System"},
         @last_filter).html_safe) %>
     </select>
-    <span class="filter_extras">
-      <%= text_field_tag(:filter0_value, @last_filter_value) %>
-    </span>
     <%= submit_tag("Submit") %>
   <% end %>
 </div>

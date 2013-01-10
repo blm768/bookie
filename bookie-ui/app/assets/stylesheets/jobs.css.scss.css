@@ -49,26 +49,22 @@ div#controls {
 div#controls h2 {
   margin-top: 0;
 }
-div#controls label {
-  display: block;
-  float: left;
-  clear: both;
-  width: 6em;
-}
 div#controls select {
   float: right;
   clear: right;
   min-width: 8em;
   max-width: 100%;
 }
-div#controls input[type=text] {
-  width: 100%;
-}
 div#controls input[type=submit] {
   float: left;
   clear: both;
   width: 7em;
 }
-.filter_extras {
-  display: none;
+
+div.filter input[type=text] {
+  width: 80%;
 }
+div.filter .filter_remover {
+  float: right;
+}
+
