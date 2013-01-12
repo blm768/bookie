@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <title>BookieUi</title>
   <%= stylesheet_link_tag    "application", :media => "all" %>
+  <%= yield :stylesheets %>
   <%= javascript_include_tag "application" %>
+  <%= yield :scripts %>
   <%= csrf_meta_tags %>
 </head>
 <body>

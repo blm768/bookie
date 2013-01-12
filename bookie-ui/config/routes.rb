@@ -53,6 +53,8 @@ BookieUi::Application.routes.draw do
   root :to => 'jobs#index'
   
   resources :jobs
+  
+  resources :systems
 
   # See how all your routes lay out with "rake routes"
 

@@ -1,0 +1,30 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5ex;
+}
+table caption {
+  margin-bottom: 0.5ex;
+  text-align: left;
+  font-size: x-large;
+  font-weight: bold;
+}
+td, th {
+  border: 1px solid;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+table#summary th {
+  width: 20%;
+}
+
+table#details tr {
+  &:nth-child(even) {
+    background: #DDDDDD;
+  }
+  
+  &:nth-child(odd) {
+    background: #FFFFFF;
+  }
+}

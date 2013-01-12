@@ -9,5 +9,14 @@
  * compiled file, but it's generally better to create a new file per style scope.
  *
  *= require_self
- *= require_tree .
  */
+
+#message_error {
+  color: #A00;
+}
+#message_alert {
+  color: #A50;
+}
+#message_notice {
+  color: #0A0;
+}

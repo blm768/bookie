@@ -48,15 +48,29 @@ function addFilter() {
 function submitFilters() {
   var filters = document.getElementById('filters')
   var filterForm = filters.parentNode
-  filterTypes = []
+  var filterTypes = []
+  var filterValues = []
   forEachFilter(function(filter) {
-    filterTypes.push(filter.firstChild.nodeValue)
+    var textNode = filter.firstChild
+    filterTypes.push(textNode.nodeValue)
+    var valueNode = nextElement(textNode)
+    while(valueNode && valueNode.tagName == 'input') {
+      alert(valueNode.value)
+      filterValues.push(valueNode.value)
+      valueNode = nextElement(valueNode)
+    }
   })
   var filterTypesInput = document.createElement('input')
   filterTypesInput.type = 'hidden'
   filterTypesInput.name = 'filter_types'
   filterTypesInput.value = filterTypes.join(',')
   filterForm.appendChild(filterTypesInput)
+  var filterValuesInput = document.createElement('input')
+  filterValuesInput.type = 'hidden'
+  filterValuesInput.name = 'filter_values'
+  //To do: prevent commas in the values from causing problems.
+  filterValuesInput.value = filterValues.join(',')
+  filterForm.appendChild(filterValuesInput)
 }
 
 document.addEventListener('DOMContentLoaded', function() {

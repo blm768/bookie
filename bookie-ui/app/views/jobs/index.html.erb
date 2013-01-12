@@ -1,3 +1,11 @@
+<% content_for :stylesheets do %>
+  <%= stylesheet_link_tag "filtered_list", :media => "all" %>
+<% end %>
+
+<% content_for :scripts do %>
+  <%= javascript_include_tag "filter" %>
+<% end %>
+
 <h1>Jobs</h1>
 
 <div id="tables">
@@ -65,21 +73,13 @@
   <% end %>
 </div>
 
-<div id="controls">
-  <h2>Filters</h2>
-  <%= form_tag("/jobs", :method => "get") do %>
-    <span id = "filters"></span>
-    <%= select_tag(:add_filter, options({
-        :none => "Add filter",
-        :user => "User",
-        :group => "Group",
-        :start_time => "Start time",
-        :end_time => "End time",
-        :system => "System"},
-        @last_filter).html_safe) %>
-    </select>
-    <%= submit_tag("Submit") %>
-  <% end %>
-</div>
-
+<%= render :partial => 'shared/filters', :locals => {
+  :filter_options => {
+    'User' => 1,
+    'Group' => 1,
+    'System' => 1,
+    'System type' => 1,
+    'Time' => 1,
+  }
+} %>
 

@@ -1,0 +1,16 @@
+<div id="controls">
+  <h2>Filters</h2>
+  <%= form_tag("/jobs", :method => "get") do %>
+    <span id="filters"></span>
+      <select id="add_filter">
+        <option value="0">Add filter</option>
+        <% filter_options.each do |name, num_values| %>
+          <% #The value attribute is hijacked to hold the number of values associated with the filter. %>
+          <option value="<%= num_values %>"><%= name %></option> 
+        <% end %>
+      </select>
+    </select>
+    <%= submit_tag("Submit") %>
+  <% end %>
+</div>
+

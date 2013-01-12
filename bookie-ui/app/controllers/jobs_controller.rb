@@ -1,5 +1,3 @@
-require 'rubygems'
-
 require 'date'
 
 class BadDateError < RangeError
@@ -10,45 +8,55 @@ class JobsController < ApplicationController
   def index
     #To do: optimize as local variable?
     jobs = Bookie::Database::Job
-    @systems = Bookie::Database::System
+    systems = Bookie::Database::System
         
     summary_start_time = nil
     summary_end_time = nil
     
-    val = params[:filter_value]
-    val = val.strip if val
-    case params[:filter_type]
-    when 'start_time'
-      
-    when 'system'
-      jobs = jobs.by_system_name(params[:filter_value])
-      @last_filter = :server
-      @last_filter_value = val
-    when 'user'
-      jobs = Bookie::Filter::by_user(jobs, val)
-      @last_filter = :user
-      @last_filter_value = val
-    when 'group'
-      @jobs = Bookie::Filter::by_group(@jobs, val)
-      @last_filter = :group
-      @last_filter_value = val
-    when 'system'
-      @jobs = Bookie::Filter::by_system(@jobs, val)
-      @last_filter = :system
-      @last_filter_value = val
+    types = params[:filter_types]
+    values = params[:filter_values]
+    
+    #To do: error messages
+    if types && values
+      types.strip!
+      types = types.split(',')
+      values.strip!
+      values = values.split(',')
+      value_index = 0
+      types.each do |type|
+        case type
+        when 'System'
+          value = values[value_index]
+          jobs = jobs.by_system_name(value)
+          systems = systems.by_name(value)
+          value_index += 1
+        when 'User'
+          jobs = jobs.by_user_name(values[value_index])
+          value_index += 1
+        when 'Group'
+          jobs = jobs.by_group_name(values[value_index])
+          value_index += 1
+        when 'System type'
+          sys_type = Bookie::Database::SystemType.find_by_name(values[value_index])
+          if sys_type
+            jobs = jobs.by_system_type(sys_type)
+            systems = systems.by_system_type(sys_type)
+          else
+            jobs = jobs.limit(0)
+            systems = systems.limit(0)
+          end
+          value_index += 1
+        when 'Time'
+          summmary_start_time = Time.parse(values[value_index])
+          summary_end_time = Time.parse(values[value_index + 1])
+          value_index += 2
+        end
+      end
     end
     
-    case params[:sort]
-    when 'date'
-      @jobs = @jobs.order(:end_time)
-      @last_sort = :date
-    when 'wall_time'
-      @jobs = @jobs.order(:wall_time)
-      @last_sort = :wall_time
-    end
-    
+    #To do: ordering?
     @jobs_summary = jobs.summary(summary_start_time, summary_end_time)
-    @systems_summary = @systems.summary(summary_start_time, summary_end_time)
+    @systems_summary = systems.summary(summary_start_time, summary_end_time)
     
     render :template => 'jobs/index'
   end

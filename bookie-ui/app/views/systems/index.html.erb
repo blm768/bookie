@@ -1,0 +1,51 @@
+<% content_for :stylesheets do %>
+  <%= stylesheet_link_tag 'filtered_list', :media => :all %>
+<% end %>
+
+<% content_for :scripts do %>
+  <%= javascript_include_tag 'filter' %>
+<% end %>
+
+<h1>Systems</h1>
+
+<div id="tables">
+  <table id="summary">
+    <caption>Summary</caption>
+    <tr>
+      <th>Available CPU time</th>
+      <td><%= @systems_summary[:avail_cpu_time] %></td>
+    </tr>
+    <tr>
+      <th>Available memory (average)</th>
+      <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
+    </tr>
+  </table>
+  <table id="details">
+    <caption>Details</caption>
+    <tr>
+      <th>Hostname</th>
+      <th>Type</th>
+      <th>Cores</th>
+      <th>Memory</th>
+      <th>Start time</th>
+      <th>End time</th>
+    </tr>
+    <% @systems.all.each do |system| %>
+      <tr>
+        <td><%= system.name %></td>
+        <td><%= system.system_type.name %></td>
+        <td><%= system.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        <td><%= system.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        <td><%= system.cores %></td>
+        <td><%= system.memory %>kb</td>
+      </tr>
+    <% end %>
+  </table>
+</div>
+
+<%= render :partial => 'shared/filters', :locals => {
+  :filter_options => {
+    'Hostname' => 1,
+    'Time' => 2,
+  }
+} %>
