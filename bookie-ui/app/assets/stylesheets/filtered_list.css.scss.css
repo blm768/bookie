@@ -31,6 +31,6 @@ div.filter input[type=text] {
   width: 80%;
 }
 div.filter .filter_remover {
-  display: inline;
+  float: right;
 }
 

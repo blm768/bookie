@@ -1,13 +1,3 @@
-function nextElement(node) {
-  var next = node.nextSibling
-  while(next && next.nodeType != 1) {
-    next = next.nextSibling
-  }
-  return next
-}
-
-var filterMax = 0
-
 function addFilter() {
   var select = $('#add_filter')
   if(select.val() == 0) {
@@ -32,7 +22,6 @@ function addFilter() {
   remover.append('X')
   filter.append(remover)
   filters.append(filter)
-  ++filterMax
 }
 
 function submitFilters() {
@@ -42,7 +31,8 @@ function submitFilters() {
   var filterValues = []
   filters.children('.filter').each(function() {
     var $this = $(this)
-    var text = $($this.contents()[0]).text()
+    //To do (future): replace $.trim with the trim() method when browser support is sufficient.
+    var text = $.trim($($this.contents()[0]).text())
     filterTypes.push(text)
     $this.children('input').each(function() {
       filterValues.push(this.value)
@@ -67,4 +57,6 @@ $(document).ready(function() {
   addFilterSelect.change(addFilter)
   var filterForm = addFilterSelect.parent()
   filterForm.submit(submitFilters)
+  //If filters have already been created by the server, tie events to their removers.
+  $('.filter_remover').click(function() { $(this).parent().remove() })
 })
