@@ -40,7 +40,7 @@
       <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
     </tr>
   </table>
-  <% if false %>
+  <% if @include_details %>
     <table id="details">
       <caption>Details</caption>
       <tr>
@@ -80,6 +80,7 @@
     'System' => 1,
     'System type' => 1,
     'Time' => 2,
-  }
+  },
+  :default_details => (@include_details == nil) ? false : @include_details
 } %>
 

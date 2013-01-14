@@ -14,11 +14,13 @@ div#controls h2 {
   margin-top: 0;
 }
 div#controls select {
-  float: left;
-  clear: left;
-  width: 75%;
+  width: 100%;
   min-width: 8em;
   max-width: 100%;
+}
+div#controls input[type=checkbox] {
+  float: left;
+  clear: left;
 }
 div#controls input[type=submit] {
   float: right;

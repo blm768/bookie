@@ -10,6 +10,7 @@
         <% end %>
       </select>
     </select>
+    <label><%= check_box_tag("details", "true", default_details) %>Include details</label>
     <%= submit_tag("Submit") %>
   <% end %>
 </div>
