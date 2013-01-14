@@ -9,6 +9,8 @@ class SystemsController < ApplicationController
     types = params[:filter_types]
     values = params[:filter_values]
     
+    @prev_filters = []
+    
     #To do: error messages
     if types && values
       types.strip!
@@ -19,12 +21,25 @@ class SystemsController < ApplicationController
       types.each do |type|
         case type
         when 'Hostname'
-          systems = systems.by_name(values[value_index])
+          value = values[value_index]
+          @systems = @systems.by_name(value)
           value_index += 1
+          @prev_filters << ['Hostname', [value]]
         when 'Time'
-          summary_start_time = Time.parse(values[value_index])
-          summary_end_time = Time.parse(values[value_index + 1])
+          start_time_text = values[value_index]
+          end_time_text = values[value_index + 1]
+          begin
+            summmary_start_time = Time.parse(start_time_text)
+          rescue
+            flash[:error] = "Invalid start time '#{start_time_text}'"
+          end
+          begin
+            summary_end_time = Time.parse(end_time_text)
+          rescue
+            flash[:error] = "Invalid end time '#{end_time_text}'"
+          end
           value_index += 2
+          @prev_filters << ['Time', [start_time_text, end_time_text]]
         end
       end
     end

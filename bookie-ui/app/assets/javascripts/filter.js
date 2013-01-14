@@ -10,17 +10,17 @@ function addFilter() {
   var filter = $('<div/>')
   filter.addClass('filter')
   filter.append(opt.text())
+  var remover = $('<div/>')
+  remover.addClass('filter_remover')
+  remover.click(function() { filter.remove() })
+  remover.append('X')
+  filter.append(remover)
   //The value attribute is hijacked to store the number of filter parameters.
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
     text.attr('type', 'text')
     filter.append(text)
   }
-  var remover = $('<div/>')
-  remover.addClass('filter_remover')
-  remover.click(function() { filter.remove() })
-  remover.append('X')
-  filter.append(remover)
   filters.append(filter)
 }
 
@@ -49,6 +49,14 @@ function submitFilters() {
   //To do: prevent commas in the values from causing problems.
   filterValuesInput.val(filterValues.join(','))
   filterForm.append(filterValuesInput)
+  var pageSelect = $('#select_page')
+  if(pageSelect) {
+    var page = $('<input/>')
+    page.attr('type', 'hidden')
+    page.attr('name', 'page')
+    page.val(pageSelect.prop('selectedIndex') + 1)
+    filterForm.append(page)
+  }
 }
 
 $(document).ready(function() {
@@ -59,4 +67,8 @@ $(document).ready(function() {
   filterForm.submit(submitFilters)
   //If filters have already been created by the server, tie events to their removers.
   $('.filter_remover').click(function() { $(this).parent().remove() })
+  var pageSelect = $('#select_page')
+  if(pageSelect) {
+    pageSelect.change(function() { filterForm.submit() })
+  }
 })

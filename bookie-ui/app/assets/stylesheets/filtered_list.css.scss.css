@@ -9,28 +9,39 @@ div#tables {
 div#controls {
   width: 23%;
   float: left;
-}
-div#controls h2 {
-  margin-top: 0;
-}
-div#controls select {
-  width: 100%;
-  min-width: 8em;
-  max-width: 100%;
-}
-div#controls input[type=checkbox] {
-  float: left;
-  clear: left;
-}
-div#controls input[type=submit] {
-  float: right;
-  width: 7em;
+
+  h2 {
+    margin-top: 0;
+  }
+  select {
+    width: 100%;
+    min-width: 8em;
+    max-width: 100%;
+  }
+  input[type=checkbox] {
+    float: left;
+    clear: left;
+  }
+  input[type=submit] {
+    float: right;
+    width: 7em;
+  }
 }
 
-div.filter input[type=text] {
-  width: 80%;
-}
-div.filter .filter_remover {
-  float: right;
+div.filter {
+  background-color: #88AAFF;
+  border: 1px solid #7799FF;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  padding-bottom: 0.4em;
+  margin: 0px;
+  margin-bottom: 1px;
+  input[type=text] {
+    width: 100%;
+    clear: both;
+  }
+  .filter_remover {
+    float: right;
+  }
 }
 

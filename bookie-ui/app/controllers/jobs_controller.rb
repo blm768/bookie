@@ -5,6 +5,8 @@ class BadDateError < RangeError
 end
 
 class JobsController < ApplicationController
+  PAGE_SIZE = 20
+
   def index
     #To do: optimize as local variable?
     jobs = Bookie::Database::Job
@@ -15,7 +17,9 @@ class JobsController < ApplicationController
     
     types = params[:filter_types]
     values = params[:filter_values]
-    
+    @page_num = params[:page].to_i
+    @page_num = 1 unless @page_num && @page_num > 0
+        
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
@@ -83,7 +87,11 @@ class JobsController < ApplicationController
     @filter_types = types
     @filter_values = values
     @include_details = (params[:details] == "true")
-    
+    @page_start = PAGE_SIZE * (@page_num - 1)
+    @page_end = @page_start + PAGE_SIZE
+    num_jobs = @jobs_summary[:jobs].length
+    @num_pages = num_jobs / PAGE_SIZE + ((num_jobs % PAGE_SIZE) > 0 ? 1 : 0)
+        
     render :template => 'jobs/index'
   end
 end

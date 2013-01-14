@@ -55,7 +55,7 @@
         <th>Memory</th>
         <th>Exit code</th>
       </tr>
-      <% @jobs_summary[:jobs].each do |job| %>
+      <% @jobs_summary[:jobs][@page_start ... @page_end].each do |job| %>
         <tr>
           <td><%= job.user.name %></td>
           <td><%= job.user.group.name %></td>
@@ -70,6 +70,7 @@
         </tr>
       <% end %>
     </table>
+    <%= render :partial => 'shared/pages' %>
   <% end %>
 </div>
 

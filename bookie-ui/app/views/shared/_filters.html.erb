@@ -1,14 +1,13 @@
 <div id="controls">
   <h2>Filters</h2>
-  <%= form_tag("/jobs", :method => "get") do %>
+  <%= form_tag("", :method => "get") do %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
-          <div class="filter"><%= filter %>
+          <div class="filter"><%= filter %><div class="filter_remover">X</div>
             <% values.each do |value| %>
               <input type="text" value="<%= value %>"></input>
             <% end %>
-            <div class="filter_remover">X</div>
           </div>
         <% end %>
       <% end %>
