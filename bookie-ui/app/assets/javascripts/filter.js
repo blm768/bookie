@@ -50,7 +50,7 @@ function submitFilters() {
   filterValuesInput.val(filterValues.join(','))
   filterForm.append(filterValuesInput)
   var pageSelect = $('#select_page')
-  if(pageSelect) {
+  if(pageSelect.length > 0) {
     var page = $('<input/>')
     page.attr('type', 'hidden')
     page.attr('name', 'page')
