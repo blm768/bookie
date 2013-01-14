@@ -23,7 +23,7 @@ function addFilter() {
   //The value attribute is hijacked to store the number of filter parameters.
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
-    text.type = 'text'
+    text.attr('type', 'text')
     filter.append(text)
   }
   var remover = $('<div/>')
@@ -41,20 +41,21 @@ function submitFilters() {
   var filterTypes = []
   var filterValues = []
   filters.children('.filter').each(function() {
-    var text = this.children(':first').text()
+    var $this = $(this)
+    var text = $($this.contents()[0]).text()
     filterTypes.push(text)
-    this.children('input').each(function() {
-      filterValues.push(this.text())
+    $this.children('input').each(function() {
+      filterValues.push(this.value)
     })
   })
   var filterTypesInput = $('<input/>')
-  filterTypesInput.type = 'hidden'
-  filterTypesInput.name = 'filter_types'
+  filterTypesInput.attr('type', 'hidden')
+  filterTypesInput.attr('name', 'filter_types')
   filterTypesInput.val(filterTypes.join(','))
   filterForm.append(filterTypesInput)
   var filterValuesInput = $('<input/>')
-  filterValuesInput.type = 'hidden'
-  filterValuesInput.name = 'filter_values'
+  filterValuesInput.attr('type', 'hidden')
+  filterValuesInput.attr('name', 'filter_values')
   //To do: prevent commas in the values from causing problems.
   filterValuesInput.val(filterValues.join(','))
   filterForm.append(filterValuesInput)
