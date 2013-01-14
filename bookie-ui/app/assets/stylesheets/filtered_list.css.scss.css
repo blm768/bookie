@@ -14,14 +14,14 @@ div#controls h2 {
   margin-top: 0;
 }
 div#controls select {
-  float: right;
-  clear: right;
+  float: left;
+  clear: left;
+  width: 75%;
   min-width: 8em;
   max-width: 100%;
 }
 div#controls input[type=submit] {
-  float: left;
-  clear: both;
+  float: right;
   width: 7em;
 }
 
