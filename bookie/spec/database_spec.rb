@@ -182,16 +182,11 @@ describe Bookie::Database do
       jobs[0].user.group.name.should eql "default"
     end
     
-    describe "::each_with_relations" do
+    describe "::all_with_relations" do
       it "loads all relations" do
         jobs = Bookie::Database::Job.limit(5)
         relations = {}
-        jobs.each_with_relations do |job|
-          test_relations(job, relations)
-        end
-        relations = {}
-        jobs = jobs.all
-        Bookie::Database::Job.each_with_relations(jobs) do |job|
+        jobs.all_with_relations.each do |job|
           test_relations(job, relations)
         end
       end

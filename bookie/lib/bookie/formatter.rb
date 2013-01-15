@@ -106,7 +106,7 @@ module Bookie
     #    end
     #  end
     def fields_for_each_job(jobs)
-      Bookie::Database::Job.each_with_relations(jobs) do |job|
+      jobs.each do |job|
         memory_stat_type = job.system.system_type.memory_stat_type
         if memory_stat_type == :unknown
           memory_stat_type = ''

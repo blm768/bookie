@@ -55,7 +55,7 @@ describe Bookie::Sender do
     begin
       @sender.send_data('snapshot/torque_large')
       count = 0
-      Bookie::Database::Job.each_with_relations do |job|
+      Bookie::Database::Job.all_with_relations.each do |job|
         job.system.name.should eql @config.hostname
         count += 1
       end

@@ -115,11 +115,12 @@ module Bookie
       #
       #This method should probably not be used with other queries that filter by start/end time.
       def self.summary(min_time = nil, max_time = nil)
-        jobs = []
+        jobs = self
         if min_time
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
           jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
+        jobs = jobs.all_with_relations
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
@@ -128,8 +129,7 @@ module Bookie
         #Maybe in a database consistency checker tool?
         #What if the system clock is off?
         #Also consider a check for system start times.
-        self.each_with_relations do |job|
-          jobs << job
+        jobs.each do |job|
           job_start_time = job.start_time
           job_end_time = job.end_time
           if min_time
@@ -158,25 +158,11 @@ module Bookie
       end
       
       ##
-      #Yields each job, pre-loading its relations to reduce the need for extra queries
+      #Returns an array of all jobs, pre-loading relations to reduce the need for extra queries
       #
       #Relations are not cached between calls.
-      #
-      #If the <tt>jobs</tt> parameter is supplied, it should be an array on which the operation will be applied.
-      #Otherwise, the operations will be performed on the object through which this method is called.
-      #
-      #Examples:
-      #  jobs = Bookie::Database::Job.by_user_name('root')
-      #  jobs.each_with_relations do |job|
-      #    #Do something...
-      #  end
-      #  jobs = jobs.all
-      #  Bookie::Database::Job.each_with_relations(jobs) do |job|
-      #    #Same as above, but uses an array from a previously run query
-      #  end
-      #  
-      def self.each_with_relations(jobs = nil)
-        jobs ||= all
+      def self.all_with_relations
+        jobs = all
         transaction do
           users = {}
           groups = {}
@@ -211,9 +197,10 @@ module Bookie
               group = user.group
               groups[group.id] = group
             end
-            yield job
           end
         end
+        
+        jobs
       end
       
       before_save do
