@@ -1,0 +1,8 @@
+<% if @page_num && @num_pages %>
+  <label for="select_page">Page:</label>
+  <select id="select_page">
+    <% (1 .. @num_pages).each do |i| %>
+      <option value="<%= i %>" <%= 'selected=selected' if i == @page_num %>><%= i %></option>
+    <% end %>
+  </select>
+<% end %>

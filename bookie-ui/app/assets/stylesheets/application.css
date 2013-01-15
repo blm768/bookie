@@ -11,6 +11,10 @@
  *= require_self
  */
 
+/*------------------------*/
+/*Whole-application styles*/
+/*------------------------*/
+
 #message_error {
   color: #A00;
 }

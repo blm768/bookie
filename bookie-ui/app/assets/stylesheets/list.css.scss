@@ -2,15 +2,16 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1.5ex;
+  caption {
+    margin-bottom: 0.5ex;
+    text-align: left;
+    font-size: x-large;
+    font-weight: bold;
+  }
 }
-table caption {
-  margin-bottom: 0.5ex;
-  text-align: left;
-  font-size: x-large;
-  font-weight: bold;
-}
+
 td, th {
-  border: 1px solid;
+  border: none;
   padding-left: 0.5em;
   padding-right: 0.5em;
 }
@@ -19,12 +20,12 @@ table#summary th {
   width: 20%;
 }
 
-table#details tr {
+tr {
   &:nth-child(even) {
-    background: #DDDDDD;
+    background: #FFFFFF;
   }
   
   &:nth-child(odd) {
-    background: #FFFFFF;
+    background: #DDDDDD;
   }
 }
