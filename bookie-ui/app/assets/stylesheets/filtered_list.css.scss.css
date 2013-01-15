@@ -22,8 +22,7 @@ div#controls {
     width: 100%;
   }
   input[type=checkbox] {
-    float: left;
-    clear: left;
+    margin-right: 0.5em;
   }
   input[type=submit] {
     float: right;
@@ -34,6 +33,7 @@ div#controls {
 div.filter {
   background-color: #88AAFF;
   border: 1px solid #7799FF;
+  padding-top: 0.4em;
   padding-left: 0.5em;
   padding-right: 0.5em;
   padding-bottom: 0.4em;
@@ -45,6 +45,9 @@ div.filter {
   }
   .filter_remover {
     float: right;
+    :hover {
+      cursor: pointer;
+    }
   }
 }
 

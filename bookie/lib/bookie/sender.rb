@@ -1,8 +1,6 @@
-require 'bookie'
+require 'bookie/database'
 
-require 'active_record'
 require 'date'
-require 'logger'
 
 module Bookie
   ##

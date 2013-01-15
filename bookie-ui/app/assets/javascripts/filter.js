@@ -54,7 +54,7 @@ function submitFilters() {
     var page = $('<input/>')
     page.attr('type', 'hidden')
     page.attr('name', 'page')
-    page.val(pageSelect.prop('selectedIndex') + 1)
+    page.val(Math.max(pageSelect.prop('selectedIndex') + 1, 1))
     filterForm.append(page)
   }
 }

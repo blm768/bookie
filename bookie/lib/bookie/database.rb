@@ -1,4 +1,4 @@
-require 'bookie'
+require 'bookie/config'
 
 require 'active_record'
 

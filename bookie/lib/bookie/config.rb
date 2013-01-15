@@ -1,5 +1,3 @@
-require 'bookie'
-
 require 'active_record'
 require 'json'
 require 'logger'

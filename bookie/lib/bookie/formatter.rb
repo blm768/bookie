@@ -1,4 +1,4 @@
-require 'bookie'
+require 'bookie/database'
 
 require 'date'
 require 'spreadsheet'
