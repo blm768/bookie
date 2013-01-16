@@ -1,6 +1,6 @@
-require 'date'
+require 'bookie_database_all'
 
-require 'filter'
+require 'date'
 
 class JobsController < ApplicationController
   PAGE_SIZE = 20
@@ -30,18 +30,16 @@ class JobsController < ApplicationController
     @prev_filters = []
     
     #To do: error on empty fields?
-    each_filter(FILTER_ARG_COUNTS) do |name, values|
-      case name
+    each_filter(FILTER_ARG_COUNTS) do |type, values|
+      case type
       when 'System'
         jobs = jobs.by_system_name(values[0])
         systems = systems.by_name(values[0])
-        @prev_filters << ['System', values]
       when 'User'
         jobs = jobs.by_user_name(values[0])
         @prev_filters << ['User', values]
       when 'Group'
         jobs = jobs.by_group_name(values[0])
-        @prev_filters << ['Group', values]
       when 'System type'
         sys_type = Bookie::Database::SystemType.find_by_name(values[0])
         if sys_type
@@ -51,7 +49,6 @@ class JobsController < ApplicationController
           jobs = jobs.limit(0)
           systems = systems.limit(0)
         end
-        @prev_filters << ['System type', values]
       when 'Time'
         start_time_text = values[0]
         end_time_text = values[1]
@@ -65,8 +62,8 @@ class JobsController < ApplicationController
         rescue
           flash[:error] = "Invalid end time '#{end_time_text}'"
         end
-        @prev_filters << ['Time', values]
       end
+      @prev_filters << [type, values]
     end
     
     #To do: ordering?

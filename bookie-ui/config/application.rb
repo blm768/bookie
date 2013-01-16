@@ -16,8 +16,7 @@ module BookieUi
     # -- all .rb files in that directory are automatically loaded.
 
     # Custom directories with classes and modules you want to be autoloadable.
-    #To do: comment out for production.
-    config.autoload_paths += Dir.glob(File.join(Dir.pwd, "../*/lib"))
+    config.autoload_paths << 'app/mixins'
 
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.

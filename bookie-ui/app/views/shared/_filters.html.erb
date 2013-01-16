@@ -1,7 +1,6 @@
 <div id="controls">
   <h2>Filters</h2>
   <%= form_tag("", :method => "get") do %>
-    <%= @prev_filters %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
