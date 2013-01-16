@@ -1,0 +1,7 @@
+{
+  "Count" : <%= @jobs_summary[:jobs].length %>,
+  "Successful" : <%= @jobs_summary[:successful] %>,
+  "Available CPU time": <%= @systems_summary[:avail_cpu_time] %>,
+  "CPU time used" : <%= @combined_summary[:cpu_time] %>,
+  "Available memory (average)" : <%= @systems_summary[:avail_memory_avg].to_i %>
+}

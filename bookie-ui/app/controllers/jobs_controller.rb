@@ -76,13 +76,24 @@ class JobsController < ApplicationController
     @jobs_summary = jobs.summary(summary_start_time, summary_end_time)
     @systems_summary = systems.summary(summary_start_time, summary_end_time)
     
+    
+    avail_cpu_time = @systems_summary[:avail_cpu_time]
+    avail_mem_time = @systems_summary[:avail_memory_time]
+    @combined_summary = {
+      :cpu_time => avail_cpu_time == 0 ? 0.0 : @jobs_summary[:cpu_time] / avail_cpu_time,
+      :memory => avail_mem_time == 0 ? 0.0 : @jobs_summary[:memory_time] / avail_mem_time,
+    }
+    
     #To be passed to the view
     @include_details = (params[:details] == "true")
     @page_start = PAGE_SIZE * (@page_num - 1)
     @page_end = @page_start + PAGE_SIZE
     num_jobs = @jobs_summary[:jobs].length
     @num_pages = num_jobs / PAGE_SIZE + ((num_jobs % PAGE_SIZE) > 0 ? 1 : 0)
-        
-    render :template => 'jobs/index'
+    
+    respond_to do |format|
+      format.html
+      format.json
+    end
   end
 end

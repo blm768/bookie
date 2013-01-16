@@ -34,7 +34,7 @@
       </tr>
       <tr>
         <th>% CPU time used</th>
-        <td><%= "%.2f%%" % (@jobs_summary[:cpu_time] * 100) %></td>
+        <td><%= "%.2f%%" % (@combined_summary[:cpu_time] * 100) %></td>
       </tr>
       <tr>
         <th>Available memory (average)</th>
@@ -76,13 +76,7 @@
   </div>
   
   <%= render :partial => 'shared/filters', :locals => {
-    :filter_options => {
-      'User' => 1,
-      'Group' => 1,
-      'System' => 1,
-      'System type' => 1,
-      'Time' => 2,
-    },
+    :filter_options => JobsController::FILTER_ARG_COUNTS,
     :default_details => (@include_details == nil) ? false : @include_details
   } %>
 </div>
