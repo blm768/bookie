@@ -41,7 +41,7 @@
         <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
       </tr>
     </table>
-    <% if @include_details %>
+    <% if @show_details %>
       <table id="details">
         <caption>Details</caption>
         <tr>
@@ -77,6 +77,6 @@
   
   <%= render :partial => 'shared/filters', :locals => {
     :filter_options => JobsController::FILTER_ARG_COUNTS,
-    :default_details => (@include_details == nil) ? false : @include_details
+    :default_details => @show_details
   } %>
 </div>

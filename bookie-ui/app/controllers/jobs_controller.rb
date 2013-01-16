@@ -43,8 +43,7 @@ class JobsController < ApplicationController
         jobs = jobs.by_group_name(values[0])
         @prev_filters << ['Group', values]
       when 'System type'
-        value = values[value_index]
-        sys_type = Bookie::Database::SystemType.find_by_name(value)
+        sys_type = Bookie::Database::SystemType.find_by_name(values[0])
         if sys_type
           jobs = jobs.by_system_type(sys_type)
           systems = systems.by_system_type(sys_type)
@@ -52,11 +51,10 @@ class JobsController < ApplicationController
           jobs = jobs.limit(0)
           systems = systems.limit(0)
         end
-        value_index += 1
-        @prev_filters << ['System type', [value]]
+        @prev_filters << ['System type', values]
       when 'Time'
-        start_time_text = values[value_index]
-        end_time_text = values[value_index + 1]
+        start_time_text = values[0]
+        end_time_text = values[1]
         begin
           summmary_start_time = Time.parse(start_time_text)
         rescue
@@ -67,8 +65,7 @@ class JobsController < ApplicationController
         rescue
           flash[:error] = "Invalid end time '#{end_time_text}'"
         end
-        value_index += 2
-        @prev_filters << ['Time', [start_time_text, end_time_text]]
+        @prev_filters << ['Time', values]
       end
     end
     
@@ -85,11 +82,13 @@ class JobsController < ApplicationController
     }
     
     #To be passed to the view
-    @include_details = (params[:details] == "true")
-    @page_start = PAGE_SIZE * (@page_num - 1)
-    @page_end = @page_start + PAGE_SIZE
-    num_jobs = @jobs_summary[:jobs].length
-    @num_pages = num_jobs / PAGE_SIZE + ((num_jobs % PAGE_SIZE) > 0 ? 1 : 0)
+    @show_details = (params[:show_details] == "true")
+    if @show_details
+      @page_start = PAGE_SIZE * (@page_num - 1)
+      @page_end = @page_start + PAGE_SIZE
+      num_jobs = @jobs_summary[:jobs].length
+      @num_pages = num_jobs / PAGE_SIZE + ((num_jobs % PAGE_SIZE) > 0 ? 1 : 0)
+    end
     
     respond_to do |format|
       format.html

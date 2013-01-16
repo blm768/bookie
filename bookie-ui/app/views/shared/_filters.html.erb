@@ -1,6 +1,7 @@
 <div id="controls">
   <h2>Filters</h2>
   <%= form_tag("", :method => "get") do %>
+    <%= @prev_filters %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
@@ -20,7 +21,7 @@
         <% end %>
       </select>
     </select>
-    <label><%= check_box_tag("details", "true", default_details) %>Include details</label>
+    <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
     <%= submit_tag("Submit") %>
   <% end %>
 </div>
