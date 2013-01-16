@@ -1,4 +1,7 @@
 function initFilters() {
+  var addFilterSelect = $('#add_filter')
+  //This should be addEventListener(), but Safari doesn't like that. I have no idea why.
+  addFilterSelect.change(addFilter)
   //If filters have already been created by the server, tie events to their removers.
   $('.filter_remover').click(function() { $(this).parent().remove() })
   //If there's a page selector, set it up.
@@ -78,9 +81,7 @@ function submitFilters() {
 }
 
 $(document).ready(function() {
-  var addFilterSelect = $('#add_filter')
-  //This should be addEventListener(), but Safari doesn't like that. I have no idea why.
-  addFilterSelect.change(addFilter)
-  var filterForm = addFilterSelect.parent()
+  var filterForm = $('#filters').parent()
   filterForm.submit(submitFilters)
+  initFilters()
 })

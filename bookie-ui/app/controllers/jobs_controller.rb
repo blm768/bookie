@@ -55,12 +55,12 @@ class JobsController < ApplicationController
         begin
           summmary_start_time = Time.parse(start_time_text)
         rescue
-          flash[:error] = "Invalid start time '#{start_time_text}'"
+          flash.now[:error] = "Invalid start time '#{start_time_text}'"
         end
         begin
           summary_end_time = Time.parse(end_time_text)
         rescue
-          flash[:error] = "Invalid end time '#{end_time_text}'"
+          flash.now[:error] = "Invalid end time '#{end_time_text}'"
         end
       end
       @prev_filters << [type, values]
