@@ -55,6 +55,8 @@ BookieUi::Application.routes.draw do
   resources :jobs
   
   resources :systems
+  
+  resource :graph
 
   # See how all your routes lay out with "rake routes"
 

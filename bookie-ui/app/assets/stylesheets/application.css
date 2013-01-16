@@ -24,3 +24,12 @@
 #message_notice {
   color: #0A0;
 }
+
+div#main {
+  display: table;
+  width: 100%;
+}
+
+div#content {
+  display: table-cell;
+}

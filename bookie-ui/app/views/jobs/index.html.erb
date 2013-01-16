@@ -1,15 +1,23 @@
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag "filtered_list", :media => "all" %>
+  <%= stylesheet_link_tag "list", :media => "all" %>
+  <%= stylesheet_link_tag "filter", :media => "all" %>
 <% end %>
 
 <% content_for :scripts do %>
   <%= javascript_include_tag "filter" %>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      initFilters()
+      var filterForm = $('#filters').parent()
+      filterForm.submit(submitFilters)
+    })
+  </script>
 <% end %>
 
 <h1>Jobs</h1>
 
 <div id="main">
-  <div id="tables">
+  <div id="content">
     <table id="summary">
       <caption>Summary</caption>
       <tr>

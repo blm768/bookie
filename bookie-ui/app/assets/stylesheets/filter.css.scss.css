@@ -1,12 +1,4 @@
-@import url("list.css");
-
-div#main {
-  display: table;
-  width: 100%;
-}
-
-div#tables {
-  display: table-cell;
+div#content {
   padding-right: 20px;
 }
 

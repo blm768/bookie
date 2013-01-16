@@ -79,9 +79,3 @@ function submitFilters() {
     }
   }
 }
-
-$(document).ready(function() {
-  var filterForm = $('#filters').parent()
-  filterForm.submit(submitFilters)
-  initFilters()
-})
