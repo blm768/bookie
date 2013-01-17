@@ -53,7 +53,7 @@ class JobsController < ApplicationController
         start_time_text = values[0]
         end_time_text = values[1]
         begin
-          summmary_start_time = Time.parse(start_time_text)
+          summary_start_time = Time.parse(start_time_text)
         rescue
           flash.now[:error] = "Invalid start time '#{start_time_text}'"
         end

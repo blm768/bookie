@@ -10,6 +10,9 @@ function dateToString(date) {
   return pad(date.getFullYear(), 4) + '-' + pad(date.getMonth() + 1, 2) + '-' + pad(date.getDate(), 2)
 }
 
+date_start = undefined
+date_end = undefined
+
 function initRange() {
   var inputs = $('#date_range .date_box').children()
   
@@ -61,14 +64,36 @@ dates = []
 counts = []
 
 function addPoint(date, summary) {
-  dates.push(date)
   counts.push(summary['Count'])
+  //If we have all the points, draw them.
+  if(counts.length == dates.length) {
+    drawPoints()
+  }
+}
+
+function resetPoints() {
+  dates = []
+  counts = []
+}
+
+function drawPoints() {
+  $('#content').append(counts.toString())
 }
 
 function onFilterChange() {
+  resetPoints()
+  if(!date_start || !date_end) {
+    return
+  }
+  
   var params = getFilterData()
-  //For testing:
-  getSummary(new Date(Date.now()), params)
+  
+  var day = new Date(date_start.valueOf())
+  while(day < date_end) {
+    getSummary(day, params)
+    dates.push(day)
+    day.setDate(day.getDate() + 1)
+  }
 }
 
 $(document).ready(function() {
