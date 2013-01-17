@@ -1,13 +1,23 @@
+#date_range {
+  margin-bottom: .5em;
+}
+
 .date_box {
-  float: left;
-  margin-right: 1em;
+  display: inline;
+  margin-left: .5em;
+  margin-right: .5em;
 }
 
 input {
   &.day {
-    width: 3em;
+    width: 2em;
   }
   &.year {
-    width: 5em;
+    width: 8em;
   }
+}
+
+.graph {
+  width: 100%;
+  height: 200px;
 }

@@ -16,7 +16,19 @@ date_end = undefined
 function initRange() {
   var inputs = $('#date_range .date_box').children()
   
-  inputs.change(function() {
+  inputs.filter
+  
+  var date = new Date(Date.now())
+  date.setMonth(0)
+  date.setDate(1)
+  var year = date.getFullYear()
+  
+  inputs.filter('.year').each(function() {
+    this.value = year
+    year += 1
+  })
+  
+  $('#set_date_range').click(function() {
     var complete = true
     inputs.filter('input').each(function() {
       if(this.value.length == 0) {
@@ -60,19 +72,14 @@ function getSummary(day, params) {
   })
 }
 
-dates = []
 counts = []
 
 function addPoint(date, summary) {
-  counts.push(summary['Count'])
-  //If we have all the points, draw them.
-  if(counts.length == dates.length) {
-    drawPoints()
-  }
+  counts.push([date.valueOf(), summary['Count']])
+  drawPoints()
 }
 
 function resetPoints() {
-  dates = []
   counts = []
 }
 
@@ -97,8 +104,9 @@ function onFilterChange() {
 }
 
 $(document).ready(function() {
-  initFilters();
-  initRange();
-  var filterForm = $('#filters').parent()
-  onFilterChange()
+  $.getScript('flot/jquery.flot.js', function() {
+    initFilters();
+    initRange();
+    var filterForm = $('#filters').parent()
+  })
 })

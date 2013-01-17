@@ -15,16 +15,20 @@
     <div id="date_range">
       <% ['start', 'end'].each do |bound| %>
         <div class="date_box">
-          <input type="text" class="day" id="day_<%= bound %>"></input>
+          <input type="text" class="day" id="day_<%= bound %>" value="1"></input>
           <select id = "month_<%= bound %>">
             <% (1 .. 12).each do |i| %>
               <option value="<%= i %>"><%= Date::ABBR_MONTHNAMES[i] %></option>
             <% end %>
           </select>
-          <input type="text" class="day" id="year_<%= bound %>"></input>
+          <input type="text" class="year" id="year_<%= bound %>"></input>
         </div>
+        <%= "to" if bound == 'start' %>
       <% end %>
+      <button id="set_date_range" type="button">Graph</button>
     </div>
+    
+    <div class="graph" id="graph_counts"></div>
   </div>
   
   <%= render :partial => 'shared/filters', :locals => {
