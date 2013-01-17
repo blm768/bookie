@@ -1,20 +1,34 @@
 <% content_for :stylesheets do %>
   <%= stylesheet_link_tag "filter", :media => "all" %>
+  <%= stylesheet_link_tag "graphs", :media => "all" %>
 <% end %>
 
 <% content_for :scripts do %>
   <%= javascript_include_tag "filter" %>
+  <%= javascript_include_tag "graph" %>
 <% end %>
 
-<h1>Jobs</h1>
+<h1>Graphs</h1>
 
 <div id="main">
   <div id="content">
-    
+    <div id="date_range">
+      <% ['start', 'end'].each do |bound| %>
+        <div class="date_box">
+          <input type="text" class="day" id="day_<%= bound %>"></input>
+          <select id = "month_<%= bound %>">
+            <% (1 .. 12).each do |i| %>
+              <option value="<%= i %>"><%= Date::ABBR_MONTHNAMES[i] %></option>
+            <% end %>
+          </select>
+          <input type="text" class="day" id="year_<%= bound %>"></input>
+        </div>
+      <% end %>
+    </div>
   </div>
   
   <%= render :partial => 'shared/filters', :locals => {
     :filter_options => GraphsController::FILTER_ARG_COUNTS,
-    :default_details => false
+    :hide_submit => true,
   } %>
 </div>

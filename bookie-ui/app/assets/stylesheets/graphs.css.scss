@@ -1,0 +1,13 @@
+.date_box {
+  float: left;
+  margin-right: 1em;
+}
+
+input {
+  &.day {
+    width: 3em;
+  }
+  &.year {
+    width: 5em;
+  }
+}

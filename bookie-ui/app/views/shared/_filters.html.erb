@@ -20,8 +20,10 @@
         <% end %>
       </select>
     </select>
-    <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
-    <%= submit_tag("Submit") %>
+    <% if defined? default_details %>
+      <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
+    <% end %>
+    <%= submit_tag("Submit") unless (defined? hide_submit) && hide_submit %>
   <% end %>
 </div>
 

@@ -3,7 +3,7 @@ function initFilters() {
   //This should be addEventListener(), but Safari doesn't like that. I have no idea why.
   addFilterSelect.change(addFilter)
   //If filters have already been created by the server, tie events to their removers.
-  $('.filter_remover').click(function() { $(this).parent().remove() })
+  $('.filter_remover').click(function() { removeFilter($(this).parent()) })
   //If there's a page selector, set it up.
   var pageSelect = $('#select_page')
   if(pageSelect) {
@@ -25,16 +25,28 @@ function addFilter() {
   filter.append(opt.text())
   var remover = $('<div/>')
   remover.addClass('filter_remover')
-  remover.click(function() { filter.remove() })
+  remover.click(function() { removeFilter(filter) })
   remover.append('X')
   filter.append(remover)
   //The value attribute is hijacked to store the number of filter parameters.
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
     text.attr('type', 'text')
+    text.change(function() {
+      if('onFilterChange' in window) {
+        window.onFilterChange()
+      }
+    })
     filter.append(text)
   }
   filters.append(filter)
+}
+
+function removeFilter(filter) {
+  filter.remove()
+  if('onFilterChange' in window) {
+    window.onFilterChange()
+  }
 }
 
 function getFilterData() {
