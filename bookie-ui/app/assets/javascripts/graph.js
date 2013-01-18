@@ -79,6 +79,9 @@ counts = []
 
 function addPoint(date, summary) {
   counts.push([date.valueOf(), summary['Count']])
+  counts.sort(function(a, b) {
+    return a[0] - b[0]
+  })
   drawPoints()
 }
 
