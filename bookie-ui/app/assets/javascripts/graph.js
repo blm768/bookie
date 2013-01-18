@@ -98,7 +98,7 @@ function initPlots() {
     {
       xaxis: {
         mode: "time",
-        minTickSize: 1,
+        minTickSize: [1, "day"],
       },
       yaxis: {
         min: 0,
