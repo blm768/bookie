@@ -79,16 +79,22 @@ function getSummary(day, params) {
 var plots = {}
 
 var plot_data = {
-  counts: []
+  counts: [],
+  successful: [],
+  cpu_time: [],
 }
 
 function addPoint(date, summary) {
   plot_data.counts.push([date.valueOf(), summary['Count']])
+  plot_data.successful.push([date.valueOf(), summary['Successful']])
+  plot_data.cpu_time.push([date.valueOf(), summary['CPU time used']])
   drawPoints()
 }
 
 function resetPoints() {
-  counts = []
+  $.each(plot_data, function(name, data) {
+    plot_data[name] = []
+  })
 }
 
 function initPlots() {
@@ -102,18 +108,77 @@ function initPlots() {
       },
       yaxis: {
         min: 0,
+        tickDecimals: 0,
+        minTickSize: 1,
+      },
+    }
+  )
+  plots.successful = $.plot(
+    $('#graph_successful'),
+    [],
+    {
+      xaxis: {
+        mode: "time",
+        minTickSize: [1, "day"],
+      },
+      yaxis: {
+        min: 0,
+        tickDecimals: 2,
+        tickFormatter: function(tick) {
+          return Math.floor(tick * 100) + "%"
+        },
+      },
+    }
+  )
+  plots.cpu_time = $.plot(
+    $('#graph_cpu_time'),
+    [],
+    {
+      xaxis: {
+        mode: "time",
+        minTickSize: [1, "day"],
+      },
+      yaxis: {
+        min: 0,
+        tickDecimals: 2,
+        tickFormatter: function(tick) {
+          return Math.floor(tick * 100) + "%"
+        },
       },
     }
   )
 }
 
+function compareDates(a, b) {
+  return a[0] - b[0]
+}
+
 function drawPoints() {
-  plot_data.counts.sort(function(a, b) {
-    return a[0] - b[0]
+  $.each(plot_data, function(name, data) {
+    data.sort(compareDates)
   })
-  plots.counts.setData([plot_data.counts])
-  plots.counts.setupGrid()
-  plots.counts.draw()
+  plots.counts.setData([
+    {
+      label: "Number of jobs",
+      data: plot_data.counts,
+    }
+  ])
+  plots.successful.setData([
+    {
+      label: "Successful jobs",
+      data: plot_data.successful,
+    }
+  ])
+  plots.cpu_time.setData([
+    {
+      label: "CPU time used",
+      data: plot_data.cpu_time,
+    }
+  ])
+  $.each(plots, function(name, plot) {
+    plot.setupGrid()
+    plot.draw()
+  })
 }
 
 function onFilterChange() {
