@@ -10,8 +10,9 @@ function dateToString(date) {
   return pad(date.getFullYear(), 4) + '-' + pad(date.getMonth() + 1, 2) + '-' + pad(date.getDate(), 2)
 }
 
-date_start = undefined
-date_end = undefined
+var MSECS_PER_DAY = 24 * 3600 * 1000
+
+var date_start, date_end
 
 function initRange() {
   var dateBoxes = $('#date_range .date_box')
@@ -75,13 +76,14 @@ function getSummary(day, params) {
   })
 }
 
-counts = []
+var plots = {}
+
+var plot_data = {
+  counts: []
+}
 
 function addPoint(date, summary) {
-  counts.push([date.valueOf(), summary['Count']])
-  counts.sort(function(a, b) {
-    return a[0] - b[0]
-  })
+  plot_data.counts.push([date.valueOf(), summary['Count']])
   drawPoints()
 }
 
@@ -89,16 +91,29 @@ function resetPoints() {
   counts = []
 }
 
-function drawPoints() {
-  window.counts_plot = $.plot(
+function initPlots() {
+  plots.counts = $.plot(
     $('#graph_counts'),
-    [counts],
+    [],
     {
       xaxis: {
-        mode: "time"
-      }
+        mode: "time",
+        minTickSize: 1,
+      },
+      yaxis: {
+        min: 0,
+      },
     }
   )
+}
+
+function drawPoints() {
+  plot_data.counts.sort(function(a, b) {
+    return a[0] - b[0]
+  })
+  plots.counts.setData([plot_data.counts])
+  plots.counts.setupGrid()
+  plots.counts.draw()
 }
 
 function onFilterChange() {
@@ -122,6 +137,7 @@ $(document).ready(function() {
       initFilters();
       initRange();
       var filterForm = $('#filters').parent()
+      initPlots();
     })
   })
 })
