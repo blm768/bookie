@@ -14,21 +14,23 @@ date_start = undefined
 date_end = undefined
 
 function initRange() {
-  var inputs = $('#date_range .date_box').children()
-  
-  inputs.filter
+  var dateBoxes = $('#date_range .date_box')
   
   var date = new Date(Date.now())
-  date.setMonth(0)
   date.setDate(1)
-  var year = date.getFullYear()
   
-  inputs.filter('.year').each(function() {
-    this.value = year
-    year += 1
+  dateBoxes.children().filter('.day').val(1)
+  
+  dateBoxes.each(function() {
+    var $this = $(this)
+    var inputs = $this.children()
+    inputs.filter('.month').val(date.getMonth())
+    inputs.filter('.year').val(date.getFullYear())
+    date.setMonth(date.getMonth() + 1)
   })
   
   $('#set_date_range').click(function() {
+    var inputs = dateBoxes.children()
     var complete = true
     inputs.filter('input').each(function() {
       if(this.value.length == 0) {
@@ -39,12 +41,12 @@ function initRange() {
     if(complete) {
       date_start = new Date(
         parseInt($('#year_start').val()), 
-        parseInt($('#month_start').val() - 1),
+        parseInt($('#month_start').val()),
         parseInt($('#day_start').val())
       )
       date_end = new Date(
         parseInt($('#year_end').val()), 
-        parseInt($('#month_end').val() - 1),
+        parseInt($('#month_end').val()),
         parseInt($('#day_end').val())
       )
       onFilterChange()
@@ -53,6 +55,7 @@ function initRange() {
 }
 
 function getSummary(day, params) {
+  day = new Date(day.valueOf())
   var start = dateToString(day)
   var next_day = new Date(day.valueOf())
   next_day.setDate(next_day.getDate() + 1)
@@ -84,7 +87,15 @@ function resetPoints() {
 }
 
 function drawPoints() {
-  $('#content').append(counts.toString())
+  window.counts_plot = $.plot(
+    $('#graph_counts'),
+    [counts],
+    {
+      xaxis: {
+        mode: "time"
+      }
+    }
+  )
 }
 
 function onFilterChange() {
@@ -98,15 +109,16 @@ function onFilterChange() {
   var day = new Date(date_start.valueOf())
   while(day < date_end) {
     getSummary(day, params)
-    dates.push(day)
     day.setDate(day.getDate() + 1)
   }
 }
 
 $(document).ready(function() {
-  $.getScript('flot/jquery.flot.js', function() {
-    initFilters();
-    initRange();
-    var filterForm = $('#filters').parent()
+  $.getScript('assets/flot/jquery.flot.js', function() {
+    $.getScript('assets/flot/jquery.flot.time.js', function() {
+      initFilters();
+      initRange();
+      var filterForm = $('#filters').parent()
+    })
   })
 })
