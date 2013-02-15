@@ -16,7 +16,6 @@ class JobsController < ApplicationController
   include FilterMixin
 
   def index
-    #To do: optimize as local variable?
     jobs = Bookie::Database::Job
     systems = Bookie::Database::System
         

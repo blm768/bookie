@@ -89,14 +89,15 @@ module Bookie
     ##
     #Converts the object to a Bookie::Database::Job
     def to_model()
-      db_job = Bookie::Database::Job.new
-      db_job.start_time = self.start_time
-      db_job.end_time = self.start_time + self.wall_time
-      db_job.wall_time = self.wall_time
-      db_job.cpu_time = self.cpu_time
-      db_job.memory = self.memory
-      db_job.exit_code = self.exit_code
-      return db_job
+      job = Bookie::Database::Job.new
+      job.command_name = self.command_name
+      job.start_time = self.start_time
+      job.end_time = self.start_time + self.wall_time
+      job.wall_time = self.wall_time
+      job.cpu_time = self.cpu_time
+      job.memory = self.memory
+      job.exit_code = self.exit_code
+      return job
     end
   end
   

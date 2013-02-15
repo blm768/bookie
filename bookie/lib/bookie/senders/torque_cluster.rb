@@ -32,6 +32,8 @@ module Torque
     attr_accessor :user_name
     #The group name of the user who created the job
     attr_accessor :group_name
+    #The name of the command
+    attr_accessor :command_name
     #The job's start time
     attr_accessor :start_time
     #The job's total wall time
@@ -118,6 +120,7 @@ module Torque
               job.exit_code = Integer(value)
           end
         end
+        job.command_name = ""
         
         yield job
       end

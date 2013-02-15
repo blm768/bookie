@@ -1,13 +1,5 @@
-//To do: fix?
-function pad(str, len) {
-  while(str.length < len) {
-    str = '0' + str
-  }
-  return str
-}
-
 function dateToString(date) {
-  return pad(date.getFullYear(), 4) + '-' + pad(date.getMonth() + 1, 2) + '-' + pad(date.getDate(), 2)
+  return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate()
 }
 
 var MSECS_PER_DAY = 24 * 3600 * 1000
@@ -149,13 +141,11 @@ function initPlots() {
   )
 }
 
-function compareDates(a, b) {
-  return a[0] - b[0]
-}
-
 function drawPoints() {
   $.each(plot_data, function(name, data) {
-    data.sort(compareDates)
+    data.sort(function(a, b) {
+      return a[0] - b[0]
+    })
   })
   plots.counts.setData([
     {

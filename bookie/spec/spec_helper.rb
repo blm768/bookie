@@ -105,6 +105,11 @@ module Helpers
       job = Bookie::Database::Job.new
       job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
       job.system = systems[i / 10]
+      if i & 1 == 0
+        job.command_name = 'vi'
+      else
+        job.command_name = 'emacs'
+      end
       job.start_time = base_time + 3600 * i
       job.wall_time = 3600
       job.cpu_time = 100

@@ -3,6 +3,7 @@ require 'spec_helper'
 class JobStub
   attr_accessor :user_name
   attr_accessor :group_name
+  attr_accessor :command_name
   attr_accessor :start_time
   attr_accessor :end_time
   attr_accessor :wall_time
@@ -34,6 +35,7 @@ describe Bookie::Sender do
     @job = JobStub.new
     @job.user_name = "root"
     @job.group_name = "root"
+    @job.command_name = "ls"
     @job.start_time = Time.new
     @job.wall_time = 3
     @job.cpu_time = 2

@@ -85,6 +85,12 @@ module Bookie
       end
       
       ##
+      #Filters by command name
+      def self.by_command_name(c_name)
+        where('command_name = ?', c_name)
+      end
+      
+      ##
       #Filters by a range of start times
       def self.by_start_time_range(start_min, start_max)
         where('? <= start_time AND start_time < ?', start_min, start_max)
@@ -120,7 +126,7 @@ module Bookie
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
           jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
-        jobs = jobs.all_with_relations
+        jobs = jobs.where('cpu_time > 0').all_with_relations
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
@@ -579,6 +585,7 @@ module Bookie
           create_table :jobs do |t|
             t.references :user, :null => false
             t.references :system, :null => false
+            t.string :command_name, :limit => 24
             t.datetime :start_time, :null => false
             t.datetime :end_time, :null => false
             t.integer :wall_time, :null => false
@@ -589,6 +596,7 @@ module Bookie
           change_table :jobs do |t|
             t.index :user_id
             t.index :system_id
+            t.index :command_name
             t.index :start_time
             t.index :end_time
           end
