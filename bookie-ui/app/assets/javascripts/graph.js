@@ -1,3 +1,15 @@
+function formatPercent(value) {
+  return Math.floor(value * 100) + '%'
+}
+
+var PLOT_TYPES = {
+  'Number of jobs': {},
+  'Successful jobs': {
+    formatter: formatPercent
+  },
+  'CPU time used': {}
+}
+
 function dateToString(date) {
   return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate()
 }
@@ -6,8 +18,8 @@ var MSECS_PER_DAY = 24 * 3600 * 1000
 
 var date_start, date_end
 
-function initRange() {
-  var dateBoxes = $('#date_range .date_box')
+function initControls() {
+  var dateBoxes = $('#date_range').children('.date_box')
   
   var date = new Date(Date.now())
   date.setDate(1)
@@ -22,7 +34,7 @@ function initRange() {
     date.setMonth(date.getMonth() + 1)
   })
   
-  $('#set_date_range').click(function() {
+  $('.set_date_range').click(function() {
     var inputs = dateBoxes.children()
     var complete = true
     inputs.filter('input').each(function() {
@@ -45,6 +57,27 @@ function initRange() {
       onFilterChange()
     }
   })  
+}
+
+function createGraph() {
+  var container = $('<div>')
+  container.addClass('graph_container')
+  
+  var select = $('<select/>')
+  select.addClass('graph_type')
+  for(name in PLOT_TYPES) {
+    var opt = $('<option/>')
+    opt.text(name)
+    opt.val(name)
+    select.append(opt)
+  }
+  container.append(select)
+  
+  var graph = $('<div/>')
+  graph.addClass('graph')
+  container.append(graph)
+  
+  return container
 }
 
 function getSummary(day, params) {
@@ -90,55 +123,27 @@ function resetPoints() {
 }
 
 function initPlots() {
-  plots.counts = $.plot(
-    $('#graph_counts'),
-    [],
-    {
-      xaxis: {
-        mode: "time",
-        minTickSize: [1, "day"],
-      },
-      yaxis: {
-        min: 0,
-        tickDecimals: 0,
-        minTickSize: 1,
-      },
-    }
-  )
-  plots.successful = $.plot(
-    $('#graph_successful'),
-    [],
-    {
-      xaxis: {
-        mode: "time",
-        minTickSize: [1, "day"],
-      },
-      yaxis: {
-        min: 0,
-        tickDecimals: 2,
-        tickFormatter: function(tick) {
-          return Math.floor(tick * 100) + "%"
+  graphs = $('.graph_container')
+  graphs.each(function() {
+    var container = $(this)
+    var type = container.children('.graph_type').first().val()
+    var type_data = PLOT_TYPES[type]
+    $.plot(
+      container.children('.graph').first(),
+      [],
+      {
+        xaxis: {
+          mode: "time",
+          minTickSize: [1, "day"],
         },
-      },
-    }
-  )
-  plots.cpu_time = $.plot(
-    $('#graph_cpu_time'),
-    [],
-    {
-      xaxis: {
-        mode: "time",
-        minTickSize: [1, "day"],
-      },
-      yaxis: {
-        min: 0,
-        tickDecimals: 2,
-        tickFormatter: function(tick) {
-          return Math.floor(tick * 100) + "%"
+        yaxis: {
+          min: 0,
+          tickDecimals: 2,
+          tickFormatter: type_data.formatter,
         },
-      },
-    }
-  )
+      }
+    )
+  })
 }
 
 function drawPoints() {
@@ -189,10 +194,11 @@ function onFilterChange() {
 $(document).ready(function() {
   $.getScript('assets/flot/jquery.flot.js', function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
-      initFilters();
-      initRange();
+      initFilters()
+      initControls()
+      $('#content').append(createGraph())
       var filterForm = $('#filters').parent()
-      initPlots();
+      initPlots()
     })
   })
 })
