@@ -48,8 +48,12 @@ opts = OptionParser.new do |opts|
     jobs = jobs.by_user_name(name)
   end
   
-  opts.on('-g', '--group NAME' "filter by group") do |name|
+  opts.on('-g', '--group NAME', "filter by group") do |name|
     jobs = jobs.by_group_name(name)
+  end
+  
+  opts.on('-m', '--command', "filter by command") do |cmd|
+    jobs = jobs.by_command_name(cmd)
   end
   
   opts.on('-s', '--system HOSTNAME', "filter by system") do |hostname|

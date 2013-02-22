@@ -1,9 +1,13 @@
 function initFilters() {
   var addFilterSelect = $('#add_filter')
   addFilterSelect.change(addFilter)
-  //If filters have already been created by the server, tie events to their removers.
-  $('.filter_remover').click(function() { removeFilter($(this).parent()) })
-  //To do: add events to text fields.
+  
+  //If filters have already been created by the server, tie events to them.
+  $('.filter_remover').click(function() { $(this).parent().remove() })
+  $('.filter').children('input[type=text]').change(function() {
+    this.blur()
+  })
+
   //If there's a page selector, set it up.
   var pageSelect = $('#select_page')
   if(pageSelect) {
@@ -27,13 +31,16 @@ function addFilter() {
   filter.append(opt.text())
   var remover = $('<div/>')
   remover.addClass('filter_remover')
-  remover.click(function() { removeFilter(filter) })
+  remover.click(function() { filter.remove() })
   remover.append('X')
   filter.append(remover)
   //The value attribute is hijacked to store the number of filter parameters.
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
     text.attr('type', 'text')
+    text.change(function() {
+      this.blur()
+    })
     filter.append(text)
   }
   filters.append(filter)
