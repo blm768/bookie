@@ -1,6 +1,6 @@
 <div id="controls">
   <h2>Filters</h2>
-  <%= form_tag("", :method => "get") do %>
+  <%= form_tag("", :method => "get", :id => "filter_form") do %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
@@ -12,18 +12,17 @@
         <% end %>
       <% end %>
     </span>
-      <select id="add_filter">
-        <option value="0">Add filter</option>
-        <% filter_options.each do |name, num_values| %>
-          <% #The value attribute is hijacked to hold the number of values associated with the filter. %>
-          <option value="<%= num_values %>"><%= name %></option> 
-        <% end %>
-      </select>
+    <select id="add_filter">
+      <option value="0">Add filter</option>
+      <% filter_options.each do |name, num_values| %>
+        <% #The value attribute is hijacked to hold the number of values associated with the filter. %>
+        <option value="<%= num_values %>"><%= name %></option> 
+      <% end %>
     </select>
     <% if defined? default_details %>
       <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
     <% end %>
-    <%= submit_tag("Submit") unless (defined? hide_submit) && hide_submit %>
+    <%= submit_tag("Filter") %>
   <% end %>
 </div>
 

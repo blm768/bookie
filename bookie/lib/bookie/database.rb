@@ -74,39 +74,39 @@ module Bookie
       #Filters by group name
       def self.by_group_name(group_name)
         group = Group.find_by_name(group_name)
-        return joins(:user).where('group_id = ?', group.id) if group
+        return joins(:user).where('users.group_id = ?', group.id) if group
         limit(0)
       end
       
       ##
       #Filters by system type
       def self.by_system_type(system_type)
-        joins(:system).where('system_type_id = ?', system_type.id)
+        joins(:system).where('systems.system_type_id = ?', system_type.id)
       end
       
       ##
       #Filters by command name
       def self.by_command_name(c_name)
-        where('command_name = ?', c_name)
+        where('jobs.command_name = ?', c_name)
       end
       
       ##
       #Filters by a range of start times
       def self.by_start_time_range(start_min, start_max)
-        where('? <= start_time AND start_time < ?', start_min, start_max)
+        where('? <= jobs.start_time AND jobs.start_time < ?', start_min, start_max)
       end
       
       ##
       #Filters by a range of end times
       def self.by_end_time_range(end_min, end_max)
-        where('? <= end_time AND end_time < ?', end_min, end_max)
+        where('? <= jobs.end_time AND jobs.end_time < ?', end_min, end_max)
       end
       
       ##
       #Finds all jobs whose running intervals overlap the given time range
       def self.by_time_range_inclusive(min_time, max_time)
         raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
-        where('start_time < ? AND end_time > ?', max_time, min_time)
+        where('jobs.start_time < ? AND jobs.end_time > ?', max_time, min_time)
       end
       
       ##
@@ -126,7 +126,7 @@ module Bookie
           raise ArgumentError.new('Max time must be specified with min time') unless max_time
           jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
-        jobs = jobs.where('cpu_time > 0').all_with_relations
+        jobs = jobs.where('jobs.cpu_time > 0').all_with_relations
         wall_time = 0
         cpu_time = 0
         successful_jobs = 0
@@ -299,19 +299,19 @@ module Bookie
       ##
       #Finds all systems that are active (i.e. all systems with NULL values for end_time)
       def self.active_systems
-        where('end_time IS NULL')
+        where('systems.end_time IS NULL')
       end
       
       ##
       #Filters by name
       def self.by_name(name)
-        where('name = ?', name)
+        where('systems.name = ?', name)
       end
       
       ##
       #Filters by system type
       def self.by_system_type(sys_type)
-        where('system_type_id = ?', sys_type.id)
+        where('systems.system_type_id = ?', sys_type.id)
       end
       
       ##
@@ -361,7 +361,7 @@ module Bookie
           raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
           #To consider: optimize as union of queries?
           systems = systems.where(
-            'start_time < ? AND (end_time IS NULL OR end_time > ?)',
+            'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
             max_time,
             min_time)
         end
@@ -389,7 +389,7 @@ module Bookie
           first_started_system = systems.order(:start_time).first
           if first_started_system
             #Is there a system still active?
-            last_ended_system = systems.where('end_time IS NULL').first
+            last_ended_system = systems.where('systems.end_time IS NULL').first
             if last_ended_system
               wall_time_range = current_time.to_i - first_started_system.start_time.to_i
             else

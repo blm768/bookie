@@ -1,13 +1,15 @@
 function initFilters() {
   var addFilterSelect = $('#add_filter')
-  //This should be addEventListener(), but Safari doesn't like that. I have no idea why.
   addFilterSelect.change(addFilter)
   //If filters have already been created by the server, tie events to their removers.
   $('.filter_remover').click(function() { removeFilter($(this).parent()) })
+  //To do: add events to text fields.
   //If there's a page selector, set it up.
   var pageSelect = $('#select_page')
   if(pageSelect) {
-    pageSelect.change(function() { filterForm.submit() })
+    pageSelect.change(function() {
+      $('#filter_form').submit()
+    })
   }
 }
 
@@ -32,11 +34,6 @@ function addFilter() {
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
     text.attr('type', 'text')
-    text.change(function() {
-      if('onFilterChange' in window) {
-        window.onFilterChange()
-      }
-    })
     filter.append(text)
   }
   filters.append(filter)
@@ -44,9 +41,6 @@ function addFilter() {
 
 function removeFilter(filter) {
   filter.remove()
-  if('onFilterChange' in window) {
-    window.onFilterChange()
-  }
 }
 
 function getFilterData() {
@@ -66,7 +60,7 @@ function getFilterData() {
 }
 
 function submitFilters() {
-  var filterForm = $('#filters').parent()
+  var filterForm = $('#filter_form')
   var filterData = getFilterData()
   var filterTypesInput = $('<input/>')
   filterTypesInput.attr('type', 'hidden')

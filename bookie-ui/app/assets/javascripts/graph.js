@@ -97,6 +97,7 @@ function addGraph(type) {
   
   var type_data = PLOT_TYPES[type]
   
+  //To do: how to handle overlapping attempts to graph?
   graph.data('plot', $.plot(
     graph,
     [],
@@ -152,6 +153,18 @@ function resetPoints() {
   for(type in PLOT_TYPES) {
     plot_data[type] = []
   }
+  
+  var end = new Date(date_end)
+  end.setDate(end.getDate() - 1)
+  
+  //Currently broken
+  /*$('.graph').each(function() {
+    var graph = $(this)
+    var plot = graph.data('plot')
+    var xaxis = plot.getAxes().xaxis
+    xaxis.min = date_start.valueOf()
+    xaxis.max = end.valueOf()
+  })*/
 }
 
 function drawPoints() {
@@ -177,7 +190,10 @@ function drawPoints() {
   })
 }
 
-function onFilterChange() {
+function onFilterChange(evt) {
+  if(evt) {
+    evt.preventDefault()
+  }
   resetPoints()
   if(!date_start || !date_end) {
     return
@@ -196,6 +212,7 @@ $(document).ready(function() {
   $.getScript('assets/flot/jquery.flot.js', function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
       initFilters()
+      $('#filter_form').submit(onFilterChange)
       initControls()
       resetPoints()
       var filterForm = $('#filters').parent()
