@@ -34,7 +34,7 @@ function initControls() {
     date.setMonth(date.getMonth() + 1)
   })
   
-  $('.set_date_range').click(function() {
+  $('#set_date_range').click(function() {
     var inputs = dateBoxes.children()
     var complete = true
     inputs.filter('input').each(function() {
@@ -56,28 +56,64 @@ function initControls() {
       )
       onFilterChange()
     }
-  })  
-}
-
-function createGraph() {
-  var container = $('<div>')
-  container.addClass('graph_container')
+  })
   
-  var select = $('<select/>')
-  select.addClass('graph_type')
-  for(name in PLOT_TYPES) {
+  var add_graph = $('#add_graph')
+  for(var name in PLOT_TYPES) {
     var opt = $('<option/>')
     opt.text(name)
     opt.val(name)
-    select.append(opt)
+    add_graph.append(opt)
   }
-  container.append(select)
+  
+  $('#add_graph').change(function() {
+    var $this = $(this)
+    if($this.val() == 0) {
+      return
+    }
+    addGraph($this.val())
+    $this.val(0)
+  })
+}
+
+function addGraph(type) {
+  var container = $('<div>')
+  container.addClass('graph_container')
   
   var graph = $('<div/>')
   graph.addClass('graph')
   container.append(graph)
   
-  return container
+  var remover = $('<div/>')
+  remover.addClass('graph_remover')
+  remover.text('X')
+  remover.click(function() {
+    $(this).parent().remove()
+  })
+  container.append(remover)
+  
+  graph.data('type', type)
+  $('#add_graph').before(container)
+  
+  var type_data = PLOT_TYPES[type]
+  
+  graph.data('plot', $.plot(
+    graph,
+    [],
+    {
+      xaxis: {
+        mode: "time",
+        minTickSize: [1, "day"],
+      },
+      yaxis: {
+        min: 0,
+        tickDecimals: 2,
+        tickFormatter: type_data.formatter,
+      },
+    }
+  ))
+  
+  drawPoints()
 }
 
 function getSummary(day, params) {
@@ -103,74 +139,39 @@ function getSummary(day, params) {
 
 var plots = {}
 
-var plot_data = {
-  counts: [],
-  successful: [],
-  cpu_time: [],
-}
+var plot_data = {}
 
 function addPoint(date, summary) {
-  plot_data.counts.push([date.valueOf(), summary['Count']])
-  plot_data.successful.push([date.valueOf(), summary['Successful']])
-  plot_data.cpu_time.push([date.valueOf(), summary['CPU time used']])
+  plot_data['Number of jobs'].push([date.valueOf(), summary['Count']])
+  plot_data['Successful jobs'].push([date.valueOf(), summary['Successful']])
+  plot_data['CPU time used'].push([date.valueOf(), summary['CPU time used']])
   drawPoints()
 }
 
 function resetPoints() {
-  $.each(plot_data, function(name, data) {
-    plot_data[name] = []
-  })
-}
-
-function initPlots() {
-  graphs = $('.graph_container')
-  graphs.each(function() {
-    var container = $(this)
-    var type = container.children('.graph_type').first().val()
-    var type_data = PLOT_TYPES[type]
-    $.plot(
-      container.children('.graph').first(),
-      [],
-      {
-        xaxis: {
-          mode: "time",
-          minTickSize: [1, "day"],
-        },
-        yaxis: {
-          min: 0,
-          tickDecimals: 2,
-          tickFormatter: type_data.formatter,
-        },
-      }
-    )
-  })
+  for(type in PLOT_TYPES) {
+    plot_data[type] = []
+  }
 }
 
 function drawPoints() {
-  $.each(plot_data, function(name, data) {
-    data.sort(function(a, b) {
+  for(type in plot_data) {
+    plot_data[type].sort(function(a, b) {
       return a[0] - b[0]
     })
-  })
-  plots.counts.setData([
-    {
-      label: "Number of jobs",
-      data: plot_data.counts,
-    }
-  ])
-  plots.successful.setData([
-    {
-      label: "Successful jobs",
-      data: plot_data.successful,
-    }
-  ])
-  plots.cpu_time.setData([
-    {
-      label: "CPU time used",
-      data: plot_data.cpu_time,
-    }
-  ])
-  $.each(plots, function(name, plot) {
+  }
+  graphs = $('.graph')
+  graphs.each(function() {
+    var graph = $(this)
+    var type = graph.data('type')
+    var type_data = PLOT_TYPES[type]
+    var plot = graph.data('plot')
+    plot.setData([
+      {
+        label: type,
+        data: plot_data[type],
+      }
+    ])
     plot.setupGrid()
     plot.draw()
   })
@@ -196,9 +197,8 @@ $(document).ready(function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
       initFilters()
       initControls()
-      $('#content').append(createGraph())
+      resetPoints()
       var filterForm = $('#filters').parent()
-      initPlots()
     })
   })
 })
