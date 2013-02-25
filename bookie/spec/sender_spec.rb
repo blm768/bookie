@@ -71,7 +71,7 @@ describe Bookie::Sender do
     exception = nil
     expect {
       @sender.send_data('snapshot/torque_large')
-    }.to raise_error(/^Jobs already exist in the database for the date [\d]{4}-[\d]{2}-[\d]{2}.$/)
+    }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
   end
   
   it "handles missing files" do

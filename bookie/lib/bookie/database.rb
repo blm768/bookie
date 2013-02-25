@@ -228,7 +228,55 @@ module Bookie
         value = value.to_time if value.respond_to?(:to_time)
         record.errors.add(attr, 'must be a time object') unless value.is_a?(Time)
       end
+    end
+    
+    class JobSummary < ActiveRecord::Base
+      self.table_name = :job_summaries
+    
+      belongs_to :user
+      belongs_to :system
       
+      def self.by_date(date)
+        where('job_summaries.date = ?', date)
+      end
+      
+      def self.by_user(user)
+        where('job_summaries.user_id = ?', user.id)
+      end
+      
+      def self.by_user_name(name)
+        joins(:users).where('users.name = ?', name)
+      end
+      
+      def self.by_system(system)
+        where('job_summaries.system_id = ?', system.id)
+      end
+      
+      def self.by_system_name(name)
+        joins(:systems).where('systems.name = ?', name)
+      end
+      
+      def self.by_command_name(cmd)
+        where('job_summaries.command_name = ?', cmd)
+      end
+      
+      def self.find_or_new(date, user, system, command_name, known_summaries = nil)
+        #To do: locking!
+        summary = known_summaries[[date, user, command_name]] if known_summaries
+        unless summary
+          Lock[:job_summaries].synchronize do
+            summary = by_date(date).by_user(user).by_system(system).by_command_name(command_name).first
+            summary ||= new(
+              :date => date,
+              :user => user,
+              :system => system,
+              :command_name => command_name
+            )
+            known_summaries[[date, user, system, command_name]] = summary
+          end
+        end
+        summary
+      end
     end
     
     ##
@@ -276,7 +324,8 @@ module Bookie
             user = Bookie::Database::User.find_by_name_and_group_id(name, group.id)
             user ||= Bookie::Database::User.create!(
               :name => name,
-              :group => group)
+              :group => group
+            )
           end
           known_users[[name, group]] = user if known_users
         end
@@ -607,6 +656,30 @@ module Bookie
         end
       end
       
+      class CreateJobSummaries < ActiveRecord::Migration
+        def up
+          create_table :job_summaries do |t|
+            t.references :user, :null => false
+            t.references :system, :null => false
+            t.date :date, :null => false
+            t.string :command_name, :null => false
+            t.integer :cpu_time, :null => false
+            t.integer :memory_time, :null => false
+            t.float :success_rate, :null => false
+          end
+          change_table :job_summaries do |t|
+            #To do: reorder for optimum efficiency?
+            t.index [:date, :user_id, :system_id, :command_name], :unique => true, :name => 'identity'
+            t.index :command_name
+            t.index :date
+          end
+        end
+        
+        def down
+         drop_table :job_summaries
+        end
+      end
+      
       class CreateLocks < ActiveRecord::Migration
         def up
           create_table :locks do |t|
@@ -616,7 +689,7 @@ module Bookie
             t.index :name, :unique => true
           end
           
-          ['users', 'groups', 'systems', 'system_types'].each do |name|
+          ['users', 'groups', 'systems', 'system_types', 'job_summaries'].each do |name|
             Lock.create!(:name => name)
           end
         end
@@ -635,6 +708,7 @@ module Bookie
           CreateSystems.new.up
           CreateSystemTypes.new.up
           CreateJobs.new.up
+          CreateJobSummaries.new.up
           CreateLocks.new.up
         end
         
@@ -648,6 +722,7 @@ module Bookie
           CreateSystems.new.down
           CreateSystemTypes.new.down
           CreateJobs.new.down
+          CreateJobSummaries.new.down
           CreateLocks.new.down
         end
       end

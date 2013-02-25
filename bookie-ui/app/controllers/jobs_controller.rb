@@ -10,7 +10,8 @@ class JobsController < ApplicationController
     'User' => 1,
     'Group' => 1,
     'System type' => 1,
-    'Time' => 2
+    'Command name' => 1,
+    'Time' => 2,
   }
   
   include FilterMixin
@@ -36,7 +37,6 @@ class JobsController < ApplicationController
         systems = systems.by_name(values[0])
       when 'User'
         jobs = jobs.by_user_name(values[0])
-        @prev_filters << ['User', values]
       when 'Group'
         jobs = jobs.by_group_name(values[0])
       when 'System type'
@@ -48,6 +48,8 @@ class JobsController < ApplicationController
           jobs = jobs.limit(0)
           systems = systems.limit(0)
         end
+      when 'Command name'
+        jobs = jobs.by_command_name(values[0])
       when 'Time'
         start_time_text = values[0]
         end_time_text = values[1]

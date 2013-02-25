@@ -43,6 +43,7 @@ module Bookie
       
       known_users = {}
       known_groups = {}
+      summaries = {}
       
       #Check the first job to see if there are entries in the database for its date from this system.
       each_job(filename) do |job|
@@ -50,22 +51,42 @@ module Bookie
         end_time = job.start_time + job.wall_time
         duplicate = system.jobs.find_by_end_time(end_time)
         if duplicate
-          raise "Jobs already exist in the database for the date #{end_time.strftime('%Y-%m-%d')}."
+          raise "Jobs already exist in the database for '#{filename}'."
         end
         break
       end
       
+      #To do: use old versions of the system when jobs match those!
+      
       each_job(filename) do |job|
         next if filtered?(job)
-        db_job = job.to_model
-        #Determine if the user/group pair must be added to/retrieved from the database.
+        model = job.to_model
         user = Bookie::Database::User.find_or_create!(
           job.user_name,
           Bookie::Database::Group.find_or_create!(job.group_name, known_groups),
-          known_users)
-        db_job.system = system
-        db_job.user = user
-        db_job.save!
+          known_users
+        )
+        model.system = system
+        model.user = user
+        model.save!
+        key = [job.start_time.to_date, model.user, model.system, job.command_name]
+        summary = summaries[key]
+        summary ||= [0, 0]
+        summary[0] += job.cpu_time
+        summary[1] += job.wall_time * job.memory
+        summaries[key] = summary
+      end
+      
+      known_summaries = {}
+      
+      summaries.each do |key, values|
+        sum = Database::JobSummary.find_or_new(*key, known_summaries)
+        sum.with_lock do
+          sum.cpu_time = values[0]
+          sum.memory_time = values[1]
+          sum.success_rate = 0.0
+        end
+        sum.save!
       end
     end
     
@@ -88,6 +109,7 @@ module Bookie
   module ModelHelpers
     ##
     #Converts the object to a Bookie::Database::Job
+    
     def to_model()
       job = Bookie::Database::Job.new
       job.command_name = self.command_name

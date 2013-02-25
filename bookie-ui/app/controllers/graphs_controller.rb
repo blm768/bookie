@@ -8,6 +8,7 @@ class GraphsController < ApplicationController
     'User' => 1,
     'Group' => 1,
     'System type' => 1,
+    'Command name' => 1,
   }
   
   include FilterMixin
