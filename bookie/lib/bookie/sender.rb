@@ -71,9 +71,11 @@ module Bookie
         model.save!
         key = [job.start_time.to_date, model.user, model.system, job.command_name]
         summary = summaries[key]
-        summary ||= [0, 0]
-        summary[0] += job.cpu_time
-        summary[1] += job.wall_time * job.memory
+        summary ||= [0, 0, 0, 0]
+        summary[0] += 1
+        summary[1] += job.cpu_time
+        summary[2] += job.wall_time * job.memory
+        summary[3] += 1 if job.exit_code == 0
         summaries[key] = summary
       end
       
@@ -82,9 +84,10 @@ module Bookie
       summaries.each do |key, values|
         sum = Database::JobSummary.find_or_new(*key, known_summaries)
         sum.with_lock do
-          sum.cpu_time = values[0]
-          sum.memory_time = values[1]
-          sum.success_rate = 0.0
+          sum.num_jobs = values[0]
+          sum.cpu_time = values[1]
+          sum.memory_time = values[2]
+          sum.successful = values[3]
         end
         sum.save!
       end

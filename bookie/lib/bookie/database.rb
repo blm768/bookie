@@ -663,9 +663,10 @@ module Bookie
             t.references :system, :null => false
             t.date :date, :null => false
             t.string :command_name, :null => false
+            t.integer :num_jobs, :null => false
             t.integer :cpu_time, :null => false
             t.integer :memory_time, :null => false
-            t.float :success_rate, :null => false
+            t.float :successful, :null => false
           end
           change_table :job_summaries do |t|
             #To do: reorder for optimum efficiency?
