@@ -28,7 +28,6 @@ module Bookie
     #An array containing the labels for each field in a summary
     SUMMARY_FIELD_LABELS = [
         "Number of jobs",
-        "Total wall time",
         "Total CPU time",
         "Successful",
         "Available CPU time",
@@ -63,7 +62,6 @@ module Bookie
       avail_memory_time = systems_summary[:avail_memory_time]
       field_values = [
         jobs_summary[:jobs].length,
-        Formatter.format_duration(jobs_summary[:wall_time]),
         Formatter.format_duration(cpu_time),
         '%.4f%%' % (jobs_summary[:successful] * 100),
         Formatter.format_duration(systems_summary[:avail_cpu_time]),

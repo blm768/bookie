@@ -54,7 +54,6 @@ describe Bookie::Formatters::Stdout do
     @formatter.flush
     @m.buf.should eql <<-eos
 Number of jobs:               5
-Total wall time:              05:00:00
 Total CPU time:               00:08:20
 Successful:                   60.0000%
 Available CPU time:           140:00:00

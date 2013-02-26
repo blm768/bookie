@@ -92,10 +92,9 @@ describe Bookie::Formatters::Spreadsheet do
     @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
     w = @m.worksheet('Summary')
     w.column(0).width.should_not eql nil
-    w.last_row_index.should eql 7
+    w.last_row_index.should eql 6
     w.mock_rows.should eql [
       ["Number of jobs", 5],
-      ["Total wall time", "05:00:00"],
       ["Total CPU time", "00:08:20"],
       ["Successful", "60.0000%"],
       ["Available CPU time", "140:00:00"],

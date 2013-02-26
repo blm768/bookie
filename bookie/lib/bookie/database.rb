@@ -127,7 +127,6 @@ module Bookie
           jobs = jobs.by_time_range_inclusive(min_time, max_time)
         end
         jobs = jobs.where('jobs.cpu_time > 0').all_with_relations
-        wall_time = 0
         cpu_time = 0
         successful_jobs = 0
         memory_time = 0
@@ -143,7 +142,6 @@ module Bookie
             job_end_time = [job_end_time, max_time].min
           end
           clipped_wall_time = job_end_time.to_i - job_start_time.to_i
-          wall_time += clipped_wall_time
           if job.wall_time != 0
             cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
             #To consider: what should I do about jobs that only report a max memory value?
@@ -154,12 +152,9 @@ module Bookie
       
         return {
           :jobs => jobs,
-          #To consider: is this field even useful? It's really in job-seconds, not just seconds.
-          #What about one in just seconds (that considers gaps in activity)?
-          :wall_time => wall_time,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful =>  if jobs.length == 0 then 0.0 else Float(successful_jobs) / jobs.length end,
+          :successful => if jobs.length == 0 then 0.0 else Float(successful_jobs) / jobs.length end,
         }
       end
       
@@ -256,6 +251,10 @@ module Bookie
         joins(:systems).where('systems.name = ?', name)
       end
       
+      def self.by_date_range(date_min, date_max)
+        where('? <= job_summaries.date AND job_summaries.date < ?', min_date, max_date)
+      end
+      
       def self.by_command_name(cmd)
         where('job_summaries.command_name = ?', cmd)
       end
@@ -276,6 +275,33 @@ module Bookie
           end
         end
         summary
+      end
+      
+      def self.summary(min_date = nil, max_date = nil)
+        summaries = self
+        if min_date then
+          raise 'Max date must be specified with min date' unless max_date
+          summaries = summaries.by_date_range(min_date, max_date)
+        end
+        
+        jobs = 0
+        cpu_time = 0
+        memory_time = 0
+        successful = 0
+        
+        summaries.all.each do |summary|
+          jobs += summary.jobs
+          cpu_time += summary.cpu_time
+          memory_time += summary.memory_time
+          successful += summary.successful
+        end
+        
+        {
+          :jobs => jobs,
+          :cpu_time => cpu_time,
+          :memory_time => memory_time,
+          successful => if jobs == 0 then 0.0 else Float(successful) / jobs end,
+        }
       end
     end
     

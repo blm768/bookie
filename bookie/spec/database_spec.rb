@@ -210,17 +210,14 @@ describe Bookie::Database do
       
       it "produces correct summary totals" do
         @summary[:all][:jobs].length.should eql @length
-        @summary[:all][:wall_time].should eql @length * 3600
         @summary[:all][:cpu_time].should eql @length * 100
         @summary[:all][:memory_time].should eql @length * 200 * 3600
         @summary[:all][:successful].should eql 0.5
         @summary[:all_constrained][:jobs].length.should eql @length
-        @summary[:all_constrained][:wall_time].should eql @length * 3600
         @summary[:all_constrained][:cpu_time].should eql @length * 100
         @summary[:all_constrained][:successful].should eql 0.5
         clipped_jobs = @summary[:clipped][:jobs].length
         clipped_jobs.should eql 25
-        @summary[:clipped][:wall_time].should eql clipped_jobs * 3600 - 1800
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
         @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
       end
@@ -228,7 +225,6 @@ describe Bookie::Database do
       it "correctly handles summaries of empty sets" do
         @summary[:empty].should eql({
             :jobs => [],
-            :wall_time => 0,
             :cpu_time => 0,
             :memory_time => 0,
             :successful => 0.0,
@@ -241,7 +237,7 @@ describe Bookie::Database do
         begin
           job.wall_time = 0
           job.save!
-          @jobs.order(:start_time).limit(1).summary[:wall_time].should eql 0
+          @jobs.order(:start_time).limit(1).summary[:cpu_time].should eql 0
         ensure
           job.wall_time = wall_time
           job.save!
