@@ -92,21 +92,20 @@ module Bookie
       
       ##
       #Filters by a range of start times
-      def self.by_start_time_range(start_min, start_max)
-        where('? <= jobs.start_time AND jobs.start_time < ?', start_min, start_max)
+      def self.by_start_time_range(time_range)
+        where('? <= jobs.start_time AND jobs.start_time < ?', time_range.first, time_range.last)
       end
       
       ##
       #Filters by a range of end times
-      def self.by_end_time_range(end_min, end_max)
-        where('? <= jobs.end_time AND jobs.end_time < ?', end_min, end_max)
+      def self.by_end_time_range(time_range)
+        where('? <= jobs.end_time AND jobs.end_time < ?', time_range.first, time_range.last)
       end
       
       ##
       #Finds all jobs whose running intervals overlap the given time range
-      def self.by_time_range_inclusive(min_time, max_time)
-        raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
-        where('jobs.start_time < ? AND jobs.end_time > ?', max_time, min_time)
+      def self.by_time_range_inclusive(time_range)
+        where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
       end
       
       ##
@@ -120,12 +119,9 @@ module Bookie
       #- <tt>:successful</tt>: the proportion of jobs that completed successfully
       #
       #This method should probably not be used with other queries that filter by start/end time.
-      def self.summary(min_time = nil, max_time = nil)
+      def self.summary(time_range = nil)
         jobs = self
-        if min_time
-          raise ArgumentError.new('Max time must be specified with min time') unless max_time
-          jobs = jobs.by_time_range_inclusive(min_time, max_time)
-        end
+        jobs = jobs.by_time_range_inclusive(time_range) if time_range
         jobs = jobs.where('jobs.cpu_time > 0').all_with_relations
         cpu_time = 0
         successful_jobs = 0
@@ -137,9 +133,9 @@ module Bookie
         jobs.each do |job|
           job_start_time = job.start_time
           job_end_time = job.end_time
-          if min_time
-            job_start_time = [job_start_time, min_time].max
-            job_end_time = [job_end_time, max_time].min
+          if time_range
+            job_start_time = [job_start_time, time_range.first].max
+            job_end_time = [job_end_time, time_range.last].min
           end
           clipped_wall_time = job_end_time.to_i - job_start_time.to_i
           if job.wall_time != 0
@@ -277,6 +273,13 @@ module Bookie
         summary
       end
       
+      def self.summarize(jobs, date_range)
+        date = date_range.min
+        while date < date_range.max
+          #day_jobs = jobs.by_time_range_inclusive(
+        end
+      end
+      
       def self.summary(min_date = nil, max_date = nil)
         summaries = self
         if min_date then
@@ -397,6 +400,9 @@ module Bookie
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
       #
       #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
+      #
+      #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
+      #(Current behavior is as if the range were always exclusive.)
       def self.find_active(values)
         system = nil
         name = values[:name]
@@ -424,31 +430,30 @@ module Bookie
       #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
       #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
       #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
-      def self.summary(min_time = nil, max_time = nil)
+      def self.summary(time_range = nil)
         current_time = Time.now
         #Sums that are actually returned
         avail_cpu_time = 0
         avail_memory_time = 0
         #Find all the systems within the time range.
         systems = System
-        if min_time
-          raise ArgumentError.new('Max time must be specified with min time') unless max_time
-          raise ArgumentError.new('Max time must be greater than or equal to min time') if max_time < min_time
+        if time_range
           #To consider: optimize as union of queries?
+          #To do: make consistent with other models' time-range queries.
           systems = systems.where(
             'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
-            max_time,
-            min_time)
+            time_range.last,
+            time_range.first)
         end
         
         systems.all.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
           #Is there a time range constraint?
-          if min_time
-            system_start_time = [system_start_time, min_time].max
-            system_end_time = [system_end_time, max_time].min if system.end_time
-            system_end_time ||= max_time
+          if time_range
+            system_start_time = [system_start_time, time_range.first].max
+            system_end_time = [system_end_time, time_range.last].min if system.end_time
+            system_end_time ||= time_range.last
           else
             system_end_time ||= current_time
           end
@@ -458,8 +463,8 @@ module Bookie
         end
         
         wall_time_range = 0
-        if min_time
-          wall_time_range = max_time - min_time
+        if time_range
+          wall_time_range = time_range.last - time_range.first
         else
           first_started_system = systems.order(:start_time).first
           if first_started_system
@@ -753,6 +758,55 @@ module Bookie
           CreateLocks.new.down
         end
       end
+    end
+  end
+end
+
+class Range
+  def normalized
+    return first ... first if last < first
+    self
+  end
+  
+  def intersection(other)
+    self_n = self.normalized
+    other = other.normalized
+    
+    new_begin, new_end, exclude_end = nil
+    
+    if self_n.cover?(other.begin)
+      new_first = other.begin
+    elsif other.cover?(self_n.begin)
+      new_first = self_n.begin
+    end
+    
+    return self_n.begin ... self_n.begin unless new_first
+    
+    if self_n.cover?(other.end)
+      unless other.exclude_end? && other.end == self_n.begin
+        new_end = other.end
+        exclude_end = other.exclude_end?
+      end
+    elsif other.cover?(self_n.end)
+      unless self_n.exclude_end? && self_n.end == other.begin
+        new_end = self_n.end
+        exclude_end = self_n.exclude_end?
+      end
+    end
+    
+    #If we still haven't found new_end, try one more case:
+    unless new_end
+      if self_n.end == other.end
+        #We'll only get here if both ranges exclude their ends and have the same end.
+        new_end = self_n.end
+        exclude_end = true
+      end
+    end
+    
+    return self_n.begin ... self_n.begin unless new_end
+
+    return new_begin ... new_end if exclude_end
+    new_begin .. new_end
     end
   end
 end

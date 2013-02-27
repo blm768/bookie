@@ -43,9 +43,9 @@ module Bookie
       
       known_users = {}
       known_groups = {}
-      summaries = {}
+#       summaries = {}
       
-      #Check the first job to see if there are entries in the database for its date from this system.
+      #Check the first job to see if this file has already been uploaded.
       each_job(filename) do |job|
         next if filtered?(job)
         end_time = job.start_time + job.wall_time
@@ -57,6 +57,7 @@ module Bookie
       end
       
       #To do: use old versions of the system when jobs match those!
+      #To do: add an option to resume an interrupted send.
       
       each_job(filename) do |job|
         next if filtered?(job)
@@ -69,28 +70,28 @@ module Bookie
         model.system = system
         model.user = user
         model.save!
-        key = [job.start_time.to_date, model.user, model.system, job.command_name]
-        summary = summaries[key]
-        summary ||= [0, 0, 0, 0]
-        summary[0] += 1
-        summary[1] += job.cpu_time
-        summary[2] += job.wall_time * job.memory
-        summary[3] += 1 if job.exit_code == 0
-        summaries[key] = summary
+#         key = [job.start_time.to_date, model.user, model.system, job.command_name]
+#         summary = summaries[key]
+#         summary ||= [0, 0, 0, 0]
+#         summary[0] += 1
+#         summary[1] += job.cpu_time
+#         summary[2] += job.wall_time * job.memory
+#         summary[3] += 1 if job.exit_code == 0
+#         summaries[key] = summary
       end
       
-      known_summaries = {}
-      
-      summaries.each do |key, values|
-        sum = Database::JobSummary.find_or_new(*key, known_summaries)
-        sum.with_lock do
-          sum.num_jobs = values[0]
-          sum.cpu_time = values[1]
-          sum.memory_time = values[2]
-          sum.successful = values[3]
-        end
-        sum.save!
-      end
+      # known_summaries = {}
+#       
+#       summaries.each do |key, values|
+#         sum = Database::JobSummary.find_or_new(*key, known_summaries)
+#         sum.with_lock do
+#           sum.num_jobs = values[0]
+#           sum.cpu_time = values[1]
+#           sum.memory_time = values[2]
+#           sum.successful = values[3]
+#         end
+#         sum.save!
+#       end
     end
     
     ##

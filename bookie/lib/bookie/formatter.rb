@@ -53,9 +53,9 @@ module Bookie
     #Both <tt>jobs</tt> and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
-    def print_summary(jobs, systems, start_time = nil, end_time = nil)
-      jobs_summary = jobs.summary(start_time, end_time)
-      systems_summary = systems.summary(start_time, end_time)
+    def print_summary(jobs, systems, time_range = nil)
+      jobs_summary = jobs.summary(time_range)
+      systems_summary = systems.summary(time_range)
       cpu_time = jobs_summary[:cpu_time]
       avail_cpu_time = systems_summary[:avail_cpu_time]
       memory_time = jobs_summary[:memory_time]

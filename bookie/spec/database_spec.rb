@@ -8,9 +8,9 @@ module Helpers
     end_time_2 = base_time + (36000 * 2 + 18000)
     {
       :all => obj.summary,
-      :all_constrained => obj.summary(start_time_1, end_time_1),
-      :clipped => obj.summary(start_time_2, end_time_2),
-      :empty => obj.summary(Time.at(0), Time.at(0)),
+      :all_constrained => obj.summary(start_time_1 ... end_time_1),
+      :clipped => obj.summary(start_time_2 ... end_time_2),
+      :empty => obj.summary(Time.at(0) ... Time.at(0)),
     }
   end
   
@@ -153,38 +153,38 @@ describe Bookie::Database do
     end
     
     it "correctly filters by start time" do
-      jobs = @jobs.by_start_time_range(@base_time, @base_time + 3600 * 2 + 1)
+      jobs = @jobs.by_start_time_range(@base_time ... @base_time + 3600 * 2 + 1)
       jobs.length.should eql 3
-      jobs = @jobs.by_start_time_range(@base_time + 1, @base_time + 3600 * 2)
+      jobs = @jobs.by_start_time_range(@base_time + 1 ... @base_time + 3600 * 2)
       jobs.length.should eql 1
-      jobs = @jobs.by_start_time_range(Time.at(0), Time.at(3))
+      jobs = @jobs.by_start_time_range(Time.at(0) ... Time.at(3))
       jobs.length.should eql 0
     end
     
     it "correctly filters by end time" do
-      jobs = @jobs.by_end_time_range(@base_time, @base_time + 3600 * 2 + 1)
+      jobs = @jobs.by_end_time_range(@base_time ... @base_time + 3600 * 2 + 1)
       jobs.length.should eql 2
-      jobs = @jobs.by_end_time_range(@base_time + 1, @base_time + 3600 * 2)
+      jobs = @jobs.by_end_time_range(@base_time + 1 ... @base_time + 3600 * 2)
       jobs.length.should eql 1
-      jobs = @jobs.by_end_time_range(Time.at(0), Time.at(3))
+      jobs = @jobs.by_end_time_range(Time.at(0) ... Time.at(3))
       jobs.length.should eql 0
     end
     
     it "correctly filters by inclusive time range" do
-      jobs = @jobs.by_time_range_inclusive(@base_time, @base_time + 3600 * 2 + 1)
+      jobs = @jobs.by_time_range_inclusive(@base_time ... @base_time + 3600 * 2 + 1)
       jobs.length.should eql 3
-      jobs = @jobs.by_time_range_inclusive(@base_time + 1, @base_time + 3600 * 2 - 1)
+      jobs = @jobs.by_time_range_inclusive(@base_time + 1 ... @base_time + 3600 * 2 - 1)
       jobs.length.should eql 2
-      jobs = @jobs.by_time_range_inclusive(Time.at(0), Time.at(3))
+      jobs = @jobs.by_time_range_inclusive(Time.at(0) ... Time.at(3))
       jobs.length.should eql 0
       expect {
-        @jobs.by_time_range_inclusive(Time.local(2012), Time.local(2012) - 1)
+        @jobs.by_time_range_inclusive(Time.local(2012) ... Time.local(2012) - 1)
       }.to raise_error('Max time must be greater than or equal to min time')
     end
     
     it "correctly chains filters" do
       jobs = @jobs.by_user_name("test")
-      jobs = jobs.by_start_time_range(@base_time + 3600, @base_time + 3601)
+      jobs = jobs.by_start_time_range(@base_time + 3600 ... @base_time + 3601)
       jobs.length.should eql 1
       jobs[0].user.group.name.should eql "default"
     end
@@ -246,10 +246,7 @@ describe Bookie::Database do
       
       it "validates arguments" do
         expect {
-          @jobs.summary(Time.local(2012), nil)
-        }.to raise_error('Max time must be specified with min time')
-        expect {
-          @jobs.summary(Time.local(2012), Time.local(2012) - 1)
+          @jobs.summary(Time.local(2012) ... Time.local(2012) - 1)
         }.to raise_error('Max time must be greater than or equal to min time')
       end
     end
@@ -396,7 +393,7 @@ describe Bookie::Database do
         @base_time = Time.local(2012)
         @systems = Bookie::Database::System
         @summary = Helpers::create_summaries(@systems, Time.local(2012))
-        @summary_wide = @systems.summary(Time.local(2012) - 3600, Time.local(2012) + 3600 * 40 + 3600)
+        @summary_wide = @systems.summary(Time.local(2012) - 3600 ... Time.local(2012) + 3600 * 40 + 3600)
       end
       
       it "produces correct summaries" do
@@ -433,7 +430,7 @@ describe Bookie::Database do
           end
           summary_all_systems_ended = @systems.summary()
           summary_all_systems_ended.should eql @summary[:all]
-          summary_all_systems_ended = @systems.summary(Time.local(2012), Time.now + 3600)
+          summary_all_systems_ended = @systems.summary(Time.local(2012) ... Time.now + 3600)
           s2 = @summary[:all].dup
           s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
           summary_all_systems_ended.should eql s2
@@ -449,10 +446,7 @@ describe Bookie::Database do
       
       it "validates arguments" do
         expect {
-          @systems.summary(Time.local(2012), nil)
-        }.to raise_error('Max time must be specified with min time')
-        expect {
-          @systems.summary(Time.local(2012), Time.local(2012) - 1)
+          @systems.summary(Time.local(2012) ... Time.local(2012) - 1)
         }.to raise_error('Max time must be greater than or equal to min time')
       end
     end

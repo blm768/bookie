@@ -65,7 +65,7 @@ describe Bookie::Formatter do
         :avail_memory_time => 0,
         :avail_memory_avg => 0
       )
-      @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012), Time.local(2012))
+      @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012) ... Time.local(2012))
       @formatter.flush
       $field_values.should eql [0, "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
     end
