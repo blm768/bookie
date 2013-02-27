@@ -177,9 +177,7 @@ describe Bookie::Database do
       jobs.length.should eql 2
       jobs = @jobs.by_time_range_inclusive(Time.at(0) ... Time.at(3))
       jobs.length.should eql 0
-      expect {
-        @jobs.by_time_range_inclusive(Time.local(2012) ... Time.local(2012) - 1)
-      }.to raise_error('Max time must be greater than or equal to min time')
+      #To do: handle inverted ranges?
     end
     
     it "correctly chains filters" do
@@ -244,11 +242,7 @@ describe Bookie::Database do
         end
       end
       
-      it "validates arguments" do
-        expect {
-          @jobs.summary(Time.local(2012) ... Time.local(2012) - 1)
-        }.to raise_error('Max time must be greater than or equal to min time')
-      end
+      it "correctly handles inverted ranges"
     end
     
     it "validates fields" do
@@ -444,11 +438,7 @@ describe Bookie::Database do
         end
       end
       
-      it "validates arguments" do
-        expect {
-          @systems.summary(Time.local(2012) ... Time.local(2012) - 1)
-        }.to raise_error('Max time must be greater than or equal to min time')
-      end
+      it "correctly handles inverted ranges"
     end
 
     describe "::find_active" do

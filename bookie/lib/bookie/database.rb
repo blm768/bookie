@@ -120,6 +120,7 @@ module Bookie
       #
       #This method should probably not be used with other queries that filter by start/end time.
       def self.summary(time_range = nil)
+        time_range = time_range.normalized if time_range
         jobs = self
         jobs = jobs.by_time_range_inclusive(time_range) if time_range
         jobs = jobs.where('jobs.cpu_time > 0').all_with_relations
@@ -280,10 +281,10 @@ module Bookie
         end
       end
       
-      def self.summary(min_date = nil, max_date = nil)
+      def self.summary(date_range = nil)
         summaries = self
-        if min_date then
-          raise 'Max date must be specified with min date' unless max_date
+        if date_range then
+          date_range = date_range.normalized
           summaries = summaries.by_date_range(min_date, max_date)
         end
         
@@ -438,6 +439,7 @@ module Bookie
         #Find all the systems within the time range.
         systems = System
         if time_range
+          time_range = time_range.normalized
           #To consider: optimize as union of queries?
           #To do: make consistent with other models' time-range queries.
           systems = systems.where(
@@ -805,8 +807,6 @@ class Range
     
     return self_n.begin ... self_n.begin unless new_end
 
-    return new_begin ... new_end if exclude_end
-    new_begin .. new_end
-    end
+    Range.new(new_begin, new_end, exclude_end)
   end
 end
