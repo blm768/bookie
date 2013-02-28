@@ -113,7 +113,6 @@ module Bookie
       #
       #Returns a hash with the following fields:
       #- <tt>:jobs</tt>: an array of all jobs in the interval
-      #- <tt>:wall_time</tt>: the sum of all the jobs' wall times
       #- <tt>:cpu_time</tt>: the total CPU time used
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
       #- <tt>:successful</tt>: the proportion of jobs that completed successfully
@@ -256,28 +255,32 @@ module Bookie
         where('job_summaries.command_name = ?', cmd)
       end
       
-      def self.find_or_new(date, user, system, command_name, known_summaries = nil)
-        #To do: locking!
-        summary = known_summaries[[date, user, command_name]] if known_summaries
-        unless summary
-          Lock[:job_summaries].synchronize do
-            summary = by_date(date).by_user(user).by_system(system).by_command_name(command_name).first
-            summary ||= new(
-              :date => date,
-              :user => user,
-              :system => system,
-              :command_name => command_name
-            )
-            known_summaries[[date, user, system, command_name]] = summary
-          end
-        end
+      #To do: unit test case where known_summaries is nil?
+      #Also do the above for other objects' methods!
+      def self.find_or_new(date, user_id, system_id, command_name)
+        summary = by_date(date).where(:user_id => user_id).where(:system_id => system_id).by_command_name(command_name).first
+        summary ||= new(
+          :date => date,
+          :user_id => user_id,
+          :system_id => system_id,
+          :command_name => command_name
+        )
         summary
       end
       
-      def self.summarize(jobs, date_range)
-        date = date_range.min
-        while date < date_range.max
-          #day_jobs = jobs.by_time_range_inclusive(
+      def self.summarize(date_range)
+        jobs = Bookie::Database::Job
+        date = date_range.begin
+        while date_range.cover?(date)
+          time_range = date.to_time ... (date + 1).to_time
+          day_jobs = jobs.by_time_range_inclusive(time_range)
+          value_sets = day_jobs.select(:user, :system, :command_name).uniq
+          value_sets.each do |set|
+            summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
+            summary = summary_jobs.summary(time_range)
+            #sum = JobSummary.find_or_new(date, )
+          end
+          date += 1
         end
       end
       

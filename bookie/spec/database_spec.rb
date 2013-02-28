@@ -98,7 +98,7 @@ describe Bookie::Database do
       job.save!
     end
     
-    it "correctly filters by user" do
+    it "correctly filters by user name" do
       jobs = @jobs.by_user_name('root').all
       jobs.length.should eql 10
       jobs[0].user.name.should eql "root"
@@ -112,7 +112,7 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
   
-    it "correctly filters by group" do
+    it "correctly filters by group name" do
       jobs = @jobs.by_group_name("root").all
       jobs.length.should eql 10
       jobs.each do |job|
@@ -125,7 +125,7 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
     
-    it "correctly filters by system" do
+    it "correctly filters by system name" do
       jobs = @jobs.by_system_name('test1')
       jobs.length.should eql 20
       jobs = @jobs.by_system_name('test2')
@@ -187,7 +187,7 @@ describe Bookie::Database do
       jobs[0].user.group.name.should eql "default"
     end
     
-    describe "::all_with_relations" do
+    describe "#all_with_relations" do
       it "loads all relations" do
         jobs = Bookie::Database::Job.limit(5)
         relations = {}
@@ -197,7 +197,7 @@ describe Bookie::Database do
       end
     end
     
-    describe "::summary" do
+    describe "#summary" do
       before(:all) do
         Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
         @base_time = Time.local(2012)
@@ -280,8 +280,16 @@ describe Bookie::Database do
     end
   end
   
+  describe Bookie::Database::JobSummary do
+    describe "#summarize" do
+      it "produces correct summaries" do
+        Bookie::Database::JobSummary.summarize(Date.new(2012) .. Date.new(2012) + 3)
+      end
+    end
+  end
+  
   describe Bookie::Database::User do
-    describe "::find_or_create" do
+    describe "#find_or_create" do
       before(:each) do
         @group = Bookie::Database::Group.find_by_name('admin')
       end
@@ -330,7 +338,7 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::Group do
-    describe "::find_or_create" do
+    describe "#find_or_create" do
       it "creates the group if needed" do
         Bookie::Database::Group.expects(:"create!")
         Bookie::Database::Group.find_or_create!('non_root')
@@ -381,7 +389,7 @@ describe Bookie::Database do
       end
     end
     
-    describe "::summary" do
+    describe "#summary" do
       before(:all) do
         Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
         @base_time = Time.local(2012)
@@ -441,7 +449,7 @@ describe Bookie::Database do
       it "correctly handles inverted ranges"
     end
 
-    describe "::find_active" do
+    describe "#find_active" do
       before(:all) do
         @FIELDS = {
           :name => 'test',
