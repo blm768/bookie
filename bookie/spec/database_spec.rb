@@ -283,6 +283,7 @@ describe Bookie::Database do
   describe Bookie::Database::JobSummary do
     describe "#summarize" do
       it "produces correct summaries" do
+        #To do: flesh out
         Bookie::Database::JobSummary.summarize(Date.new(2012) .. Date.new(2012) + 3)
       end
     end
@@ -449,51 +450,45 @@ describe Bookie::Database do
       it "correctly handles inverted ranges"
     end
 
-    describe "#find_active" do
+    describe "#find_current" do
       before(:all) do
-        @FIELDS = {
-          :name => 'test',
-          :start_time => Time.local(2012),
-          :system_type => Bookie::Database::SystemType.first,
-          :cores => 2,
-          :memory => 1000000
-        }
-      end
-      
-      it "raises an error if no versions or only old versions of this system exist" do
-        create_fields = @FIELDS.dup
-        create_fields[:end_time] = Time.local(2012) + 1
-        sys = Bookie::Database::System.create!(create_fields)
-        begin
-          expect {
-            Bookie::Database::System.find_active(@FIELDS)
-          }.to raise_error("There is no active system with hostname 'test' in the database.")
-        ensure
-          sys.delete
+        @config = Object.new()
+        
+        def @config.hostname
+          'test'
+        end
+        def @config.system_type
+          Bookie::Database::SystemType.first
+        end
+        def @config.cores
+          2
+        end
+        def @config.memory
+          1000000
         end
       end
   
-      it "finds the existing active system" do
-        sys = Bookie::Database::System.create!(@FIELDS)
-        begin
-          Bookie::Database::System.find_active(@FIELDS).should eql sys
-        ensure
-          sys.delete
-        end
-      end
+      it "finds the correct system" #do
+      #   sys = Bookie::Database::System.create!(@FIELDS)
+#         begin
+#           Bookie::Database::System.find_active(@FIELDS).should eql sys
+#         ensure
+#           sys.delete
+#         end
+#       end
       
-      it "correctly detects conflicts" do
-        fields = @FIELDS.dup
-        fields[:cores] = 1
-        csys = Bookie::Database::System.create!(fields)
-        begin
-          expect {
-            Bookie::Database::System.find_active(@FIELDS)
-          }.to raise_error(Bookie::Database::System::SystemConflictError)
-        ensure
-          csys.delete
-        end
-      end
+      it "correctly detects conflicts" #do
+#         fields = @FIELDS.dup
+#         fields[:cores] = 1
+#         csys = Bookie::Database::System.create!(fields)
+#         begin
+#           expect {
+#             Bookie::Database::System.find_active(@FIELDS)
+#           }.to raise_error(Bookie::Database::System::SystemConflictError)
+#         ensure
+#           csys.delete
+#         end
+#       end
     end
 
     it "correctly decommissions" do

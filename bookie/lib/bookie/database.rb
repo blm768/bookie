@@ -268,17 +268,25 @@ module Bookie
         summary
       end
       
-      def self.summarize(date_range)
-        jobs = Bookie::Database::Job
+      def self.summarize(date_range, jobs = nil)
+        jobs ||= Bookie::Database::Job
         date = date_range.begin
         while date_range.cover?(date)
           time_range = date.to_time ... (date + 1).to_time
           day_jobs = jobs.by_time_range_inclusive(time_range)
-          value_sets = day_jobs.select(:user, :system, :command_name).uniq
+          value_sets = day_jobs.select('user_id, system_id, command_name').uniq
           value_sets.each do |set|
             summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
             summary = summary_jobs.summary(time_range)
-            #sum = JobSummary.find_or_new(date, )
+            Lock[:job_summaries].synchronize do
+              sum = JobSummary.find_or_new(date, set.user_id, set.system_id, set.command_name)
+              sum.num_jobs = summary[:jobs].length
+              sum.cpu_time = summary[:cpu_time]
+              sum.memory_time = summary[:memory_time]
+              sum.successful = sum.num_jobs * summary[:successful]
+              puts sum.inspect
+              sum.save!
+            end
           end
           date += 1
         end
@@ -397,31 +405,28 @@ module Bookie
       end
       
       ##
-      #Finds the active system for a given hostname
-      #
-      #<tt>values</tt> should contain a list of fields, including the name, in the format that would normally be passed to System.create!.
+      #Finds the current system for a given sender and time
       #
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
       #
       #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       #
-      #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
-      #(Current behavior is as if the range were always exclusive.)
-      def self.find_active(values)
+      def self.find_current(sender, time = nil)
+        time ||= Time.now
+        config = sender.config
         system = nil
-        name = values[:name]
+        name = config.hostname
         Lock[:systems].synchronize do
-          system = active_systems.find_by_name(name)
+          system = by_name(config.hostname).where('systems.start_time <= :time AND (:time <= systems.end_time OR systems.end_time IS NULL)', :time => time).first
           if system
-            [:cores, :memory, :system_type].each do |key|
-              #To consider: this also compares the names, which is unnecessary.
-              unless system.send(key) == values[key]
-                raise SystemConflictError.new("The specifications on record for '#{name}' do not match this system's specifications.
-  Please make sure that all previous systems with this hostname have been marked as decommissioned.")
-              end
+            mismatch = !(system.cores == config.cores && system.memory == config.memory)
+            mismatch ||= sender.system_type != system.system_type
+            if mismatch
+              raise SystemConflictError.new("The specifications on record for '#{name}' do not match this system's specifications.
+Please make sure that all previous systems with this hostname have been marked as decommissioned.")
             end
           else
-            raise "There is no active system with hostname '#{values[:name]}' in the database."
+            raise "There is no system with hostname '#{values[:name]}' in the database at  #{time}."
           end
         end
         system
@@ -434,6 +439,9 @@ module Bookie
       #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
       #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
       #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
+      #
+      #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
+      #(Current behavior is as if the range were always exclusive.)
       def self.summary(time_range = nil)
         current_time = Time.now
         #Sums that are actually returned
@@ -702,7 +710,7 @@ module Bookie
             t.integer :num_jobs, :null => false
             t.integer :cpu_time, :null => false
             t.integer :memory_time, :null => false
-            t.float :successful, :null => false
+            t.integer :successful, :null => false
           end
           change_table :job_summaries do |t|
             #To do: reorder for optimum efficiency?

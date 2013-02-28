@@ -6,6 +6,8 @@ module Bookie
   ##
   #An object that sends data to the database
   class Sender
+    attr_reader :config
+    
     ##
     #Creates a new Sender
     #
@@ -18,28 +20,11 @@ module Bookie
     end
     
     ##
-    #Retrieves the System object with which the jobs will be associated
-    #--
-    #To consider: caching?
-    #++
-    def system
-      hostname = @config.hostname
-      system_type = self.system_type
-      Bookie::Database::System.find_active(
-        :name => hostname,
-        :system_type => system_type,
-        :start_time => Time.now,
-        :cores => @config.cores,
-        :memory => @config.memory
-      )
-    end
-    
-    ##
     #Sends job data from the given file to the database server
     def send_data(filename)
       raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
     
-      system = self.system
+      system = nil
       
       known_users = {}
       known_groups = {}
@@ -49,10 +34,9 @@ module Bookie
       each_job(filename) do |job|
         next if filtered?(job)
         end_time = job.start_time + job.wall_time
+        system = Bookie::Database::System.find_current(self, end_time)
         duplicate = system.jobs.find_by_end_time(end_time)
-        if duplicate
-          raise "Jobs already exist in the database for '#{filename}'."
-        end
+        raise "Jobs already exist in the database for '#{filename}'." if duplicate
         break
       end
       
@@ -62,6 +46,9 @@ module Bookie
       each_job(filename) do |job|
         next if filtered?(job)
         model = job.to_model
+        if system.end_time && model.end_time > system.end_time
+          system = Database::System.find_current(@config, model.end_time)
+        end
         user = Bookie::Database::User.find_or_create!(
           job.user_name,
           Bookie::Database::Group.find_or_create!(job.group_name, known_groups),
@@ -97,6 +84,7 @@ module Bookie
     ##
     #The name of the Bookie::Database::SystemType that systems using this sender will have
     def system_type
+      #To do: cache?
       Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
     end
     
