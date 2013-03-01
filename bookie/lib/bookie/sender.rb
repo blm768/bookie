@@ -28,24 +28,33 @@ module Bookie
       
       known_users = {}
       known_groups = {}
-#       summaries = {}
       
-      #Check the first job to see if this file has already been uploaded.
+      time_min, time_max = nil
+      
+      #Grab data from the first job:  
       each_job(filename) do |job|
         next if filtered?(job)
         end_time = job.start_time + job.wall_time
         system = Bookie::Database::System.find_current(self, end_time)
         duplicate = system.jobs.find_by_end_time(end_time)
         raise "Jobs already exist in the database for '#{filename}'." if duplicate
+        time_min = job.start_time
+        time_max = end_time
         break
       end
       
-      #To do: use old versions of the system when jobs match those!
+      #If there are no jobs, return.
+      #To do: unit test this logic.
+      return unless time_min
+      
       #To do: add an option to resume an interrupted send.
       
+      #Send the job data:
       each_job(filename) do |job|
         next if filtered?(job)
         model = job.to_model
+        time_min = (model.start_time < time_min) ? model.start_time : time_min
+        time_max = (model.end_time > time_max) ? model.end_time : time_max
         if system.end_time && model.end_time > system.end_time
           system = Database::System.find_current(@config, model.end_time)
         end
@@ -57,28 +66,14 @@ module Bookie
         model.system = system
         model.user = user
         model.save!
-#         key = [job.start_time.to_date, model.user, model.system, job.command_name]
-#         summary = summaries[key]
-#         summary ||= [0, 0, 0, 0]
-#         summary[0] += 1
-#         summary[1] += job.cpu_time
-#         summary[2] += job.wall_time * job.memory
-#         summary[3] += 1 if job.exit_code == 0
-#         summaries[key] = summary
       end
       
-      # known_summaries = {}
-#       
-#       summaries.each do |key, values|
-#         sum = Database::JobSummary.find_or_new(*key, known_summaries)
-#         sum.with_lock do
-#           sum.num_jobs = values[0]
-#           sum.cpu_time = values[1]
-#           sum.memory_time = values[2]
-#           sum.successful = values[3]
-#         end
-#         sum.save!
-#       end
+      #Clear out the summaries that would have been affected by the new data:
+      #To do: unit test.
+      date_min = time_min.to_date
+      date_max = time_max.to_date + ((time_max.to_date.to_time == time_max) ? 0 : 1)
+      
+      Database::JobSummary.by_system(system).where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end
     
     ##

@@ -284,8 +284,18 @@ describe Bookie::Database do
     describe "#summarize" do
       it "produces correct summaries" do
         #To do: flesh out
-        Bookie::Database::JobSummary.summarize(Date.new(2012) .. Date.new(2012) + 3)
+        Bookie::Database::JobSummary.summarize(Date.new(2012))
       end
+    end
+    
+    describe "#summary" do
+      it "produces correct summaries" do
+        #To do: flesh out.
+        puts Bookie::Database::Job.all.length
+        puts Bookie::Database::JobSummary.summary(Date.new(2012) .. Date.new(2012) + 3).inspect
+      end
+      
+      it "caches summaries"
     end
   end
   

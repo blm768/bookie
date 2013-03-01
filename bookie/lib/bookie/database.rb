@@ -268,54 +268,97 @@ module Bookie
         summary
       end
       
-      def self.summarize(date_range, jobs = nil)
+      def self.summarize(date, jobs = nil)
         jobs ||= Bookie::Database::Job
-        date = date_range.begin
-        while date_range.cover?(date)
-          time_range = date.to_time ... (date + 1).to_time
-          day_jobs = jobs.by_time_range_inclusive(time_range)
-          value_sets = day_jobs.select('user_id, system_id, command_name').uniq
-          value_sets.each do |set|
-            summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
-            summary = summary_jobs.summary(time_range)
-            Lock[:job_summaries].synchronize do
-              sum = JobSummary.find_or_new(date, set.user_id, set.system_id, set.command_name)
-              sum.num_jobs = summary[:jobs].length
-              sum.cpu_time = summary[:cpu_time]
-              sum.memory_time = summary[:memory_time]
-              sum.successful = sum.num_jobs * summary[:successful]
-              puts sum.inspect
-              sum.save!
-            end
+        time_range = date.to_time ... (date + 1).to_time
+        jobs = jobs.by_time_range_inclusive(time_range)
+        value_sets = jobs.select('user_id, system_id, command_name').uniq
+        value_sets.each do |set|
+          summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
+          summary = summary_jobs.summary(time_range)
+          Lock[:job_summaries].synchronize do
+            sum = JobSummary.find_or_new(date, set.user_id, set.system_id, set.command_name)
+            sum.num_jobs = summary[:jobs].length
+            sum.cpu_time = summary[:cpu_time]
+            sum.memory_time = summary[:memory_time]
+            sum.successful = sum.num_jobs * summary[:successful]
+            sum.save!
           end
-          date += 1
         end
       end
       
-      def self.summary(date_range = nil)
+      def self.summary(range = nil)
+        jobs = Bookie::Database::Job
         summaries = self
-        if date_range then
-          date_range = date_range.normalized
-          summaries = summaries.by_date_range(min_date, max_date)
+        unless range
+          first_started_system = System.order(:start_time).first
+          end_time = nil
+          if System.active_systems.any?
+            end_time = Time.now
+          else
+            last_ended_system = System.order('end_time DESC').first
+            end_time = last_ended_system.end_time if last_ended_system
+          end
+          if first_started_system
+            range = first_started_system.start_time ... end_time
+          else
+            #To do: use Dates instead.
+            range = Time.at(0) ... Time.at(0)
+          end
         end
+        range = range.normalized
         
-        jobs = 0
+        num_jobs = 0
         cpu_time = 0
         memory_time = 0
         successful = 0
         
-        summaries.all.each do |summary|
-          jobs += summary.jobs
-          cpu_time += summary.cpu_time
-          memory_time += summary.memory_time
-          successful += summary.successful
+        date_begin, date_end = nil
+        
+        #If there's the potential for partial days at the beginning/end, summarize them:
+        unless range.begin.kind_of?(Date) && range.end.kind_of?(Date)
+          time_before_min = range.begin
+          date_before_max = range.begin.to_date
+          date_before_max += 1 unless date_before_max.to_time == time_before_min
+          summary = Job.summary(time_before_min ... date_before_max.to_time)
+          num_jobs += summary[:jobs].length
+          cpu_time += summary[:cpu_time]
+          memory_time += summary[:memory_time]
+          successful += summary[:successful]
+          date_begin = time_end_date
+
+          date_after_min = range.end.to_date
+          time_after_max = range.end
+          summary = Job.summary(Range.new(date_before_min.to_time, time_before_max, range.exclude_end?))
+          num_jobs += summary[:jobs].length
+          cpu_time += summary[:cpu_time]
+          memory_time += summary[:memory_time]
+          successful += summary[:successful]
+          date_end = time_begin_date
+          
+          range = date_before_max .. date_after_min
+        end
+        
+        date = range.begin
+        while range.cover?(date) do
+          summaries = where('date == ?', date)
+          if summaries.empty?
+            summarize(date)
+          end
+          summaries.find_each do |summary|
+            num_jobs += summary.num_jobs
+            cpu_time += summary.cpu_time
+            memory_time += summary.memory_time
+            successful += summary.successful
+          end
+          date += 1
         end
         
         {
-          :jobs => jobs,
+          :num_jobs => num_jobs,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          successful => if jobs == 0 then 0.0 else Float(successful) / jobs end,
+          :successful => if num_jobs == 0 then 0.0 else Float(successful) / num_jobs end,
         }
       end
     end
@@ -779,6 +822,11 @@ class Range
   def normalized
     return first ... first if last < first
     self
+  end
+  
+  def empty?
+    norm = self.normalized
+    norm.exclude_end && (norm.begin == norm.end)
   end
   
   def intersection(other)
