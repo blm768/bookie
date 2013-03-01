@@ -282,6 +282,7 @@ module Bookie
             sum.cpu_time = summary[:cpu_time]
             sum.memory_time = summary[:memory_time]
             sum.successful = sum.num_jobs * summary[:successful]
+            puts sum.inspect
             sum.save!
           end
         end
