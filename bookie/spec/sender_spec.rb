@@ -14,7 +14,7 @@ end
 
 describe Bookie::Sender do
   before(:all) do
-    base_time = Time.new(2012)
+    base_time = Date.new(2012).to_time
     Bookie::Database::Migration.up
     Bookie::Database::System.create!(
       :name => 'localhost',
