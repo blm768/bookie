@@ -16,6 +16,8 @@ function dateToString(date) {
 
 var MSECS_PER_DAY = 24 * 3600 * 1000
 
+var MAX_CONCURRENT_REQUESTS = 10
+
 var date_start, date_end
 
 function initControls() {
@@ -135,6 +137,11 @@ function getSummary(day, params) {
   queryParams[1] += start + ',' + end
   $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
     addPoint(day, data)
+    var next_date = new Date(day)
+    next_date.setDate(next_date.getDate() + MAX_CONCURRENT_REQUESTS)
+    if(next_date < date_end) {
+      getSummary(next_date, params)
+    }
   })
 }
 
@@ -202,7 +209,11 @@ function onFilterChange(evt) {
   var params = getFilterData()
   
   var day = new Date(date_start.valueOf())
-  while(day < date_end) {
+  var date_max = new Date(date_start)
+  date_max.setDate(date_max.getDate() + MAX_CONCURRENT_REQUESTS)
+  date_max = Math.min(date_end, date_max)
+  
+  while(day < date_max) {
     getSummary(day, params)
     day.setDate(day.getDate() + 1)
   }

@@ -210,14 +210,15 @@ describe Bookie::Database do
         @summary[:all][:jobs].length.should eql @length
         @summary[:all][:cpu_time].should eql @length * 100
         @summary[:all][:memory_time].should eql @length * 200 * 3600
-        @summary[:all][:successful].should eql 0.5
+        @summary[:all][:successful].should eql 20
         @summary[:all_constrained][:jobs].length.should eql @length
         @summary[:all_constrained][:cpu_time].should eql @length * 100
-        @summary[:all_constrained][:successful].should eql 0.5
+        @summary[:all_constrained][:successful].should eql 20
         clipped_jobs = @summary[:clipped][:jobs].length
         clipped_jobs.should eql 25
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
         @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
+        #To do: unit test :successful?
       end
       
       it "correctly handles summaries of empty sets" do
@@ -225,7 +226,7 @@ describe Bookie::Database do
             :jobs => [],
             :cpu_time => 0,
             :memory_time => 0,
-            :successful => 0.0,
+            :successful => 0,
           })
       end
       
@@ -291,7 +292,6 @@ describe Bookie::Database do
     describe "#summary" do
       it "produces correct summaries" do
         #To do: flesh out.
-        puts Bookie::Database::Job.all.map{|j| j.inspect}.join("\n")
         puts Bookie::Database::JobSummary.summary(Date.new(2012) ... Date.new(2012) + 1).inspect
       end
       

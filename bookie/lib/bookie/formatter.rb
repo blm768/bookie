@@ -55,15 +55,17 @@ module Bookie
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
     def print_summary(jobs, systems, time_range = nil)
       jobs_summary = jobs.summary(time_range)
+      num_jobs = jobs_summary[:jobs].length
       systems_summary = systems.summary(time_range)
       cpu_time = jobs_summary[:cpu_time]
       avail_cpu_time = systems_summary[:avail_cpu_time]
       memory_time = jobs_summary[:memory_time]
       avail_memory_time = systems_summary[:avail_memory_time]
+      successful = (num_jobs == 0) ? 0.0 : Float(jobs_summary[:successful]) / num_jobs
       field_values = [
-        jobs_summary[:jobs].length,
+        num_jobs,
         Formatter.format_duration(cpu_time),
-        '%.4f%%' % (jobs_summary[:successful] * 100),
+        '%.4f%%' % (successful * 100),
         Formatter.format_duration(systems_summary[:avail_cpu_time]),
         if avail_cpu_time == 0 then '0.0000%' else '%.4f%%' % (Float(cpu_time) / avail_cpu_time * 100) end,
         "#{Integer(systems_summary[:avail_memory_avg])} kb",

@@ -115,7 +115,7 @@ module Bookie
       #- <tt>:jobs</tt>: an array of all jobs in the interval
       #- <tt>:cpu_time</tt>: the total CPU time used
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
-      #- <tt>:successful</tt>: the proportion of jobs that completed successfully
+      #- <tt>:successful</tt>: the number of jobs that have completed successfully
       #
       #This method should probably not be used with other queries that filter by start/end time.
       def self.summary(time_range = nil)
@@ -143,14 +143,18 @@ module Bookie
             #To consider: what should I do about jobs that only report a max memory value?
             memory_time += job.memory * clipped_wall_time
           end
-          successful_jobs += 1 if job.exit_code == 0
+          #Only count the job as successful if it's actually finished by the end of the summary.
+          #To do: unit test this logic.
+          if job.exit_code == 0 && (!time_range || job.end_time < time_range.end) then
+            successful_jobs += 1
+          end
         end
       
         return {
           :jobs => jobs,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful => if jobs.length == 0 then 0.0 else Float(successful_jobs) / jobs.length end,
+          :successful => successful_jobs,
         }
       end
       
@@ -281,7 +285,7 @@ module Bookie
             sum.num_jobs = summary[:jobs].length
             sum.cpu_time = summary[:cpu_time]
             sum.memory_time = summary[:memory_time]
-            sum.successful = sum.num_jobs * summary[:successful]
+            sum.successful = summary[:successful]
             puts sum.inspect
             sum.save!
           end
@@ -321,20 +325,26 @@ module Bookie
           time_before_min = range.begin
           date_before_max = range.begin.to_date
           date_before_max += 1 unless date_before_max.to_time == time_before_min
-          summary = Job.summary(time_before_min ... date_before_max.to_time)
-          num_jobs += summary[:jobs].length
-          cpu_time += summary[:cpu_time]
-          memory_time += summary[:memory_time]
-          successful += summary[:successful]
+          time_before_range = time_before_min ... date_before_max.to_time
+          unless time_before_range.empty?
+            puts time_before_range
+            summary = jobs.summary(time_before_range)
+            cpu_time += summary[:cpu_time]
+            memory_time += summary[:memory_time]
+            successful += summary[:successful]
+          end
           date_begin = time_end_date
 
           date_after_min = range.end.to_date
           time_after_max = range.end
-          summary = Job.summary(Range.new(date_before_min.to_time, time_before_max, range.exclude_end?))
-          num_jobs += summary[:jobs].length
-          cpu_time += summary[:cpu_time]
-          memory_time += summary[:memory_time]
-          successful += summary[:successful]
+          time_after_range = Range.new(date_after_min.to_time, time_after_max, range.exclude_end?)
+          unless time_after_range.empty?
+            puts time_after_range
+            summary = jobs.summary(time_after_range)
+            cpu_time += summary[:cpu_time]
+            memory_time += summary[:memory_time]
+            successful += summary[:successful]
+          end
           date_end = time_begin_date
           
           range = date_before_max .. date_after_min
@@ -345,6 +355,7 @@ module Bookie
           summaries = where('date == ?', date)
           if summaries.empty?
             summarize(date)
+            summaries = where('date == ?', date)
           end
           summaries.find_each do |summary|
             num_jobs += summary.num_jobs
@@ -354,6 +365,8 @@ module Bookie
           end
           date += 1
         end
+        
+        num_jobs = jobs.count
         
         {
           :num_jobs => num_jobs,
