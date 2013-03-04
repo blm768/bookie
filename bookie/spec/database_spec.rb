@@ -6,12 +6,17 @@ module Helpers
     end_time_1   = base_time + 3600 * 40
     start_time_2 = base_time + 1800
     end_time_2 = base_time + (36000 * 2 + 18000)
-    {
+    summaries = {
       :all => obj.summary,
       :all_constrained => obj.summary(start_time_1 ... end_time_1),
       :clipped => obj.summary(start_time_2 ... end_time_2),
       :empty => obj.summary(Time.at(0) ... Time.at(0)),
     }
+    if obj.respond_to?(:by_command_name)
+      summaries[:all_filtered] = obj.by_command_name('vi').summary(start_time_1 ... end_time_1)
+    end
+    
+    summaries
   end
   
   def test_relations(job, relations)
@@ -214,6 +219,9 @@ describe Bookie::Database do
         @summary[:all_constrained][:jobs].length.should eql @length
         @summary[:all_constrained][:cpu_time].should eql @length * 100
         @summary[:all_constrained][:successful].should eql 20
+        @summary[:all_filtered][:jobs].length.should eql @length / 2
+        @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
+        @summary[:all_filtered][:successful].should eql 20
         clipped_jobs = @summary[:clipped][:jobs].length
         clipped_jobs.should eql 25
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
@@ -290,6 +298,11 @@ describe Bookie::Database do
     end
     
     describe "#summary" do
+      before(:each) do
+        Bookie::Database::JobSummary.delete_all
+      end
+      
+      #To do: test inclusive ranges?
       it "produces correct summaries" do
         #To do: flesh out.
         date_start = Date.new(2012)
@@ -312,12 +325,19 @@ describe Bookie::Database do
         end
       end
       
-      it "correctly handles constrained summaries"
+      it "correctly handles filtered summaries"
       
       it "correctly handles inverted ranges"
       
-      it "caches summaries"
+      it "caches summaries" do
+        Bookie::Database::JobSummary.summary
+        Bookie::Database::Job.expects(:summary).never
+        range = Date.new(2012) ... Date.new(2012) + 1
+        Bookie::Database::JobSummary.summary(:range => range)
+      end
     end
+    
+    it "validates fields"
   end
   
   describe Bookie::Database::User do

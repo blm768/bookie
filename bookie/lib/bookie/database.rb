@@ -286,13 +286,12 @@ module Bookie
             sum.cpu_time = summary[:cpu_time]
             sum.memory_time = summary[:memory_time]
             sum.successful = summary[:successful]
-            puts sum.inspect
             sum.save!
           end
         end
       end
       
-      def self.summary(opts)
+      def self.summary(opts = {})
         jobs = opts[:jobs] || Bookie::Database::Job
         range = opts[:range]
         summaries = self
@@ -326,7 +325,6 @@ module Bookie
           date_before_max += 1 unless date_before_max.to_time == time_before_min
           time_before_range = time_before_min ... date_before_max.to_time
           unless time_before_range.empty?
-            puts time_before_range
             summary = jobs.summary(time_before_range)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
@@ -337,7 +335,6 @@ module Bookie
           time_after_max = range.end
           time_after_range = Range.new(date_after_min.to_time, time_after_max, range.exclude_end?)
           unless time_after_range.empty?
-            puts time_after_range
             summary = jobs.summary(time_after_range)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
