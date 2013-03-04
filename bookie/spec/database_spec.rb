@@ -292,8 +292,29 @@ describe Bookie::Database do
     describe "#summary" do
       it "produces correct summaries" do
         #To do: flesh out.
-        puts Bookie::Database::JobSummary.summary(Date.new(2012) ... Date.new(2012) + 1).inspect
+        date_start = Date.new(2012)
+        date_end = date_start
+        date_bound = date_start + 3
+        while date_start < date_bound
+          while date_end < date_bound
+            range = date_start ... date_end
+            time_range = date_start.to_time ... date_end.to_time
+            sum1 = Bookie::Database::JobSummary.summary(:range => range)
+            sum2 = Bookie::Database::Job.summary(time_range)
+            sum1[:num_jobs].should eql sum2[:jobs].length
+            #To consider: what if sum2 has fields that sum1 doesn't?
+            sum1.each do |key, value|
+              sum2[key].should eql value unless key == :num_jobs
+            end
+            date_end += 1
+          end
+          date_start += 1
+        end
       end
+      
+      it "correctly handles constrained summaries"
+      
+      it "correctly handles inverted ranges"
       
       it "caches summaries"
     end

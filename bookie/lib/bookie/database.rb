@@ -292,8 +292,9 @@ module Bookie
         end
       end
       
-      def self.summary(range = nil)
-        jobs = Bookie::Database::Job
+      def self.summary(opts)
+        jobs = opts[:jobs] || Bookie::Database::Job
+        range = opts[:range]
         summaries = self
         unless range
           first_started_system = System.order(:start_time).first
@@ -318,8 +319,6 @@ module Bookie
         memory_time = 0
         successful = 0
         
-        date_begin, date_end = nil
-        
         #If there's the potential for partial days at the beginning/end, summarize them:
         unless range.begin.kind_of?(Date) && range.end.kind_of?(Date)
           time_before_min = range.begin
@@ -333,7 +332,6 @@ module Bookie
             memory_time += summary[:memory_time]
             successful += summary[:successful]
           end
-          date_begin = time_end_date
 
           date_after_min = range.end.to_date
           time_after_max = range.end
@@ -345,7 +343,6 @@ module Bookie
             memory_time += summary[:memory_time]
             successful += summary[:successful]
           end
-          date_end = time_begin_date
           
           range = date_before_max .. date_after_min
         end
@@ -354,7 +351,7 @@ module Bookie
         while range.cover?(date) do
           summaries = where('date == ?', date)
           if summaries.empty?
-            summarize(date)
+            summarize(date, jobs)
             summaries = where('date == ?', date)
           end
           summaries.find_each do |summary|
@@ -366,13 +363,15 @@ module Bookie
           date += 1
         end
         
-        num_jobs = jobs.count
+        time_range = Range.new(range.begin.to_time, range.end.to_time, range.exclude_end?)
+        jobs = jobs.by_time_range_inclusive(time_range)
+        num_jobs = (range && range.empty?) ? 0 : jobs.count
         
         {
           :num_jobs => num_jobs,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful => if num_jobs == 0 then 0.0 else Float(successful) / num_jobs end,
+          :successful => successful,
         }
       end
     end
@@ -839,8 +838,7 @@ class Range
   end
   
   def empty?
-    norm = self.normalized
-    norm.exclude_end && (norm.begin == norm.end)
+    (self.end < self.begin) || (exclude_end? && (self.begin == self.end))
   end
   
   def intersection(other)
