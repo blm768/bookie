@@ -8,6 +8,7 @@ require 'optparse'
 require 'bookie/formatter'
 
 jobs = Bookie::Database::Job
+summaries = Bookie::Database::JobSummary
 systems = Bookie::Database::System
 
 config_filename = '/etc/bookie/config.json'
@@ -46,18 +47,22 @@ opts = OptionParser.new do |opts|
   
   opts.on('-u', '--user NAME', "filter by username") do |name|
     jobs = jobs.by_user_name(name)
+    summaries = summaries.by_user_name(name)
   end
   
   opts.on('-g', '--group NAME', "filter by group") do |name|
     jobs = jobs.by_group_name(name)
+    summaries = summaries.by_group_name(name)
   end
   
   opts.on('-m', '--command', "filter by command") do |cmd|
     jobs = jobs.by_command_name(cmd)
+    summaries = summaries.by_command_name(cmd)
   end
   
   opts.on('-s', '--system HOSTNAME', "filter by system") do |hostname|
     jobs = jobs.by_system_name(hostname)
+    summaries = summaries.by_system_name(hostname)
     systems = systems.by_name(hostname)
   end
   
@@ -68,6 +73,7 @@ opts = OptionParser.new do |opts|
       exit 1
     end
     jobs = jobs.by_system_type(t)
+    summaries = summaries.by_system_type(t)
     systems = systems.by_system_type(t)
   end
   

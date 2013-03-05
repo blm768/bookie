@@ -251,6 +251,10 @@ module Bookie
         joins(:systems).where('systems.name = ?', name)
       end
       
+      def self.by_system_type(type)
+        joins(:systems).where('systems.type_id = ?', type.id)
+      end
+      
       def self.by_date_range(date_min, date_max)
         where('? <= job_summaries.date AND job_summaries.date < ?', min_date, max_date)
       end
@@ -307,8 +311,7 @@ module Bookie
           if first_started_system
             range = first_started_system.start_time ... end_time
           else
-            #To do: use Dates instead.
-            range = Time.at(0) ... Time.at(0)
+            range = Date.new ... Date.new
           end
         end
         range = range.normalized
