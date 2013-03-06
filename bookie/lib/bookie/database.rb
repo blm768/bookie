@@ -321,41 +321,44 @@ module Bookie
         memory_time = 0
         successful = 0
         
-        #If there's the potential for partial days at the beginning/end, summarize them:
+        #Could there be partial days at the beginning/end?
         unless range.begin.kind_of?(Date) && range.end.kind_of?(Date)
-          time_before_min = range.begin
-          date_before_max = range.begin.to_date
-          date_before_max += 1 unless date_before_max.to_time == time_before_min
-          time_before_range = time_before_min ... date_before_max.to_time
-          unless time_before_range.empty?
+          date_begin = range.begin.to_date
+          unless date_begin.to_time == range.begin
+            date_begin += 1
+            time_before_max = date_begin.to_time
+            time_before_min = range.begin
+            time_before_range = time_before_min ... time_before_max
             summary = jobs.summary(time_before_range)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
             successful += summary[:successful]
           end
 
-          date_after_min = range.end.to_date
-          time_after_max = range.end
-          time_after_range = Range.new(date_after_min.to_time, time_after_max, range.exclude_end?)
-          unless time_after_range.empty?
-            summary = jobs.summary(time_after_range)
-            cpu_time += summary[:cpu_time]
-            memory_time += summary[:memory_time]
-            successful += summary[:successful]
+          date_end = range.end.to_date
+          time_after_min = date_end.to_time
+          unless time_after_min < range.begin
+            time_after_max = range.end
+            time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
+            unless time_after_range.empty?
+              summary = jobs.summary(time_after_range)
+              cpu_time += summary[:cpu_time]
+              memory_time += summary[:memory_time]
+              successful += summary[:successful]
+            end
           end
           
-          range = date_before_max .. date_after_min
+          range = date_begin ... date_end
         end
         
         date = range.begin
         while range.cover?(date) do
-          summaries = where('date == ?', date)
+          summaries = by_date(date)
           if summaries.empty?
             summarize(date, jobs)
-            summaries = where('date == ?', date)
+            summaries = by_date(date)
           end
           summaries.find_each do |summary|
-            num_jobs += summary.num_jobs
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time
             successful += summary.successful

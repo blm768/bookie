@@ -294,10 +294,7 @@ describe Bookie::Database do
   
   describe Bookie::Database::JobSummary do
     describe "#summarize" do
-      it "produces correct summaries" do
-        #To do: flesh out
-        #Bookie::Database::JobSummary.summarize(Date.new(2012))
-      end
+      it "produces correct summaries"
     end
     
     describe "#summary" do
@@ -330,7 +327,14 @@ describe Bookie::Database do
       
       it "correctly handles filtered summaries"
       
-      it "correctly handles inverted ranges"
+      it "correctly handles inverted ranges" do
+        Bookie::Database::JobSummary.summary(:range => Time.new(2012) .. Time.new(2012) - 1).should eql({
+          :num_jobs => 0,
+          :cpu_time => 0,
+          :memory_time => 0,
+          :successful => 0,
+        })
+      end
       
       it "caches summaries" do
         Bookie::Database::JobSummary.summary
