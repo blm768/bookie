@@ -251,7 +251,10 @@ describe Bookie::Database do
         end
       end
       
-      it "correctly handles inverted ranges"
+      it "correctly handles inverted ranges" do
+        @jobs.summary(Time.now() ... Time.now() - 1).should eql @summary[:empty]
+        @jobs.summary(Time.now() .. Time.now() - 1).should eql @summary[:empty]
+      end
     end
     
     it "validates fields" do
@@ -503,30 +506,24 @@ describe Bookie::Database do
 
     describe "#find_current" do
       before(:all) do
-        @config = Object.new()
+        @config_t1 = @config.clone
         
-        def @config.hostname
-          'test'
-        end
-        def @config.system_type
-          Bookie::Database::SystemType.first
-        end
-        def @config.cores
-          2
-        end
-        def @config.memory
-          1000000
-        end
+        @config_t1.hostname = 'test1'
+        @config_t1.system_type = 'standalone'
+        @config_t1.cores = 2
+        @config_t1.memory = 1000000
+        
+        @config_t2 = @config_t1.clone
+        @config_t2.system_type = 'torque_cluster'
       end
-  
-      it "finds the correct system" #do
-      #   sys = Bookie::Database::System.create!(@FIELDS)
-#         begin
-#           Bookie::Database::System.find_active(@FIELDS).should eql sys
-#         ensure
-#           sys.delete
-#         end
-#       end
+
+      it "finds the correct system" do
+        sender_1 = Bookie::Sender.new(@config_t1)
+        sender_2 = Bookie::Sender.new(@config_t2)
+        Bookie::Database::System.find_current(sender_2).id.should eql 2
+        Bookie::Database::System.find_current(sender_2, Time.now).id.should eql 2
+        Bookie::Database::System.find_current(sender_1, Time.new(2012, 1, 1)).id.should eql 1
+      end
       
       it "correctly detects conflicts" #do
 #         fields = @FIELDS.dup
