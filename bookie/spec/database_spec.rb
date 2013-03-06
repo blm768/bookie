@@ -539,18 +539,25 @@ describe Bookie::Database do
         }.to raise_error(/^There is no system with hostname 'test1000' in the database at /)
       end
       
-      it "correctly detects conflicts" #do
-#         fields = @FIELDS.dup
-#         fields[:cores] = 1
-#         csys = Bookie::Database::System.create!(fields)
-#         begin
-#           expect {
-#             Bookie::Database::System.find_active(@FIELDS)
-#           }.to raise_error(Bookie::Database::System::SystemConflictError)
-#         ensure
-#           csys.delete
-#         end
-#       end
+      it "correctly detects conflicts" do
+        config = @config.clone
+        config.hostname = 'test1'
+        config.cores = 2
+        config.memory = 1000000
+
+        sender = Bookie::Sender.new(config)
+        [:cores, :memory].each do |field|
+          config.expects(field).at_least_once.returns("value")
+          expect {
+            Bookie::Database::System.find_current(sender)
+          }.to raise_error(Bookie::Database::System::SystemConflictError)
+          config.unstub(field)
+        end
+        sender.expects(:system_type).returns(Bookie::Database::SystemType.find_by_name("Standalone"))
+        expect {
+          Bookie::Database::System.find_current(sender)
+        }.to raise_error(Bookie::Database::System::SystemConflictError)
+      end
     end
 
     it "correctly decommissions" do
