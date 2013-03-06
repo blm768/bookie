@@ -501,7 +501,10 @@ describe Bookie::Database do
         end
       end
       
-      it "correctly handles inverted ranges"
+      it "correctly handles inverted ranges" do
+        @systems.summary(Time.new(2012) ... Time.new(2012) - 1).should eql @summary[:empty]
+        @systems.summary(Time.new(2012) .. Time.new(2012) - 1).should eql @summary[:empty]
+      end
     end
 
     describe "#find_current" do
@@ -524,6 +527,8 @@ describe Bookie::Database do
         Bookie::Database::System.find_current(sender_2, Time.now).id.should eql 2
         Bookie::Database::System.find_current(sender_1, Time.new(2012, 1, 1)).id.should eql 1
       end
+      
+      it "correctly detects the lack of a matching system"
       
       it "correctly detects conflicts" #do
 #         fields = @FIELDS.dup

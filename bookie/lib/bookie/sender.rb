@@ -55,8 +55,9 @@ module Bookie
         model = job.to_model
         time_min = (model.start_time < time_min) ? model.start_time : time_min
         time_max = (model.end_time > time_max) ? model.end_time : time_max
+        #To consider: handle files that don't have jobs sorted by end time?
         if system.end_time && model.end_time > system.end_time
-          system = Database::System.find_current(@config, model.end_time)
+          system = Database::System.find_current(self, model.end_time)
         end
         user = Bookie::Database::User.find_or_create!(
           job.user_name,

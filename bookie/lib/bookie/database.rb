@@ -734,7 +734,7 @@ Please make sure that all previous systems with this hostname have been marked a
           create_table :jobs do |t|
             t.references :user, :null => false
             t.references :system, :null => false
-            t.string :command_name, :limit => 24
+            t.string :command_name, :limit => 24, :null => false
             t.datetime :start_time, :null => false
             t.datetime :end_time, :null => false
             t.integer :wall_time, :null => false
