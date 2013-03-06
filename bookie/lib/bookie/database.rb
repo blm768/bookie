@@ -482,7 +482,7 @@ module Bookie
 Please make sure that all previous systems with this hostname have been marked as decommissioned.")
             end
           else
-            raise "There is no system with hostname '#{values[:name]}' in the database at  #{time}."
+            raise "There is no system with hostname '#{config.hostname}' in the database at #{time}."
           end
         end
         system

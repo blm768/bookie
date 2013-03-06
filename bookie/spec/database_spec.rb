@@ -518,17 +518,26 @@ describe Bookie::Database do
         
         @config_t2 = @config_t1.clone
         @config_t2.system_type = 'torque_cluster'
+        
+        @sender_1 = Bookie::Sender.new(@config_t1)
+        @sender_2 = Bookie::Sender.new(@config_t2)
       end
 
       it "finds the correct system" do
-        sender_1 = Bookie::Sender.new(@config_t1)
-        sender_2 = Bookie::Sender.new(@config_t2)
-        Bookie::Database::System.find_current(sender_2).id.should eql 2
-        Bookie::Database::System.find_current(sender_2, Time.now).id.should eql 2
-        Bookie::Database::System.find_current(sender_1, Time.new(2012, 1, 1)).id.should eql 1
+        Bookie::Database::System.find_current(@sender_2).id.should eql 2
+        Bookie::Database::System.find_current(@sender_2, Time.now).id.should eql 2
+        Bookie::Database::System.find_current(@sender_1, Time.new(2012, 1, 1)).id.should eql 1
       end
       
-      it "correctly detects the lack of a matching system"
+      it "correctly detects the lack of a matching system" do
+        expect {
+          Bookie::Database::System.find_current(@sender_1, Time.new(2011, 1, 1))
+        }.to raise_error(/^There is no system with hostname 'test1' in the database at /)
+        @config_t1.expects(:hostname).at_least_once.returns('test1000')
+        expect {
+          Bookie::Database::System.find_current(@sender_1, Time.new(2012, 1, 1))
+        }.to raise_error(/^There is no system with hostname 'test1000' in the database at /)
+      end
       
       it "correctly detects conflicts" #do
 #         fields = @FIELDS.dup
