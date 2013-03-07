@@ -152,7 +152,6 @@ module Bookie
             memory_time += job.memory * clipped_wall_time
           end
           #Only count the job as successful if it's actually finished by the end of the summary.
-          #To do: unit test this logic.
           if job.exit_code == 0 && (!time_range || job.end_time < time_range.end) then
             successful_jobs += 1
           end
@@ -270,11 +269,7 @@ module Bookie
       end
       
       def self.by_system_type(type)
-        joins(:system).where('systems.type_id = ?', type.id)
-      end
-      
-      def self.by_date_range(date_min, date_max)
-        where('? <= job_summaries.date AND job_summaries.date < ?', min_date, max_date)
+        joins(:system).where('systems.system_type_id = ?', type.id)
       end
       
       def self.by_command_name(cmd)

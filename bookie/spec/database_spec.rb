@@ -335,6 +335,108 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::JobSummary do
+  
+    describe "" do
+      before(:all) do
+        d = Date.new(2012)
+        Bookie::Database::User.all.each do |user|
+          Bookie::Database::System.all.each do |system|
+            ['vi', 'emacs'].each do |command_name|
+              (d ... d + 2).each do |date|
+                Bookie::Database::JobSummary.create!(
+                  :user => user,
+                  :system => system,
+                  :command_name => command_name,
+                  :date => date,
+                  :num_jobs => 0,
+                  :cpu_time => 0,
+                  :memory_time => 0,
+                  :successful => 0
+                )
+              end
+            end
+          end
+        end
+      end
+      
+      it "correctly filters by date" do
+        d = Date.new(2012)
+        sums = Bookie::Database::JobSummary.by_date(d).all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.date.should eql d
+        end
+      end
+      
+      it "correctly filters by user" do
+        u = Bookie::Database::User.first
+        sums = Bookie::Database::JobSummary.by_user(u).all
+        sums.length.should eql 16
+        sums.each do |sum|
+          sum.user.should eql u
+        end
+      end
+      
+      it "correctly filters by user name" do
+        sums = Bookie::Database::JobSummary.by_user_name('test').all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.user.name.should eql 'test'
+        end
+      end
+      
+      it "correctly filters by group" do
+        g = Bookie::Database::Group.find_by_name('admin')
+        sums = Bookie::Database::JobSummary.by_group(g).all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.user.group.should eql g
+        end
+      end
+      
+      it "correctly filters by group name" do
+        sums = Bookie::Database::JobSummary.by_group_name('admin').all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.user.group.name.should eql 'admin'
+        end
+      end
+      
+      it "correctly filters by system" do
+        s = Bookie::Database::System.first
+        sums = Bookie::Database::JobSummary.by_system(s).all
+        sums.length.should eql 16
+        sums.each do |sum|
+          sum.system.should eql s
+        end
+      end
+      
+      it "correctly filters by system name" do
+        sums = Bookie::Database::JobSummary.by_system_name('test1').all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.system.name.should eql 'test1'
+        end
+      end
+      
+      it "correctly filters by system type" do
+        s = Bookie::Database::SystemType.first
+        sums = Bookie::Database::JobSummary.by_system_type(s).all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.system.system_type.should eql s
+        end
+      end
+      
+      it "correctly filters by command name" do
+        sums = Bookie::Database::JobSummary.by_command_name('vi').all
+        sums.length.should eql 32
+        sums.each do |sum|
+          sum.command_name.should eql 'vi'
+        end
+      end
+    end
+    
     describe "#summarize" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
@@ -463,6 +565,8 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::User do
+    it "correctly filters by name"
+    
     describe "#find_or_create" do
       before(:each) do
         @group = Bookie::Database::Group.find_by_name('admin')
