@@ -368,8 +368,8 @@ module Bookie
             summarize(date, jobs)
             summaries = by_date(date)
           end
-          raise summaries.to_sql
-          summaries.find_each do |summary|
+          #raise summaries.to_sql
+          summaries.all.each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time
             successful += summary.successful
