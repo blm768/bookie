@@ -72,7 +72,7 @@ module Bookie
       #Clear out the summaries that would have been affected by the new data:
       #To do: unit test.
       date_min = time_min.to_date
-      date_max = time_max.to_date + ((time_max.to_date.to_time == time_max) ? 0 : 1)
+      date_max = time_max.to_date
       
       Database::JobSummary.by_system(system).where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end

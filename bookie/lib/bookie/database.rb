@@ -231,6 +231,7 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
+      #To do: unit test.
       def self.by_date(date)
         where('job_summaries.date = ?', date)
       end
@@ -240,7 +241,17 @@ module Bookie
       end
       
       def self.by_user_name(name)
-        joins(:users).where('users.name = ?', name)
+        joins(:user).where('users.name = ?', name)
+      end
+      
+      def self.by_group(group)
+        joins(:user).where('users.group_id = ?', group.id)
+      end
+      
+      def self.by_group_name(name)
+        group = Group.find_by_name(name)
+        return by_group(group) if group
+        limit(0)
       end
       
       def self.by_system(system)
@@ -248,11 +259,11 @@ module Bookie
       end
       
       def self.by_system_name(name)
-        joins(:systems).where('systems.name = ?', name)
+        joins(:system).where('systems.name = ?', name)
       end
       
       def self.by_system_type(type)
-        joins(:systems).where('systems.type_id = ?', type.id)
+        joins(:system).where('systems.type_id = ?', type.id)
       end
       
       def self.by_date_range(date_min, date_max)
@@ -298,7 +309,6 @@ module Bookie
       def self.summary(opts = {})
         jobs = opts[:jobs] || Bookie::Database::Job
         range = opts[:range]
-        summaries = self
         unless range
           first_started_system = System.order(:start_time).first
           end_time = nil
@@ -358,6 +368,7 @@ module Bookie
             summarize(date, jobs)
             summaries = by_date(date)
           end
+          raise summaries.to_sql
           summaries.find_each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time

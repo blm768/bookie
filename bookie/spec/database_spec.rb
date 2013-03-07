@@ -305,6 +305,7 @@ describe Bookie::Database do
       #To do: test inclusive ranges?
       it "produces correct summaries" do
         #To do: flesh out.
+        #To do: consider summaries that last under a day.
         date_start = Date.new(2012)
         date_end = date_start
         date_bound = date_start + 3
@@ -325,7 +326,24 @@ describe Bookie::Database do
         end
       end
       
-      it "correctly handles filtered summaries"
+      it "correctly handles filtered summaries" do
+        filters = {
+          :user_name => 'blm',
+          :group_name => 'blm',
+          :command_name => 'vi',
+        }
+        filters.each do |filter, value|
+          filter_sym = "by_#{filter}".intern
+          jobs = Bookie::Database::Job.send(filter_sym, value)
+          sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
+          sum2 = jobs.summary
+          sum1[:num_jobs].should eql sum2[:jobs].length
+          #To consider: what if sum2 has fields that sum1 doesn't?
+          sum1.each do |key, value|
+            sum2[key].should eql value unless key == :num_jobs
+          end
+        end
+      end
       
       it "correctly handles inverted ranges" do
         Bookie::Database::JobSummary.summary(:range => Time.new(2012) .. Time.new(2012) - 1).should eql({
