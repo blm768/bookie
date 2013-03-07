@@ -294,7 +294,17 @@ describe Bookie::Database do
   
   describe Bookie::Database::JobSummary do
     describe "#summarize" do
-      it "produces correct summaries"
+      before(:each) do
+        Bookie::Database::JobSummary.delete_all
+      end
+      
+      it "produces correct summaries" do
+        Bookie::Database::JobSummary.summarize(Date.new(2012))
+      end
+      
+      it "correctly handles filters" do
+      
+      end
     end
     
     describe "#summary" do
@@ -346,7 +356,8 @@ describe Bookie::Database do
       end
       
       it "correctly handles inverted ranges" do
-        Bookie::Database::JobSummary.summary(:range => Time.new(2012) .. Time.new(2012) - 1).should eql({
+        t = Date.new(2012).to_time
+        Bookie::Database::JobSummary.summary(:range => t .. t - 1).should eql({
           :num_jobs => 0,
           :cpu_time => 0,
           :memory_time => 0,
@@ -524,8 +535,9 @@ describe Bookie::Database do
       end
       
       it "correctly handles inverted ranges" do
-        @systems.summary(Time.new(2012) ... Time.new(2012) - 1).should eql @summary[:empty]
-        @systems.summary(Time.new(2012) .. Time.new(2012) - 1).should eql @summary[:empty]
+        t = Date.new(2012).to_time
+        @systems.summary(t ... t - 1).should eql @summary[:empty]
+        @systems.summary(t .. t - 1).should eql @summary[:empty]
       end
     end
 
@@ -548,16 +560,16 @@ describe Bookie::Database do
       it "finds the correct system" do
         Bookie::Database::System.find_current(@sender_2).id.should eql 2
         Bookie::Database::System.find_current(@sender_2, Time.now).id.should eql 2
-        Bookie::Database::System.find_current(@sender_1, Time.new(2012, 1, 1)).id.should eql 1
+        Bookie::Database::System.find_current(@sender_1, Date.new(2012, 1, 1).to_time).id.should eql 1
       end
       
       it "correctly detects the lack of a matching system" do
         expect {
-          Bookie::Database::System.find_current(@sender_1, Time.new(2011, 1, 1))
+          Bookie::Database::System.find_current(@sender_1, Date.new(2011, 1, 1).to_time)
         }.to raise_error(/^There is no system with hostname 'test1' in the database at /)
         @config_t1.expects(:hostname).at_least_once.returns('test1000')
         expect {
-          Bookie::Database::System.find_current(@sender_1, Time.new(2012, 1, 1))
+          Bookie::Database::System.find_current(@sender_1, Date.new(2012, 1, 1).to_time)
         }.to raise_error(/^There is no system with hostname 'test1000' in the database at /)
       end
       
