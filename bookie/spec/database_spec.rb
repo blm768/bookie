@@ -139,6 +139,15 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
     
+    it "correctly filters by system" do
+      sys = Bookie::Database::System.first
+      jobs = @jobs.by_system(sys)
+      jobs.length.should eql 10
+      jobs.each do |job|
+        job.system.should eql sys
+      end
+    end
+    
     it "correctly filters by system name" do
       jobs = @jobs.by_system_name('test1')
       jobs.length.should eql 20
@@ -184,14 +193,21 @@ describe Bookie::Database do
       jobs.length.should eql 0
     end
     
-    it "correctly filters by inclusive time range" do
-      jobs = @jobs.by_time_range_inclusive(@base_time ... @base_time + 3600 * 2 + 1)
-      jobs.length.should eql 3
-      jobs = @jobs.by_time_range_inclusive(@base_time + 1 ... @base_time + 3600 * 2 - 1)
-      jobs.length.should eql 2
-      jobs = @jobs.by_time_range_inclusive(Time.at(0) ... Time.at(3))
-      jobs.length.should eql 0
-      #To do: handle inverted ranges?
+    describe "#by_time_range_inclusive" do
+      it "correctly filters by inclusive time range" do
+        jobs = @jobs.by_time_range_inclusive(@base_time ... @base_time + 3600 * 2 + 1)
+        jobs.length.should eql 3
+        jobs = @jobs.by_time_range_inclusive(@base_time + 1 ... @base_time + 3600 * 2 - 1)
+        jobs.length.should eql 2
+        jobs = @jobs.by_time_range_inclusive(Time.at(0) ... Time.at(3))
+        jobs.length.should eql 0
+      end
+      
+      it "correctly handles inverted ranges" do
+        t = Date.new(2012).to_time
+        jobs = @jobs.by_time_range_inclusive(t ... t - 1)
+        jobs.count.should eql 0
+      end
     end
     
     it "correctly chains filters" do
@@ -235,7 +251,8 @@ describe Bookie::Database do
         clipped_jobs.should eql 25
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
         @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
-        #To do: unit test :successful?
+        #Luckily for us, rounding down gives us the right answer. This is a bit fragile, though.
+        @summary[:clipped][:successful].should eql clipped_jobs / 2
       end
       
       it "correctly handles summaries of empty sets" do
@@ -247,7 +264,7 @@ describe Bookie::Database do
           })
       end
       
-      it "correctly handles jobs with zero wall time" do
+      it "correctly handles summaries with zero wall time" do
         job = @jobs.order(:start_time).first
         wall_time = job.wall_time
         begin
@@ -260,6 +277,25 @@ describe Bookie::Database do
         end
       end
       
+      it "only considers finished jobs to be successful" do
+        begin
+          job = Bookie::Database::Job.create!(
+            :user => Bookie::Database::User.first,
+            :system => Bookie::Database::System.first,
+            :command_name => '',
+            :cpu_time => 100,
+            :start_time => Time.local(2013),
+            :wall_time => 3600 * 24 * 2,
+            :memory => 10000,
+            :exit_code => 0
+          )
+          @jobs.summary(job.start_time ... job.start_time + 3600 * 24)[:successful].should eql 0
+        ensure
+          job.delete if job
+        end
+      end
+    
+      
       it "correctly handles inverted ranges" do
         @jobs.summary(Time.now() ... Time.now() - 1).should eql @summary[:empty]
         @jobs.summary(Time.now() .. Time.now() - 1).should eql @summary[:empty]
@@ -270,6 +306,7 @@ describe Bookie::Database do
       fields = {
         :user => Bookie::Database::User.first,
         :system => Bookie::Database::System.first,
+        :command_name => '',
         :cpu_time => 100,
         :start_time => Time.local(2012),
         :wall_time => 1000,
@@ -319,14 +356,14 @@ describe Bookie::Database do
           sum.successful.should eql sum_2[:successful]
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
-        #Is it producing all of the summaries needed?
+        #Is it producing all of the summaries needed?g
         Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
           values = [values.user_id, values.system_id, values.command_name]
           found_sums.include?(values).should eql true
         end
       end
     end
-    
+  
     describe "#summary" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
@@ -397,6 +434,7 @@ describe Bookie::Database do
       fields = {
         :user => Bookie::Database::User.first,
         :system => Bookie::Database::System.first,
+        :command_name => '',
         :date => Date.new(2012),
         :num_jobs => 1,
         :cpu_time => 100,

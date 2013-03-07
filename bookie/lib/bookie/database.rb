@@ -58,7 +58,6 @@ module Bookie
         return start_time + wall_time
       end
       
-      #To do: unit test.
       def self.by_user(user)
         where('jobs.user_id = ?', user.id)
       end
@@ -223,6 +222,10 @@ module Bookie
       
       validates_presence_of :user, :system, :cpu_time,
         :start_time, :wall_time, :memory, :exit_code
+        
+      validates_each :command_name do |record, attr, value|
+        record.errors.add(attr, 'must not be nil') if value == nil
+      end
        
       validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
@@ -395,7 +398,11 @@ module Bookie
         }
       end
       
-      validates_presence_of :user, :system, :date, :num_jobs, :cpu_time, :memory_time, :successful
+      validates_presence_of :user_id, :system_id, :date, :num_jobs, :cpu_time, :memory_time, :successful
+      
+      validates_each :command_name do |record, attr, value|
+        record.errors.add(attr, 'must not be nil') if value == nil
+      end
       
       validates_each :num_jobs, :cpu_time, :memory_time, :successful do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
@@ -795,7 +802,7 @@ Please make sure that all previous systems with this hostname have been marked a
             t.integer :successful, :null => false
           end
           change_table :job_summaries do |t|
-            #To do: reorder for optimum efficiency?
+            #To consider: reorder for optimum efficiency?
             t.index [:date, :user_id, :system_id, :command_name], :unique => true, :name => 'identity'
             t.index :command_name
             t.index :date
