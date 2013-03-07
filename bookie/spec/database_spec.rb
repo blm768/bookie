@@ -103,6 +103,15 @@ describe Bookie::Database do
       job.save!
     end
     
+    it "correctly filters by user" do
+      user = Bookie::Database::User.by_name('test').order(:id).first
+      jobs = @jobs.by_user(user).all
+      jobs.each do |job|
+        job.user.should eql user
+      end
+      jobs.length.should eql 10 
+    end
+    
     it "correctly filters by user name" do
       jobs = @jobs.by_user_name('root').all
       jobs.length.should eql 10
@@ -299,8 +308,8 @@ describe Bookie::Database do
         range = d.to_time ... (d + 1).to_time
         Bookie::Database::JobSummary.summarize(d)
         sums = Bookie::Database::JobSummary.all
+        found_sums = Set.new
         sums.each do |sum|
-          
           sum.date.should eql Date.new(2012)
           jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
           sum_2 = jobs.summary(range)
@@ -308,8 +317,13 @@ describe Bookie::Database do
           sum.cpu_time.should eql sum_2[:cpu_time]
           sum.memory_time.should eql sum_2[:memory_time]
           sum.successful.should eql sum_2[:successful]
+          found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
-        puts sums.inspect
+        #Is it producing all of the summaries needed?
+        Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
+          values = [values.user_id, values.system_id, values.command_name]
+          found_sums.include?(values).should eql true
+        end
       end
     end
     

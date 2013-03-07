@@ -432,6 +432,11 @@ module Bookie
     class User < ActiveRecord::Base
       belongs_to :group
       
+      #To do: unit test.
+      def self.by_name(name)
+        where('users.name = ?', name)
+      end
+      
       ##
       #Finds a user by name and group, creating it if it doesn't exist
       #
