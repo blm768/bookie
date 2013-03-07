@@ -287,8 +287,8 @@ module Bookie
         summary
       end
       
-      def self.summarize(date, jobs = nil)
-        jobs ||= Bookie::Database::Job
+      def self.summarize(date)
+        jobs = Bookie::Database::Job
         time_range = date.to_time ... (date + 1).to_time
         jobs = jobs.by_time_range_inclusive(time_range)
         value_sets = jobs.select('user_id, system_id, command_name').uniq
@@ -297,6 +297,7 @@ module Bookie
           summary = summary_jobs.summary(time_range)
           Lock[:job_summaries].synchronize do
             sum = JobSummary.find_or_new(date, set.user_id, set.system_id, set.command_name)
+            #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
             sum.num_jobs = summary[:jobs].length
             sum.cpu_time = summary[:cpu_time]
             sum.memory_time = summary[:memory_time]
@@ -364,8 +365,9 @@ module Bookie
         date = range.begin
         while range.cover?(date) do
           summaries = by_date(date)
+          #To consider: what if there aren't any summaries to be made? Will we continue to run the query each time?
           if summaries.empty?
-            summarize(date, jobs)
+            summarize(date)
             summaries = by_date(date)
           end
           #raise summaries.to_sql
