@@ -379,7 +379,35 @@ describe Bookie::Database do
       end
     end
     
-    it "validates fields"
+    it "validates fields" do
+      fields = {
+        :user => Bookie::Database::User.first,
+        :system => Bookie::Database::System.first,
+        :date => Date.new(2012),
+        :num_jobs => 1,
+        :cpu_time => 100,
+        :memory_time => 1000000,
+        :successful => 1,
+      }
+      
+      sum = Bookie::Database::JobSummary.new(fields)
+      sum.valid?.should eql true
+      
+      fields.each_key do |field|
+        job = Bookie::Database::JobSummary.new(fields)
+        job.method("#{field}=".intern).call(nil)
+        job.valid?.should eql false
+      end
+      
+      [:cpu_time, :memory_time, :successful].each do |field|
+        job = Bookie::Database::JobSummary.new(fields)
+        m = job.method("#{field}=".intern)
+        m.call(-1)
+        job.valid?.should eql false
+        m.call(0)
+        job.valid?.should eql true
+      end
+    end
   end
   
   describe Bookie::Database::User do

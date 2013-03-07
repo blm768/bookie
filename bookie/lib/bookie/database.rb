@@ -678,7 +678,7 @@ Please make sure that all previous systems with this hostname have been marked a
   
     ##
     #Database migrations
-    module Migration 
+    module Migration
       class CreateUsers < ActiveRecord::Migration
         def up
           create_table :users do |t|
@@ -825,6 +825,7 @@ Please make sure that all previous systems with this hostname have been marked a
         ##
         #Brings up all migrations
         def up
+          ActiveRecord::Migration.verbose = false
           CreateUsers.new.up
           CreateGroups.new.up
           CreateSystems.new.up
@@ -839,6 +840,7 @@ Please make sure that all previous systems with this hostname have been marked a
         #
         #Warning: this will destroy all data!
         def down
+          ActiveRecord::Migration.verbose = false
           CreateUsers.new.down
           CreateGroups.new.down
           CreateSystems.new.down
