@@ -58,10 +58,19 @@ module Bookie
         return start_time + wall_time
       end
       
+      #To do: unit test.
+      def self.by_user(user)
+        where('jobs.user_id = ?', user.id)
+      end
+      
       ##
       #Filters by user name
       def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
+      end
+      
+      def self.by_system(system)
+        where('jobs.system_id = ?', system.id)
       end
 
       ##
@@ -217,11 +226,6 @@ module Bookie
        
       validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
-      end
-      
-      validates_each :start_time do |record, attr, value|
-        value = value.to_time if value.respond_to?(:to_time)
-        record.errors.add(attr, 'must be a time object') unless value.is_a?(Time)
       end
     end
     
@@ -389,6 +393,12 @@ module Bookie
           :memory_time => memory_time,
           :successful => successful,
         }
+      end
+      
+      validates_presence_of :user, :system, :date, :num_jobs, :cpu_time, :memory_time, :successful
+      
+      validates_each :num_jobs, :cpu_time, :memory_time, :successful do |record, attr, value|
+        record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end
     end
     
@@ -585,11 +595,6 @@ Please make sure that all previous systems with this hostname have been marked a
       
       validates_each :cores, :memory do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
-      end
-      
-      validates_each :start_time do |record, attr, value|
-        value = value.to_time if value.respond_to?(:to_time)
-        record.errors.add(attr, 'must be a time object') unless value.is_a?(Time)
       end
       
       validates_each :end_time do |record, attr, value|
@@ -847,53 +852,63 @@ Please make sure that all previous systems with this hostname have been marked a
   end
 end
 
+##
+#Reopened to add some useful methods
 class Range
+  ##
+  #If end < begin, returns an empty range (begin ... begin)
+  #Otherwise, returns the original range
   def normalized
-    return first ... first if last < first
+    return self.begin ... self.begin if self.end < self.begin
     self
   end
   
+  ##
+  #Returns the empty status of the range
+  #
+  #A range is empty if end < begin or if begin == end and exclude_end? is true.
   def empty?
     (self.end < self.begin) || (exclude_end? && (self.begin == self.end))
   end
-  
-  def intersection(other)
-    self_n = self.normalized
-    other = other.normalized
-    
-    new_begin, new_end, exclude_end = nil
-    
-    if self_n.cover?(other.begin)
-      new_first = other.begin
-    elsif other.cover?(self_n.begin)
-      new_first = self_n.begin
-    end
-    
-    return self_n.begin ... self_n.begin unless new_first
-    
-    if self_n.cover?(other.end)
-      unless other.exclude_end? && other.end == self_n.begin
-        new_end = other.end
-        exclude_end = other.exclude_end?
-      end
-    elsif other.cover?(self_n.end)
-      unless self_n.exclude_end? && self_n.end == other.begin
-        new_end = self_n.end
-        exclude_end = self_n.exclude_end?
-      end
-    end
-    
-    #If we still haven't found new_end, try one more case:
-    unless new_end
-      if self_n.end == other.end
-        #We'll only get here if both ranges exclude their ends and have the same end.
-        new_end = self_n.end
-        exclude_end = true
-      end
-    end
-    
-    return self_n.begin ... self_n.begin unless new_end
 
-    Range.new(new_begin, new_end, exclude_end)
-  end
+#This code probably works, but we're not using it anywhere.  
+#   def intersection(other)
+#     self_n = self.normalized
+#     other = other.normalized
+#     
+#     new_begin, new_end, exclude_end = nil
+#     
+#     if self_n.cover?(other.begin)
+#       new_first = other.begin
+#     elsif other.cover?(self_n.begin)
+#       new_first = self_n.begin
+#     end
+#     
+#     return self_n.begin ... self_n.begin unless new_first
+#     
+#     if self_n.cover?(other.end)
+#       unless other.exclude_end? && other.end == self_n.begin
+#         new_end = other.end
+#         exclude_end = other.exclude_end?
+#       end
+#     elsif other.cover?(self_n.end)
+#       unless self_n.exclude_end? && self_n.end == other.begin
+#         new_end = self_n.end
+#         exclude_end = self_n.exclude_end?
+#       end
+#     end
+#     
+#     #If we still haven't found new_end, try one more case:
+#     unless new_end
+#       if self_n.end == other.end
+#         #We'll only get here if both ranges exclude their ends and have the same end.
+#         new_end = self_n.end
+#         exclude_end = true
+#       end
+#     end
+#     
+#     return self_n.begin ... self_n.begin unless new_end
+# 
+#     Range.new(new_begin, new_end, exclude_end)
+#   end
 end

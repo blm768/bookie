@@ -285,10 +285,6 @@ describe Bookie::Database do
         m.call(0)
         job.valid?.should eql true
       end
-      
-      job = Bookie::Database::Job.new(fields)
-      job.start_time = 0
-      job.valid?.should eql false
     end
   end
   
@@ -299,11 +295,21 @@ describe Bookie::Database do
       end
       
       it "produces correct summaries" do
-        Bookie::Database::JobSummary.summarize(Date.new(2012))
-      end
-      
-      it "correctly handles filters" do
-      
+        d = Date.new(2012)
+        range = d.to_time ... (d + 1).to_time
+        Bookie::Database::JobSummary.summarize(d)
+        sums = Bookie::Database::JobSummary.all
+        sums.each do |sum|
+          
+          sum.date.should eql Date.new(2012)
+          jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
+          sum_2 = jobs.summary(range)
+          sum.num_jobs.should eql sum_2[:jobs].length
+          sum.cpu_time.should eql sum_2[:cpu_time]
+          sum.memory_time.should eql sum_2[:memory_time]
+          sum.successful.should eql sum_2[:successful]
+        end
+        puts sums.inspect
       end
     end
     
@@ -634,10 +640,6 @@ describe Bookie::Database do
         m.call(0)
         system.valid?.should eql true
       end
-      
-      system = Bookie::Database::System.new(fields)
-      system.start_time = 0
-      system.valid?.should eql false
       
       system = Bookie::Database::System.new(fields)
       system.end_time = Time.local(2012)
