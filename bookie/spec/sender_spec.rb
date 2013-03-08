@@ -61,10 +61,15 @@ describe Bookie::Sender do
   end
   
   it "refuses to send jobs when jobs already have been sent from a file" do
-    exception = nil
     expect {
       @sender.send_data('snapshot/torque_large')
     }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
+  end
+  
+  it "correctly handles empty files" do
+    Bookie::Database::Job.any_instance.expects(:'save!').never
+    ActiveRecord::Relation.any_instance.expects(:'delete_all').never
+    @sender.send_data('/dev/null')
   end
   
   it "handles missing files" do
@@ -113,6 +118,8 @@ describe Bookie::Sender do
     jobs[0].system.should eql sys_1
     jobs[1].system.should eql sys_2
   end
+  
+  it "deletes cached summaries that overlap the new jobs"
 end
 
 describe Bookie::ModelHelpers do
@@ -127,7 +134,7 @@ describe Bookie::ModelHelpers do
     @job.memory = 300
   end
   
-  #To do: check user/group?
+  #To consider: check user/group somewhere?
   it "correctly converts jobs to models" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
     djob = @job.to_model

@@ -237,7 +237,6 @@ module Bookie
       belongs_to :user
       belongs_to :system
       
-      #To do: unit test.
       def self.by_date(date)
         where('job_summaries.date = ?', date)
       end
@@ -276,8 +275,6 @@ module Bookie
         where('job_summaries.command_name = ?', cmd)
       end
       
-      #To do: unit test case where known_summaries is nil?
-      #Also do the above for other objects' methods!
       def self.find_or_new(date, user_id, system_id, command_name)
         summary = by_date(date).where(:user_id => user_id).where(:system_id => system_id).by_command_name(command_name).first
         summary ||= new(
@@ -434,7 +431,6 @@ module Bookie
     class User < ActiveRecord::Base
       belongs_to :group
       
-      #To do: unit test.
       def self.by_name(name)
         where('users.name = ?', name)
       end
@@ -541,7 +537,6 @@ Please make sure that all previous systems with this hostname have been marked a
         if time_range
           time_range = time_range.normalized
           #To consider: optimize as union of queries?
-          #To do: make consistent with other models' time-range queries.
           systems = systems.where(
             'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
             time_range.last,

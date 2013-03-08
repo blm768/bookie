@@ -565,7 +565,13 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::User do
-    it "correctly filters by name"
+    it "correctly filters by name" do
+      users = Bookie::Database::User.by_name('test').all
+      users.length.should eql 2
+      users.each do |user|
+        user.name.should eql 'test'
+      end
+    end
     
     describe "#find_or_create" do
       before(:each) do

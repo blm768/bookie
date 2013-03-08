@@ -44,7 +44,6 @@ module Bookie
       end
       
       #If there are no jobs, return.
-      #To do: unit test this logic.
       return unless time_min
       
       #To do: add an option to resume an interrupted send.
@@ -70,7 +69,6 @@ module Bookie
       end
       
       #Clear out the summaries that would have been affected by the new data:
-      #To do: unit test.
       date_min = time_min.to_date
       date_max = time_max.to_date
       
@@ -97,7 +95,6 @@ module Bookie
   module ModelHelpers
     ##
     #Converts the object to a Bookie::Database::Job
-    
     def to_model()
       job = Bookie::Database::Job.new
       job.command_name = self.command_name
