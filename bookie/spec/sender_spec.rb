@@ -49,12 +49,11 @@ describe Bookie::Sender do
     @config.excluded_users = Set.new
     begin
       @sender.send_data('snapshot/torque_large')
-      count = 0
-      Bookie::Database::Job.all_with_relations.each do |job|
+      jobs = Bookie::Database::Job.all_with_relations
+      jobs.each do |job|
         job.system.name.should eql @config.hostname
-        count += 1
       end
-      count.should eql 100
+      jobs.length.should eql 100
     ensure
       @config.excluded_users = old_excluded
     end
@@ -119,7 +118,48 @@ describe Bookie::Sender do
     jobs[1].system.should eql sys_2
   end
   
-  it "deletes cached summaries that overlap the new jobs"
+  it "deletes cached summaries that overlap the new jobs" do
+    Bookie::Database::Job.delete_all
+    sender = Bookie::Sender.new(@config)
+    user = Bookie::Database::User.first
+    systems = [
+      Bookie::Database::System.find_current(sender),
+      Bookie::Database::System.create!(
+        :name => 'test',
+        :system_type => Bookie::Database::SystemType.first,
+        :start_time => Time.new,
+        :cores => 1,
+        :memory => 1000000
+      )
+    ]
+    date_start = Date.new(2012) - 2
+    date_end = date_start + 4
+    (date_start .. date_end).each do |date|
+      systems.each do |system|
+        sum = Bookie::Database::JobSummary.create!(
+          :date => date,
+          :system => system,
+          :user => user,
+          :command_name => 'vi',
+          :num_jobs => 1,
+          :cpu_time => 1,
+          :memory_time => 100,
+          :successful => 1
+        )
+      end
+    end
+    sender.send_data('snapshot/torque_large')
+    sums = Bookie::Database::JobSummary.all
+    sums.length.should eql 9
+    sums.each do |sum|
+      if sum.system == systems[0]
+        sum.date.should_not eql Date.new(2012)
+      end
+    end
+    sums = Bookie::Database::JobSummary.by_date(Date.new(2012)).all
+    sums.length.should eql 1
+    sums[0].system.should eql systems[1]
+  end
 end
 
 describe Bookie::ModelHelpers do
