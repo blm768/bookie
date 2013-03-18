@@ -473,8 +473,7 @@ describe Bookie::Database do
       
       #To do: test inclusive ranges?
       it "produces correct summaries" do
-        #To do: flesh out.
-        #To do: consider summaries that last under a day.
+        #To consider: flesh out some more?
         date_start = Date.new(2012)
         date_end = date_start
         date_bound = date_start + 3
@@ -489,9 +488,23 @@ describe Bookie::Database do
             sum1.each do |key, value|
               sum2[key].should eql value unless key == :num_jobs
             end
+            Bookie::Database::JobSummary.summary(:range => time_range).should eql sum1
             date_end += 1
           end
           date_start += 1
+        end
+        time_start = date_start.to_time
+        time_end = (date_start + 1).to_time
+        [0, 100].each do |offset_begin|
+          [0, 100].each do |offset_end|
+            range_short = time_start + offset_end ... time_end - offset_end
+            sum1 = Bookie::Database::JobSummary.summary(:range => range_short)
+            sum2 = Bookie::Database::Job.summary(range_short)
+            sum1[:num_jobs].should eql sum2[:jobs].length
+            sum1.each do |key, value|
+              sum2[key].should eql value unless key == :num_jobs
+            end
+          end
         end
       end
       

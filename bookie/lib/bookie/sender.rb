@@ -78,7 +78,7 @@ module Bookie
     ##
     #The name of the Bookie::Database::SystemType that systems using this sender will have
     def system_type
-      #To do: cache?
+      #To consider: cache?
       Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
     end
     
