@@ -310,7 +310,6 @@ module Bookie
         jobs = opts[:jobs] || Bookie::Database::Job
         range = opts[:range]
         unless range
-          first_started_system = System.order(:start_time).first
           end_time = nil
           if System.active_systems.any?
             end_time = Time.now
@@ -318,7 +317,8 @@ module Bookie
             last_ended_system = System.order('end_time DESC').first
             end_time = last_ended_system.end_time if last_ended_system
           end
-          if first_started_system
+          if end_time
+            first_started_system = System.order(:start_time).first
             range = first_started_system.start_time ... end_time
           else
             range = Date.new ... Date.new

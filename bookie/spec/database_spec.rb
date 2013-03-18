@@ -29,6 +29,14 @@ module Helpers
       relations[r] = r
     end
   end
+  
+  def check_job_sums(js_sum, j_sum)
+    js_sum[:num_jobs].should eql j_sum[:jobs].length
+    [:cpu_time, :memory_time, :successful].each do |field|
+      js_sum[field].should eql j_sum[field]
+    end
+    true
+  end
 end
 
 describe Bookie::Database do
@@ -458,7 +466,7 @@ describe Bookie::Database do
           sum.successful.should eql sum_2[:successful]
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
-        #Is it producing all of the summaries needed?g
+        #Is it producing all of the summaries needed?
         Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
           values = [values.user_id, values.system_id, values.command_name]
           found_sums.include?(values).should eql true
@@ -469,6 +477,8 @@ describe Bookie::Database do
     describe "#summary" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
+        t = (Date.new(2012) + 3).to_time
+        Time.expects(:now).at_least(0).returns(t)
       end
       
       #To do: test inclusive ranges?
@@ -483,11 +493,7 @@ describe Bookie::Database do
             time_range = date_start.to_time ... date_end.to_time
             sum1 = Bookie::Database::JobSummary.summary(:range => range)
             sum2 = Bookie::Database::Job.summary(time_range)
-            sum1[:num_jobs].should eql sum2[:jobs].length
-            #To consider: what if sum2 has fields that sum1 doesn't?
-            sum1.each do |key, value|
-              sum2[key].should eql value unless key == :num_jobs
-            end
+            check_job_sums(sum1, sum2)
             Bookie::Database::JobSummary.summary(:range => time_range).should eql sum1
             date_end += 1
           end
@@ -500,12 +506,47 @@ describe Bookie::Database do
             range_short = time_start + offset_end ... time_end - offset_end
             sum1 = Bookie::Database::JobSummary.summary(:range => range_short)
             sum2 = Bookie::Database::Job.summary(range_short)
-            sum1[:num_jobs].should eql sum2[:jobs].length
-            sum1.each do |key, value|
-              sum2[key].should eql value unless key == :num_jobs
-            end
+            check_job_sums(sum1, sum2)
           end
         end
+      end
+      
+      def check_time_bounds
+        date_min = Date.new(2012)
+        date_max = date_min + 1
+        check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
+        Bookie::Database::JobSummary.order(:date).first.date.should eql date_min
+        Bookie::Database::JobSummary.order('date DESC').first.date.should eql date_max
+      end
+      
+      it "correctly finds the default time bounds" do
+        check_time_bounds
+        systems = Bookie::Database::System.active_systems
+        Bookie::Database::JobSummary.delete_all
+        begin
+          systems.each do |sys|
+            sys.end_time = Time.now
+            sys.save!
+          end
+          check_time_bounds
+        ensure
+          systems.each do |sys|
+            sys.end_time = nil
+            sys.save!
+          end
+        end
+        Bookie::Database::JobSummary.delete_all
+        empty = Bookie::Database::System.limit(0)
+        ActiveRecord::Relation.any_instance.expects(:'any?').at_least_once.returns(false)
+        ActiveRecord::Relation.any_instance.expects(:first).at_least_once.returns(nil)
+        sum = Bookie::Database::JobSummary.summary
+        sum.should eql ({
+          :num_jobs => 0,
+          :cpu_time => 0,
+          :memory_time => 0,
+          :successful => 0,
+        })
+        Bookie::Database::JobSummary.any?.should eql false
       end
       
       it "correctly handles filtered summaries" do
