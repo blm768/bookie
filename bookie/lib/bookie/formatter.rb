@@ -44,18 +44,18 @@ module Bookie
       ]
     
     ##
-    #Prints a summary of <tt>jobs</tt> and <tt>systems</tt> to <tt>io</tt>
+    #Prints a summary of <tt>jobs</tt> and <tt>systems</tt> to <tt>io</tt>, using cached data from <tt>summaries</tt>
     #
     #Use start_time and end_time to filter the jobs by a time range.
     #
-    #It is probably not a good idea to apply any time-based filters to <tt>jobs</tt> or <tt>systems</tt> beforehand.
+    #It is probably not a good idea to apply any time-based filters to the arguments beforehand.
     #
-    #Both <tt>jobs</tt> and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
+    #Both <tt>jobs</tt>, <tt>summaries</tt>, and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
-    def print_summary(jobs, systems, time_range = nil)
-      jobs_summary = jobs.summary(time_range)
-      num_jobs = jobs_summary[:jobs].length
+    def print_summary(jobs, summaries, systems, time_range = nil)
+      jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
+      num_jobs = jobs_summary[:num_jobs]
       systems_summary = systems.summary(time_range)
       cpu_time = jobs_summary[:cpu_time]
       avail_cpu_time = systems_summary[:avail_cpu_time]

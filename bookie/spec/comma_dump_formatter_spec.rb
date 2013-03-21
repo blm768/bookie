@@ -13,6 +13,7 @@ describe Bookie::Formatters::CommaDump do
     Bookie::Database::Migration.up
     Helpers::generate_database
     @jobs = Bookie::Database::Job
+    @summaries = Bookie::Database::JobSummary
   end
   
   before(:each) do
@@ -31,7 +32,7 @@ describe Bookie::Formatters::CommaDump do
   end
   
   it "correctly formats jobs" do
-    @formatter.print_jobs(@jobs.order(:start_time).limit(2))
+    @formatter.print_jobs(@jobs.order(:start_time).limit(2).all)
     @m.buf.should eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Exit code
 root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), 0
@@ -41,15 +42,15 @@ eos
   
   it "correctly formats summaries" do
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+    @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     @m.buf.should eql <<-eos
-Number of jobs, 5
-Total CPU time, 00:08:20
-Successful, 60.0000%
+Number of jobs, 24
+Total CPU time, 01:06:40
+Successful, 83.3333%
 Available CPU time, 140:00:00
-CPU time used, 0.0992%
+CPU time used, 0.7937%
 Available memory (average), 1750000 kb
-Memory used (average), 0.0014%
+Memory used (average), 0.0114%
 eos
   end
 end

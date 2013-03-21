@@ -22,6 +22,7 @@ describe Bookie::Formatter do
     Bookie::Formatter.any_instance.stubs(:require)
     @formatter = Bookie::Formatter.new(:mock)
     @jobs = Bookie::Database::Job
+    @summaries = Bookie::Database::JobSummary
   end
   
   after(:all) do
@@ -57,22 +58,22 @@ describe Bookie::Formatter do
   describe "#print_summary" do
     it "prints the correct summary fields" do
       Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
-      @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+      @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
       @formatter.flush
-      $field_values.should eql [5, "00:08:20", "60.0000%", "140:00:00", "0.0992%", "1750000 kb", "0.0014%"]
+      $field_values.should eql [24, "01:06:40", "83.3333%", "140:00:00", "0.7937%", "1750000 kb", "0.0114%"]
       Bookie::Database::System.expects(:summary).returns(
         :avail_cpu_time => 0,
         :avail_memory_time => 0,
         :avail_memory_avg => 0
       )
-      @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System, Time.local(2012) ... Time.local(2012))
+      @formatter.print_summary(@jobs, @summaries, Bookie::Database::System, Time.local(2012) ... Time.local(2012))
       @formatter.flush
       $field_values.should eql [0, "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
     end
     
     it "returns the summary objects" do
-      s1, s2 = @formatter.print_summary(@jobs.order(:start_time).limit(1), Bookie::Database::System.limit(0))
-      s1[:jobs].length.should eql 1
+      s1, s2 = @formatter.print_summary(@jobs, @summaries, Bookie::Database::System.limit(0))
+      s1[:num_jobs].should eql 40
       s2[:avail_memory_time].should eql 0
     end
   end

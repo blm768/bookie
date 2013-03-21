@@ -38,7 +38,7 @@ opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-data [options]"
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
-    #This is just here so it shows up in the message.
+    #This is just here for validation and so it shows up in the usage message.
   end
   
   opts.on('-d', '--details', "include full details") do
@@ -106,7 +106,7 @@ end
 
 formatter = Bookie::Formatter.new(output_type, filename)
 
-jobs_summary, systems_summary = formatter.print_summary(jobs, systems, t_min, t_max)
+jobs_summary, systems_summary = formatter.print_summary(jobs, summaries, systems, t_min, t_max)
 jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
-formatter.print_jobs(jobs_summary[:jobs]) if include_details
+formatter.print_jobs(jobs.all) if include_details
 formatter.flush

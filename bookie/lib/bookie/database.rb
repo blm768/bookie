@@ -332,6 +332,7 @@ module Bookie
         successful = 0
         
         #Could there be partial days at the beginning/end?
+        date_range = range
         unless range.begin.kind_of?(Date) && range.end.kind_of?(Date)
           date_begin = range.begin.to_date
           unless date_begin.to_time == range.begin
@@ -358,18 +359,17 @@ module Bookie
             end
           end
           
-          range = date_begin ... date_end
+          date_range = date_begin ... date_end
         end
         
-        date = range.begin
-        while range.cover?(date) do
+        date = date_range.begin
+        while date_range.cover?(date) do
           summaries = by_date(date)
           #To consider: what if there aren't any summaries to be made? Will we continue to run the query each time?
           if summaries.empty?
             summarize(date)
             summaries = by_date(date)
           end
-          #raise summaries.to_sql
           summaries.all.each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time

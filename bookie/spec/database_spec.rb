@@ -33,6 +33,7 @@ module Helpers
   def check_job_sums(js_sum, j_sum)
     js_sum[:num_jobs].should eql j_sum[:jobs].length
     [:cpu_time, :memory_time, :successful].each do |field|
+      puts field
       js_sum[field].should eql j_sum[field]
     end
     true
@@ -499,13 +500,15 @@ describe Bookie::Database do
           end
           date_start += 1
         end
+        date_start = Date.new(2012)
         time_start = date_start.to_time
         time_end = (date_start + 1).to_time
-        [0, 100].each do |offset_begin|
-          [0, 100].each do |offset_end|
-            range_short = time_start + offset_end ... time_end - offset_end
-            sum1 = Bookie::Database::JobSummary.summary(:range => range_short)
-            sum2 = Bookie::Database::Job.summary(range_short)
+        [0, -7200, 7200].each do |offset_begin|
+          [0, -7200, 7200].each do |offset_end|
+            range_offset = time_start + offset_end ... time_end - offset_end
+            sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
+            sum2 = Bookie::Database::Job.summary(range_offset)
+            puts sum1[:num_jobs]
             check_job_sums(sum1, sum2)
           end
         end
