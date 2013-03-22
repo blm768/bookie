@@ -33,7 +33,6 @@ module Helpers
   def check_job_sums(js_sum, j_sum)
     js_sum[:num_jobs].should eql j_sum[:jobs].length
     [:cpu_time, :memory_time, :successful].each do |field|
-      puts field
       js_sum[field].should eql j_sum[field]
     end
     true
@@ -467,7 +466,7 @@ describe Bookie::Database do
           sum.successful.should eql sum_2[:successful]
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
-        #Is it producing all of the summaries needed?
+        #Is it producing all of the values needed?
         Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
           values = [values.user_id, values.system_id, values.command_name]
           found_sums.include?(values).should eql true
@@ -508,7 +507,6 @@ describe Bookie::Database do
             range_offset = time_start + offset_end ... time_end - offset_end
             sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
             sum2 = Bookie::Database::Job.summary(range_offset)
-            puts sum1[:num_jobs]
             check_job_sums(sum1, sum2)
           end
         end

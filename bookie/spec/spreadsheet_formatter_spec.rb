@@ -95,13 +95,13 @@ describe Bookie::Formatters::Spreadsheet do
     w.column(0).width.should_not eql nil
     w.last_row_index.should eql 6
     w.mock_rows.should eql [
-      ["Number of jobs", 5],
-      ["Total CPU time", "00:08:20"],
-      ["Successful", "60.0000%"],
+      ["Number of jobs", 40],
+      ["Total CPU time", "01:06:40"],
+      ["Successful", "50.0000%"],
       ["Available CPU time", "140:00:00"],
-      ["CPU time used", "0.0992%"],
+      ["CPU time used", "0.7937%"],
       ["Available memory (average)", "1750000 kb"],
-      ["Memory used (average)", "0.0014%"],
+      ["Memory used (average)", "0.0114%"],
     ]
   end
   

@@ -337,10 +337,9 @@ module Bookie
           date_begin = range.begin.to_date
           unless date_begin.to_time == range.begin
             date_begin += 1
-            time_before_max = date_begin.to_time
+            time_before_max = [date_begin.to_time, range.end].min
             time_before_min = range.begin
-            time_before_range = time_before_min ... time_before_max
-            summary = jobs.summary(time_before_range)
+            summary = jobs.summary(time_before_min ... time_before_max)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
             successful += summary[:successful]
@@ -348,7 +347,7 @@ module Bookie
 
           date_end = range.end.to_date
           time_after_min = date_end.to_time
-          unless time_after_min < range.begin
+          unless time_after_min <= range.begin
             time_after_max = range.end
             time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
             unless time_after_range.empty?

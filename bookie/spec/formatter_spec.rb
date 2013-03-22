@@ -60,7 +60,7 @@ describe Bookie::Formatter do
       Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
       @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
       @formatter.flush
-      $field_values.should eql [24, "01:06:40", "83.3333%", "140:00:00", "0.7937%", "1750000 kb", "0.0114%"]
+      $field_values.should eql [40, "01:06:40", "50.0000%", "140:00:00", "0.7937%", "1750000 kb", "0.0114%"]
       Bookie::Database::System.expects(:summary).returns(
         :avail_cpu_time => 0,
         :avail_memory_time => 0,

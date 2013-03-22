@@ -13,6 +13,7 @@ describe Bookie::Formatters::Stdout do
     Bookie::Database::Migration.up
     Helpers::generate_database
     @jobs = Bookie::Database::Job
+    @summaries = Bookie::Database::JobSummary
   end
   
   before(:each) do
@@ -50,16 +51,16 @@ describe Bookie::Formatters::Stdout do
   
   it "correctly formats summaries" do
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-    @formatter.print_summary(@jobs.order(:start_time).limit(5), Bookie::Database::System)
+    @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     @formatter.flush
     @m.buf.should eql <<-eos
-Number of jobs:               5
-Total CPU time:               00:08:20
-Successful:                   60.0000%
+Number of jobs:               40
+Total CPU time:               01:06:40
+Successful:                   50.0000%
 Available CPU time:           140:00:00
-CPU time used:                0.0992%
+CPU time used:                0.7937%
 Available memory (average):   1750000 kb
-Memory used (average):        0.0014%
+Memory used (average):        0.0114%
 eos
   end
 end

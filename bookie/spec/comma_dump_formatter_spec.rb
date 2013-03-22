@@ -44,9 +44,9 @@ eos
     Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
     @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     @m.buf.should eql <<-eos
-Number of jobs, 24
+Number of jobs, 40
 Total CPU time, 01:06:40
-Successful, 83.3333%
+Successful, 50.0000%
 Available CPU time, 140:00:00
 CPU time used, 0.7937%
 Available memory (average), 1750000 kb
