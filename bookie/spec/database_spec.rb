@@ -445,6 +445,24 @@ describe Bookie::Database do
       end
     end
     
+    describe "#find_or_new" do
+      it "creates a summary if needed" do
+        Bookie::Database::JobSummary.delete_all
+        s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
+        s.persisted?.should eql false
+        s.num_jobs = 0
+        s.cpu_time = 0
+        s.memory_time = 0
+        s.successful = 0
+        s.save!
+      end
+      
+      it "uses the old summary if present" do
+        s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
+        s.persisted?.should eql true
+      end
+    end
+    
     describe "#summarize" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
@@ -460,10 +478,7 @@ describe Bookie::Database do
           sum.date.should eql Date.new(2012)
           jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
           sum_2 = jobs.summary(range)
-          sum.num_jobs.should eql sum_2[:jobs].length
-          sum.cpu_time.should eql sum_2[:cpu_time]
-          sum.memory_time.should eql sum_2[:memory_time]
-          sum.successful.should eql sum_2[:successful]
+          check_job_sums(sum, sum_2)
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
         #Is it producing all of the values needed?
@@ -504,7 +519,7 @@ describe Bookie::Database do
         time_end = (date_start + 1).to_time
         [0, -7200, 7200].each do |offset_begin|
           [0, -7200, 7200].each do |offset_end|
-            range_offset = time_start + offset_end ... time_end - offset_end
+            range_offset = time_start + offset_end ... time_end + offset_end
             sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
             sum2 = Bookie::Database::Job.summary(range_offset)
             check_job_sums(sum1, sum2)
@@ -541,7 +556,7 @@ describe Bookie::Database do
         ActiveRecord::Relation.any_instance.expects(:'any?').at_least_once.returns(false)
         ActiveRecord::Relation.any_instance.expects(:first).at_least_once.returns(nil)
         sum = Bookie::Database::JobSummary.summary
-        sum.should eql ({
+        sum.should eql({
           :num_jobs => 0,
           :cpu_time => 0,
           :memory_time => 0,
@@ -557,14 +572,15 @@ describe Bookie::Database do
           :command_name => 'vi',
         }
         filters.each do |filter, value|
+          $dbg = true
+          begin
           filter_sym = "by_#{filter}".intern
           jobs = Bookie::Database::Job.send(filter_sym, value)
           sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
           sum2 = jobs.summary
-          sum1[:num_jobs].should eql sum2[:jobs].length
-          #To consider: what if sum2 has fields that sum1 doesn't?
-          sum1.each do |key, value|
-            sum2[key].should eql value unless key == :num_jobs
+          check_job_sums(sum1, sum2)
+          ensure
+          $dbg = false
           end
         end
       end

@@ -287,10 +287,10 @@ module Bookie
       end
       
       def self.summarize(date)
-        jobs = Bookie::Database::Job
+        jobs = Job
         time_range = date.to_time ... (date + 1).to_time
-        jobs = jobs.by_time_range_inclusive(time_range)
-        value_sets = jobs.select('user_id, system_id, command_name').uniq
+        day_jobs = jobs.by_time_range_inclusive(time_range)
+        value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         value_sets.each do |set|
           summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
           summary = summary_jobs.summary(time_range)
@@ -307,7 +307,7 @@ module Bookie
       end
       
       def self.summary(opts = {})
-        jobs = opts[:jobs] || Bookie::Database::Job
+        jobs = opts[:jobs] || Job
         range = opts[:range]
         unless range
           end_time = nil
@@ -367,6 +367,7 @@ module Bookie
           #To consider: what if there aren't any summaries to be made? Will we continue to run the query each time?
           if summaries.empty?
             summarize(date)
+            #To consider: is this redundant?
             summaries = by_date(date)
           end
           summaries.all.each do |summary|

@@ -19,7 +19,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('activerecord')
   #For some reason, this is needed for Ruby 1.8.7 using RVM on CentOS.
   #To do: remove when no longer needed
-  gem.add_dependency('mysql2')
+  #gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
   gem.add_dependency('spreadsheet')
   gem.add_development_dependency('mocha')
