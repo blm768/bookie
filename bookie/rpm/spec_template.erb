@@ -1,0 +1,68 @@
+%define gem_name <%= gem_name %>
+
+Name:		rubygem-%{gem_name}
+Version:	<%= version %>
+Release:	1%{?dist}
+Summary:	<%= summary %>
+
+%define gem <%= gem %>
+
+Group:		Development/Libraries
+License:	<%= license %>
+URL:		  <%= url %>
+Source0:	<%= gem_file %>
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
+BuildRequires:	ruby-devel
+Requires:	rubygems
+<% if requires.length > 0 %>
+Requires:	<%= requires.join(", ") %>
+<% end %>
+
+%description
+<%= description %>
+
+%prep
+rm -rf %{name}
+mkdir %{name}
+%setup -q -D -T -n %{name}
+cp %{SOURCE0} .
+
+%define gem_dir /usr/lib/ruby/gems/1.8
+%define gem_instdir %{gem_dir}/gems/%{gem}
+
+%build
+mkdir -p ./%{gem_dir}
+
+export CONFIGURE_ARGS="--with-cflags='%{optflags}'"
+gem install -V \
+        --local \
+        --install-dir ./%{gem_dir} \
+        --bindir ./%{_bindir} \
+        --force \
+        --rdoc \
+        <%= gem_file %>
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}%{gem_instdir}
+
+cp -a ./%{gem_dir}/* %{buildroot}%{gem_dir}/
+
+rm %{buildroot}%{gem_dir}/bin/ruby_noexec_wrapper
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+%dir %{gem_dir}/doc/%{gem}
+%doc %{gem_dir}/doc/%{gem}/*
+%dir %{gem_instdir}
+%{gem_instdir}/*
+%{gem_instdir}/.*
+%{gem_dir}/specifications/%{gem}.gemspec
+%{gem_dir}/cache/%{gem}.gem
+
+%changelog
+
