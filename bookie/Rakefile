@@ -33,14 +33,14 @@ task :rpm do
     FileUtils.mkdir_p(dir)
   end
 
-  FileUtils.cp('rpm/pacct.spec', spec_dir)
+  FileUtils.cp('rpm/bookie_accounting.spec', spec_dir)
   FileUtils.cp(package, src_dir)
 
   rake_dir = Dir.pwd
 
   Dir.chdir(rpmbuild_dir)
 
-  system 'rpmbuild -ba SPECS/pacct.spec'
+  system 'rpmbuild -ba SPECS/bookie_accounting.spec'
 
   Dir.chdir(rake_dir)
 end
@@ -125,11 +125,18 @@ def build_rpms(modules_to_build)
     url = s.homepage
     summary = s.summary
     description = s.description
+    requires = []
     build_requires = []
-    requires = s.dependencies
-    requires.delete_if{ |d| /development\)/.match(d) }
-    puts requires
+    s.dependencies.each do |dep|
+      case dep.type
+      when :development
+        build_requires.push(dep)
+      else
+        requires.push(dep)
+      end
+    end
     requires.map!{ |r| "rubygem-#{r.name}" }
+    puts requires
     
     spec_filename = File.join(spec_dir, "rubygem-#{gem_name}.spec")
 
