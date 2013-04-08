@@ -539,6 +539,7 @@ describe Bookie::Database do
         check_time_bounds
         systems = Bookie::Database::System.active_systems
         Bookie::Database::JobSummary.delete_all
+        #Check the case where all systems are decommissioned.
         begin
           systems.each do |sys|
             sys.end_time = Time.now
@@ -553,6 +554,7 @@ describe Bookie::Database do
         end
         Bookie::Database::JobSummary.delete_all
         empty = Bookie::Database::System.limit(0)
+        #Check the case where there are no systems.
         ActiveRecord::Relation.any_instance.expects(:'any?').at_least_once.returns(false)
         ActiveRecord::Relation.any_instance.expects(:first).at_least_once.returns(nil)
         sum = Bookie::Database::JobSummary.summary
@@ -562,6 +564,7 @@ describe Bookie::Database do
           :memory_time => 0,
           :successful => 0,
         })
+        ActiveRecord::Relation.any_instance.unstub(:'any?')
         Bookie::Database::JobSummary.any?.should eql false
       end
       
@@ -572,16 +575,11 @@ describe Bookie::Database do
           :command_name => 'vi',
         }
         filters.each do |filter, value|
-          $dbg = true
-          begin
           filter_sym = "by_#{filter}".intern
           jobs = Bookie::Database::Job.send(filter_sym, value)
           sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
           sum2 = jobs.summary
           check_job_sums(sum1, sum2)
-          ensure
-          $dbg = false
-          end
         end
       end
       

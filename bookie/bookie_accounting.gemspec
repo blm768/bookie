@@ -4,6 +4,7 @@ require File.expand_path('../lib/bookie/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
+  gem.license       = "MIT"
   gem.description   = %q{A simple system to record and query process accounting records}
   gem.summary       = %q{A simple system to record and query process accounting records}
   gem.homepage      = "https://github.com/blm768/bookie/"

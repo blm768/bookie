@@ -276,7 +276,8 @@ module Bookie
       end
       
       def self.find_or_new(date, user_id, system_id, command_name)
-        summary = by_date(date).where(:user_id => user_id).where(:system_id => system_id).by_command_name(command_name).first
+        str = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).to_sql
+        summary = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).first
         summary ||= new(
           :date => date,
           :user_id => user_id,
@@ -288,6 +289,7 @@ module Bookie
       
       def self.summarize(date)
         jobs = Job
+        unscoped = self.unscoped
         time_range = date.to_time ... (date + 1).to_time
         day_jobs = jobs.by_time_range_inclusive(time_range)
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
@@ -295,7 +297,7 @@ module Bookie
           summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
           summary = summary_jobs.summary(time_range)
           Lock[:job_summaries].synchronize do
-            sum = JobSummary.find_or_new(date, set.user_id, set.system_id, set.command_name)
+            sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
             #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
             sum.num_jobs = summary[:jobs].length
             sum.cpu_time = summary[:cpu_time]
@@ -361,15 +363,12 @@ module Bookie
           date_range = date_begin ... date_end
         end
         
+        unscoped = self.unscoped
         date = date_range.begin
         while date_range.cover?(date) do
+          #To do: what if there aren't any summaries to be made? Will we just run summarize() each time?
+          summarize(date) if unscoped.by_date(date).empty?
           summaries = by_date(date)
-          #To consider: what if there aren't any summaries to be made? Will we continue to run the query each time?
-          if summaries.empty?
-            summarize(date)
-            #To consider: is this redundant?
-            summaries = by_date(date)
-          end
           summaries.all.each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time
@@ -524,6 +523,8 @@ Please make sure that all previous systems with this hostname have been marked a
       #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
       #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
       #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
+      #
+      #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
       #
       #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
       #(Current behavior is as if the range were always exclusive.)
