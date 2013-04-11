@@ -15,54 +15,25 @@ task :docs do
   system("rdoc rdoc lib")
 end
 
-desc "Build RPM"
-task :rpm do
-  require './lib/bookie/version.rb'
-
-  Rake::Task['build'].invoke
-
-  package = "pkg/bookie-#{Bookie::VERSION}.gem"
-
-  home_dir = Etc.getpwuid.dir
-
-  rpmbuild_dir = File.join(home_dir, 'rpmbuild')
-  spec_dir = File.join(rpmbuild_dir, 'SPECS')
-  src_dir = File.join(rpmbuild_dir, 'SOURCES')
-
-  [rpmbuild_dir, spec_dir, src_dir].each do |dir|
-    FileUtils.mkdir_p(dir)
-  end
-
-  FileUtils.cp('rpm/bookie_accounting.spec', spec_dir)
-  FileUtils.cp(package, src_dir)
-
-  rake_dir = Dir.pwd
-
-  Dir.chdir(rpmbuild_dir)
-
-  system 'rpmbuild -ba SPECS/bookie_accounting.spec'
-
-  Dir.chdir(rake_dir)
-end
-
-def get_gem_file(gem_name)
-  candidates = Dir.glob("#{gem_name}*.gem")
-  die "#{src_dir} has too many files that could be #{gem_name}; aborting" if candidates.length > 1
-  candidates[0]
-end
-
 desc "Build RPM and dependencies"
 task :rpm_deps do
   require 'erb'
   require 'yaml'
 
   build_rpms({
-    #'bookie_accounting' => {
-    #  :license => 'MIT',
-    #  :skip_deps => Set.new(['sqlite3']),
-    #},
+    'bookie_accounting' => {
+      :is_app => true,
+      :has_binaries => true,
+      :gem_file => "bookie_accounting-#{Bookie::VERSION}.gem",
+      :license => 'MIT',
+      :skip_deps => Set.new(['sqlite3']),
+    },
+    'bundler' => {
+
+    },
     'spreadsheet' => {
-       :license => 'GPL3',
+      :has_binaries => true,
+      :license => 'GPL3',
     },
     'ruby-ole' => {
       :license => 'MIT',
@@ -73,9 +44,13 @@ task :rpm_deps do
   })
 end
 
+def find_gem_file(gem_name)
+  Dir.glob("#{gem_name}-*.gem")[0]
+end
  
 def build_rpms(modules_to_build)
   this_dir = Dir.pwd
+  pkg_dir = File.join(this_dir, 'pkg')
 
   home_dir = Etc.getpwuid.dir
 
@@ -101,16 +76,21 @@ def build_rpms(modules_to_build)
     puts gem_name
 
     #Has the RPM already been built?
-    next if Dir.glob(File.join(rpm_dir, "*/rubygem-#{gem_name}-#{version}-*.rpm")).length > 0
+    next if Dir.glob(File.join(rpm_dir, "*/(rubygem-)?#{gem_name}-#{version}-*.rpm")).length > 0
     
     ruby_version = RUBY_VERSION.split('.')[0 .. 1].join('.')
 
     #Get the gem.
     Dir.chdir(src_dir)
-    gem_file = get_gem_file(gem_name)
-    #To do: handle old versions of gems existing in src_dir
-    system("gem fetch #{gem_name} -v #{version}") unless gem_file && File.exists?(gem_file)
-    gem_file ||= get_gem_file(gem_name)
+    gem_file = extra_data[:gem_file]
+    if gem_file
+      FileUtils.cp(File.join(pkg_dir, gem_file), '.')
+    else
+      gem_file = find_gem_file(gem_name)
+      #To do: handle old versions of gems existing in src_dir
+      system("gem fetch #{gem_name} -v #{version}") unless gem_file && File.exists?(gem_file)
+      gem_file ||= find_gem_file(gem_name)
+    end
     fail "Unable to find gem file for #{gem_name}" unless gem_file
     gem = File.basename(gem_file, '.gem')
     s = YAML.load(`gem spec #{gem_file}`)
@@ -136,12 +116,24 @@ def build_rpms(modules_to_build)
       end
     end
     requires.map!{ |r| "rubygem-#{r.name}" }
-    puts requires
     
-    spec_filename = File.join(spec_dir, "rubygem-#{gem_name}.spec")
+    is_app = extra_data[:is_app]
+    has_binaries = extra_data[:has_binaries]
+
+    if is_app
+      spec_filename = "#{gem_name}.spec"
+    else
+      spec_filename = "rubygem-#{gem_name}.spec"
+    end
+    spec_filename = File.join(spec_dir, spec_filename)
 
     File.open(spec_filename, "w") do |file|
-      file.write(template.result(binding))
+      template_filename = File.join(this_dir, "rpm/#{gem_name}.spec.erb")
+      if File.exists?(template_filename)
+         file.write(ERB.new(File.read(template_filename)).result(binding))
+      else
+        file.write(template.result(binding))
+      end
     end
 
     msg = `rpmbuild -bb #{spec_filename}`

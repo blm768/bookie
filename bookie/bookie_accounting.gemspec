@@ -16,7 +16,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Bookie::VERSION
   
-  gem.add_dependency('json')
   gem.add_dependency('activerecord')
   #For some reason, this is needed for Ruby 1.8.7 using RVM on CentOS.
   #To do: remove when no longer needed

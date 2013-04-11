@@ -1,6 +1,10 @@
 %define gem_name <%= gem_name %>
 
+<% if is_app %>
+Name:   %{gem_name}
+<% else %>
 Name:		rubygem-%{gem_name}
+<% end %>
 Version:	<%= version %>
 Release:	1%{?dist}
 Summary:	<%= summary %>
@@ -28,7 +32,7 @@ mkdir %{name}
 %setup -q -D -T -n %{name}
 cp %{SOURCE0} .
 
-%define gem_dir /usr/lib/ruby/gems/1.8
+%define gem_dir /usr/lib/ruby/gems/<%= ruby_version %>
 %define gem_instdir %{gem_dir}/gems/%{gem}
 
 %build
@@ -47,6 +51,10 @@ gem install -V \
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{gem_instdir}
 
+<% if has_binaries %>
+cp -a ./%{_bindir} %{buildroot}%{_bindir}/
+<% end %>
+
 cp -a ./%{gem_dir}/* %{buildroot}%{gem_dir}/
 
 rm %{buildroot}%{gem_dir}/bin/ruby_noexec_wrapper
@@ -59,6 +67,10 @@ rm -rf %{buildroot}
 %dir %{gem_dir}/doc/%{gem}
 %doc %{gem_dir}/doc/%{gem}/*
 %dir %{gem_instdir}
+<% if has_binaries %>
+%{_bindir}/*
+<% end %>
+#{gem_dir}/bin/ruby_noexec_wrapper
 %{gem_instdir}/*
 %{gem_instdir}/.*
 %{gem_dir}/specifications/%{gem}.gemspec
