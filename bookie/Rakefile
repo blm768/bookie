@@ -15,7 +15,7 @@ task :docs do
   system("rdoc rdoc lib")
 end
 
-desc "Build RPM and dependencies"
+desc "Build RPM and dependencies (intended for IBEST internal use)"
 task :rpm_deps do
   require 'erb'
   require 'yaml'
