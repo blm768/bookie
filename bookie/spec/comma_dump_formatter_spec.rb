@@ -34,9 +34,9 @@ describe Bookie::Formatters::CommaDump do
   it "correctly formats jobs" do
     @formatter.print_jobs(@jobs.order(:start_time).limit(2).all)
     @m.buf.should eql <<-eos
-User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Exit code
-root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), 0
-test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 200kb (avg), 1
+User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Command, Exit code
+root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), vi, 0
+test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 200kb (avg), emacs, 1
 eos
   end
   

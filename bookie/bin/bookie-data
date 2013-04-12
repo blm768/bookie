@@ -17,8 +17,7 @@ include_details = false
 output_type = :stdout
 filename = nil
 
-t_min = nil
-t_max = nil
+time_range = nil
 
 #Process arguments
 
@@ -78,8 +77,7 @@ opts = OptionParser.new do |opts|
   end
   
   opts.on('-r', '--time BEGIN,END', Array, "filter by a time range") do |t|
-    t_min = Time.parse(t[0])
-    t_max = Time.parse(t[1])
+    time_range = Time.parse(t[0]) ... Time.parse(t[1])
   end
   
   opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME",
@@ -106,7 +104,7 @@ end
 
 formatter = Bookie::Formatter.new(output_type, filename)
 
-jobs_summary, systems_summary = formatter.print_summary(jobs, summaries, systems, t_min, t_max)
-jobs = jobs.by_time_range_inclusive(t_min, t_max) if t_min
+jobs_summary, systems_summary = formatter.print_summary(jobs, summaries, systems, time_range)
+jobs = jobs.by_time_range_inclusive(time_range) if time_range
 formatter.print_jobs(jobs.all) if include_details
 formatter.flush

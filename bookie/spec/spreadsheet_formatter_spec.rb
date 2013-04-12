@@ -83,9 +83,9 @@ describe Bookie::Formatters::Spreadsheet do
     end
     w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
     w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
-      "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 0]
+      "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'vi', 0]
     w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
-      "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 1]
+      "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'emacs', 1]
   end
   
   it "correctly formats summaries" do

@@ -10,7 +10,7 @@ module Bookie
         @workbook = ::Spreadsheet::Workbook.new
       end
       
-      #Actual printing is delayed until object finalization due to the workings of the Spreadsheet gem.
+      #Actual file write is delayed until do_flush() due to the workings of the Spreadsheet gem.
       def do_print_summary(field_values)
         s = @workbook.worksheet("Summary") || @workbook.create_worksheet(:name => "Summary")
         
@@ -26,7 +26,7 @@ module Bookie
         s = @workbook.worksheet("Details") || @workbook.create_worksheet(:name => "Details")
         
         s.row(0).concat(Formatter::DETAILS_FIELD_LABELS)
-        (0 .. (Formatter::DETAILS_FIELD_LABELS.length - 1)).step do |i|
+        (0 ... Formatter::DETAILS_FIELD_LABELS.length).step do |i|
           s.column(i).width = 20
         end
         

@@ -40,7 +40,7 @@ module Bookie
       #An array containing the labels for each field in a details table
       DETAILS_FIELD_LABELS = [
         'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
-        'CPU time', 'Memory usage', 'Exit code'
+        'CPU time', 'Memory usage', 'Command', 'Exit code'
       ]
     
     ##
@@ -123,6 +123,7 @@ module Bookie
           Formatter.format_duration(job.end_time - job.start_time),
           Formatter.format_duration(job.cpu_time),
           "#{job.memory}kb#{memory_stat_type}",
+          job.command_name,
           job.exit_code
         ]
       end

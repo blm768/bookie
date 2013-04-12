@@ -36,17 +36,12 @@ describe Bookie::Formatters::Stdout do
   it "correctly formats jobs" do
     @formatter.print_jobs(@jobs.order(:start_time).limit(2))
     @formatter.flush
-    @m.buf.should eql \
-      "User            Group           System               System type          Start " +
-      "time                 End time                   Wall time    CPU time     Memory" +
-      " usage         Exit code  \n----------------------------------------------------" +
-      "--------------------------------------------------------------------------------" +
-      "------------------------------------------------------\nroot            root    " +
-      "        test1                Standalone           2012-01-01 00:00:00        201" +
-      "2-01-01 01:00:00        01:00:00     00:01:40     200kb (avg)          0        " +
-      "  \ntest            default         test1                Standalone           20" +
-      "12-01-01 01:00:00        2012-01-01 02:00:00        01:00:00     00:01:40     20" +
-      "0kb (avg)          1          \n"
+    @m.buf.should eql <<-eos
+User            Group           System               System type          Start time                 End time                   Wall time    CPU time     Memory usage         Command              Exit code  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+root            root            test1                Standalone           2012-01-01 00:00:00        2012-01-01 01:00:00        01:00:00     00:01:40     200kb (avg)          vi                   0          
+test            default         test1                Standalone           2012-01-01 01:00:00        2012-01-01 02:00:00        01:00:00     00:01:40     200kb (avg)          emacs                1          
+eos
   end
   
   it "correctly formats summaries" do
