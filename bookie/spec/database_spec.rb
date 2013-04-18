@@ -487,6 +487,17 @@ describe Bookie::Database do
           found_sums.include?(values).should eql true
         end
       end
+      
+      it "creates dummy summaries when there are no jobs" do
+        d = Date.new(2012) + 5
+        Bookie::Database::JobSummary.summarize(d)
+        sums = Bookie::Database::JobSummary.by_date(d).all
+        sums.length.should eql 1
+        sum = sums[0]
+        sum.num_jobs.should eql 0
+        sum.cpu_time.should eql 0
+        sum.memory_time.should eql 0
+      end
     end
   
     describe "#summary" do
@@ -527,28 +538,30 @@ describe Bookie::Database do
         end
       end
       
-      def check_time_bounds
+      def check_time_bounds(date_max = Date.new(2012) + 1)
         date_min = Date.new(2012)
-        date_max = date_min + 1
         check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
         Bookie::Database::JobSummary.order(:date).first.date.should eql date_min
         Bookie::Database::JobSummary.order('date DESC').first.date.should eql date_max
       end
       
       it "correctly finds the default time bounds" do
-        check_time_bounds
+        #The last daily summary in this range isn't cached because Time.now could be partway through a day.
+        check_time_bounds(Time.now.to_date - 1)
         systems = Bookie::Database::System.active_systems
         Bookie::Database::JobSummary.delete_all
         #Check the case where all systems are decommissioned.
+        end_times = {}
         begin
           systems.each do |sys|
+            end_times[sys.id] = sys.end_time
             sys.end_time = Time.now
             sys.save!
           end
           check_time_bounds
         ensure
           systems.each do |sys|
-            sys.end_time = nil
+            sys.end_time = end_times[sys.id]
             sys.save!
           end
         end

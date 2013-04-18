@@ -293,17 +293,29 @@ module Bookie
         time_range = date.to_time ... (date + 1).to_time
         day_jobs = jobs.by_time_range_inclusive(time_range)
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
-        value_sets.each do |set|
-          summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
-          summary = summary_jobs.summary(time_range)
+        if value_sets.empty?
+          #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
           Lock[:job_summaries].synchronize do
-            sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
-            #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
-            sum.num_jobs = summary[:jobs].length
-            sum.cpu_time = summary[:cpu_time]
-            sum.memory_time = summary[:memory_time]
-            sum.successful = summary[:successful]
+            sum = unscoped.find_or_new(date, User.select(:id).first.id, System.select(:id).first.id, '')
+            sum.num_jobs = 0
+            sum.cpu_time = 0
+            sum.memory_time = 0
+            sum.successful = 0
             sum.save!
+          end
+        else
+          value_sets.each do |set|
+            summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
+            summary = summary_jobs.summary(time_range)
+            Lock[:job_summaries].synchronize do
+              sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
+              #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
+              sum.num_jobs = summary[:jobs].length
+              sum.cpu_time = summary[:cpu_time]
+              sum.memory_time = summary[:memory_time]
+              sum.successful = summary[:successful]
+              sum.save!
+            end
           end
         end
       end
@@ -366,7 +378,6 @@ module Bookie
         unscoped = self.unscoped
         date = date_range.begin
         while date_range.cover?(date) do
-          #To do: what if there aren't any summaries to be made? Will we just run summarize() each time?
           summarize(date) if unscoped.by_date(date).empty?
           summaries = by_date(date)
           summaries.all.each do |summary|
