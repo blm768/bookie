@@ -160,6 +160,26 @@ describe Bookie::Sender do
     sums.length.should eql 1
     sums[0].system.should eql systems[1]
   end
+  
+  #To do: expand? (check for correct system selection, etc.?)
+  describe "#undo_send" do
+    it "removes the correct entries" do
+      Bookie::Database::Job.delete_all
+      @sender.send_data('snapshot/torque_large')
+      @sender.send_data('snapshot/torque')
+      @sender.undo_send('snapshot/torque_large')
+      
+      Bookie::Database::Job.all.length.should eql 1
+      job = Bookie::Database::Job.first
+      Bookie::Database::Job.delete_all
+      @sender.send_data('snapshot/torque')
+      job2 = Bookie::Database::Job.first
+      job2.id = job.id
+      job2.should eql job
+    end
+    
+    it "deletes cached summaries in the affected range"
+  end
 end
 
 describe Bookie::ModelHelpers do

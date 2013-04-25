@@ -777,12 +777,14 @@ Please make sure that all previous systems with this hostname have been marked a
             t.integer :memory, :null => false
             t.integer :exit_code, :null => false
           end
+          #To do: more indices?
           change_table :jobs do |t|
             t.index :user_id
             t.index :system_id
             t.index :command_name
             t.index :start_time
             t.index :end_time
+            t.index :exit_code
           end
         end
       

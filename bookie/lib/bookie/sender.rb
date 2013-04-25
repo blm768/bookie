@@ -37,6 +37,7 @@ module Bookie
         end_time = job.start_time + job.wall_time
         system = Bookie::Database::System.find_current(self, end_time)
         duplicate = system.jobs.find_by_end_time(end_time)
+        #To do: tighten conditions for duplicate detection?
         raise "Jobs already exist in the database for '#{filename}'." if duplicate
         time_min = job.start_time
         time_max = end_time
@@ -73,6 +74,54 @@ module Bookie
       date_max = time_max.to_date
       
       Database::JobSummary.by_system(system).where('date >= ? AND date <= ?', date_min, date_max).delete_all
+    end
+    
+    ##
+    #Undoes a previous send operation
+    def undo_send(filename)
+      raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
+      
+      system = nil
+      
+      time_min, time_max = nil
+      
+      #Grab data from the first job:  
+      each_job(filename) do |job|
+        next if filtered?(job)
+        end_time = job.start_time + job.wall_time
+        system = Bookie::Database::System.find_current(self, end_time)
+        time_min = job.start_time
+        time_max = end_time
+        break
+      end
+      
+      return unless time_min
+      
+      each_job(filename) do |job|
+        next if filtered?(job)
+        if system.end_time && job.end_time > system.end_time
+          system = Database::System.find_current(self, job.end_time)
+        end
+        #To consider: optimize this query?
+        model = Database::Job.where({
+          :start_time => job.start_time,
+          :wall_time => job.wall_time,
+          :system_id => system.id,
+          :command_name => job.command_name,
+          :cpu_time => job.cpu_time,
+          :memory => job.memory,
+          :exit_code => job.exit_code
+        }).by_user_name(job.user_name).by_group_name(job.group_name).first
+        break unless model
+        time_min = (model.start_time < time_min) ? model.start_time : time_min
+        time_max = (model.end_time > time_max) ? model.end_time : time_max
+        model.delete
+      end
+      
+      date_min = time_min.to_date
+      date_max = time_max.to_date
+      
+      Database::JobSummary.where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end
     
     ##

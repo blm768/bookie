@@ -18,6 +18,7 @@ class JobsController < ApplicationController
 
   def index
     jobs = Bookie::Database::Job
+    summaries = Bookie::Database::JobSummary
     systems = Bookie::Database::System
         
     summary_start_time = nil
@@ -34,22 +35,29 @@ class JobsController < ApplicationController
       case type
       when 'System'
         jobs = jobs.by_system_name(values[0])
+        summaries = summaries.by_system_name(values[0])
         systems = systems.by_name(values[0])
       when 'User'
         jobs = jobs.by_user_name(values[0])
+        summaries = summaries.by_user_name(values[0])
       when 'Group'
         jobs = jobs.by_group_name(values[0])
+        summaries = summaries.by_group_name(values[0])
       when 'System type'
         sys_type = Bookie::Database::SystemType.find_by_name(values[0])
         if sys_type
           jobs = jobs.by_system_type(sys_type)
+          summaries = summaries.by_system_type(sys_type)
           systems = systems.by_system_type(sys_type)
         else
-          jobs = jobs.limit(0)
-          systems = systems.limit(0)
+          jobs = jobs.where('false')
+          #To do: figure out how well this actually works.
+          summaries = summaries.where('false')
+          systems = systems.where('false')
         end
       when 'Command name'
         jobs = jobs.by_command_name(values[0])
+        summaries = summaries.by_command_name(values[0])
       when 'Time'
         start_time_text = values[0]
         end_time_text = values[1]
@@ -67,9 +75,11 @@ class JobsController < ApplicationController
       @prev_filters << [type, values]
     end
     
+    summary_time_range = summary_start_time ... summary_end_time
+    
     #To do: ordering?
-    @jobs_summary = jobs.summary(summary_start_time, summary_end_time)
-    @systems_summary = systems.summary(summary_start_time, summary_end_time)
+    @jobs_summary = summaries.summary(:jobs => jobs, summary_time_range)
+    @systems_summary = systems.summary(summary_time_range)
     
     
     avail_cpu_time = @systems_summary[:avail_cpu_time]
