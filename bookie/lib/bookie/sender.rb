@@ -70,10 +70,7 @@ module Bookie
       end
       
       #Clear out the summaries that would have been affected by the new data:
-      date_min = time_min.to_date
-      date_max = time_max.to_date
-      
-      Database::JobSummary.by_system(system).where('date >= ? AND date <= ?', date_min, date_max).delete_all
+      clear_summaries(time_min.to_date, time_max.to_date)
     end
     
     ##
@@ -118,10 +115,7 @@ module Bookie
         model.delete
       end
       
-      date_min = time_min.to_date
-      date_max = time_max.to_date
-      
-      Database::JobSummary.where('date >= ? AND date <= ?', date_min, date_max).delete_all
+      clear_summaries(time_min.to_date, time_max.to_date)
     end
     
     ##
@@ -137,6 +131,15 @@ module Bookie
     def filtered?(job)
       @config.excluded_users.include?job.user_name
     end
+    
+    #Used internally by #send_data and #undo_send
+    def clear_summaries(date_min, date_max)      
+      #Since joins don't mix with DELETE statements, we have to do this the hard way.
+      systems = Database::System.by_name(@config.hostname).all
+      systems.map!{ |sys| sys.id }
+      Database::JobSummary.where('job_summaries.system_id in (?)', systems).where('date >= ? AND date <= ?', date_min, date_max).delete_all
+    end
+    private :clear_summaries
   end
   
   ##

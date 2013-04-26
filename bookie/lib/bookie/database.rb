@@ -113,7 +113,11 @@ module Bookie
       ##
       #Finds all jobs whose running intervals overlap the given time range
       def self.by_time_range_inclusive(time_range)
-        where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
+        if time_range.empty?
+          where('1=0')
+        else
+          where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
+        end
       end
       
       ##

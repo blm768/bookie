@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'date'
 
-f = File.open('snapshot/torque_generated', 'w')
+f = File.open('../bookie/snapshot/torque_generated', 'w')
 
 count = 100
 
@@ -9,7 +9,7 @@ hostnames = ['test1', 'test2', 'test3']
 users = ['abc1', 'abc2', 'abc3']
 groups = ['group1', 'group2', 'group3']
 
-base_time = Date.new(2012, 1, 1).to_time.to_i
+base_time = Time.utc(2012).to_i
 
 rand = Random.new(Time.new.to_i)
 

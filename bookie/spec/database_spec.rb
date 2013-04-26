@@ -211,10 +211,12 @@ describe Bookie::Database do
         jobs.length.should eql 0
       end
       
-      it "correctly handles inverted ranges" do
-        t = Date.new(2012).to_time
-        jobs = @jobs.by_time_range_inclusive(t ... t - 1)
-        jobs.count.should eql 0
+      it "correctly handles empty/inverted ranges" do
+        t = Time.utc(2012)
+        (-1 .. 0).each do |offset|
+          jobs = @jobs.by_time_range_inclusive(t ... t + offset)
+          jobs.count.should eql 0
+        end
       end
     end
     
@@ -503,7 +505,7 @@ describe Bookie::Database do
     describe "#summary" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
-        t = (Date.new(2012) + 3).to_time
+        t = Time.utc(2012, 1, 3)
         Time.expects(:now).at_least(0).returns(t)
       end
       
@@ -597,7 +599,7 @@ describe Bookie::Database do
       end
       
       it "correctly handles inverted ranges" do
-        t = Date.new(2012).to_time
+        t = Time.utc(2012)
         Bookie::Database::JobSummary.summary(:range => t .. t - 1).should eql({
           :num_jobs => 0,
           :cpu_time => 0,
@@ -813,7 +815,7 @@ describe Bookie::Database do
       end
       
       it "correctly handles inverted ranges" do
-        t = Date.new(2012).to_time
+        t = Time.utc(2012)
         @systems.summary(t ... t - 1).should eql @summary[:empty]
         @systems.summary(t .. t - 1).should eql @summary[:empty]
       end

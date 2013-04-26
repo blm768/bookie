@@ -69,8 +69,10 @@ rm -rf %{buildroot}
 %doc %{gem_dir}/doc/%{gem}/*
 %dir %{gem_instdir}
 <% if has_binaries %>
+%attr(700,root,root)
 %{_bindir}/*
 <% end %>
+%attr(600,root,root)
 /etc/bookie/config.json
 %{gem_instdir}/*
 %{gem_instdir}/.*

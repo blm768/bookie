@@ -18,6 +18,7 @@ require 'bookie/sender'
 config_file = '/etc/bookie/config.json'
 will_create = false
 will_decommission = false
+will_undo = false
 system_start_time = nil
 system_hostname = nil
 system_end_time = nil
@@ -27,6 +28,10 @@ opts = OptionParser.new do |opts|
   
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
     config_file = file
+  end
+  
+  opts.on('-u', '--undo', String, "undo a previous send operation (file must be specified)") do
+    will_undo = true
   end
   
   opts.on("--create [TIME]",
@@ -59,7 +64,11 @@ fail("No operation specified") unless filename || will_create || will_decommissi
 
 if filename
   sender = Bookie::Sender.new(config)
-  sender.send_data(filename)
+  if will_undo
+    sender.undo_send(filename)
+  else
+    sender.send_data(filename)
+  end
 end
 
 if will_decommission
