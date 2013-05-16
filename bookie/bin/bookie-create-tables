@@ -33,7 +33,7 @@ config = Bookie::Config.new(config_file)
 config.connect
 
 if drop
-  STDOUT.write "Are you sure? This will destroy all tables in the database. "
+  STDOUT.write "Are you sure? This will destroy all tables in the database. (YES/NO): "
   response = nil
   until response
     response = STDIN.gets.chomp

@@ -821,10 +821,10 @@ Please make sure that all previous systems with this hostname have been marked a
             t.string :command_name, :null => false
             t.integer :cpu_time, :null => false
             t.integer :memory_time, :null => false
+            #To do: change semantics and remove?
             t.integer :successful, :null => false
           end
           change_table :job_summaries do |t|
-            #To consider: reorder for optimum efficiency?
             t.index [:date, :user_id, :system_id, :command_name], :unique => true, :name => 'identity'
             t.index :command_name
             t.index :date
@@ -887,6 +887,8 @@ Please make sure that all previous systems with this hostname have been marked a
     end
   end
 end
+
+#To do: move?
 
 ##
 #Reopened to add some useful methods
