@@ -383,7 +383,6 @@ module Bookie
         unless time_after_min <= range.begin
           time_after_max = range.end
           time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
-          puts "time_after_range: #{time_after_range.inspect}"
           unless time_after_range.empty?
             summary = jobs.summary(time_after_range)
             cpu_time += summary[:cpu_time]
