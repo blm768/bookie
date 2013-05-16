@@ -499,13 +499,24 @@ describe Bookie::Database do
         sum.num_jobs.should eql 0
         sum.cpu_time.should eql 0
         sum.memory_time.should eql 0
+
+        #Check the case where there are no users or no systems:
+        Bookie::Database::JobSummary.delete_all
+        [Bookie::Database::User, Bookie::Database::System].each do |klass|
+          #This will cause nested transactions, but we *should* be OK.
+          Bookie::Database::JobSummary.transaction do
+            klass.delete_all
+            Bookie::Database::JobSummary.summarize(d)
+            Bookie::Database::JobSummary.by_date(d).count.should eql 0
+            raise ActiveRecord::Rollback
+          end
+        end
       end
     end
   
     describe "#summary" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
-		#To do: stop messing with Time.now? (could be rather confusing to the reader...)
         t = Time.utc(2012, 1, 3)
         Time.expects(:now).at_least(0).returns(t)
       end

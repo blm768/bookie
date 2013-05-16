@@ -310,13 +310,12 @@ module Bookie
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
           user = User.select(:id).first
-          group = Group.select(:id).first
-          #If there are no users, we can't create the dummy summary, so just return.
-          #To do: unit test.
-          return unless user
+          system = System.select(:id).first
+          #If there are no users or no systems, we can't create the dummy summary, so just return.
+          return unless user && system
           #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
           Lock[:job_summaries].synchronize do
-            sum = unscoped.find_or_new(date, User.select(:id).first.id, System.select(:id).first.id, '')
+            sum = unscoped.find_or_new(date, user.id, system.id, '')
             sum.num_jobs = 0
             sum.cpu_time = 0
             sum.memory_time = 0
@@ -561,6 +560,7 @@ Please make sure that all previous systems with this hostname have been marked a
       #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
       #(Current behavior is as if the range were always exclusive.)
       def self.summary(time_range = nil)
+        #To do: use something like Time.current?
         current_time = Time.now
         #Sums that are actually returned
         avail_cpu_time = 0
