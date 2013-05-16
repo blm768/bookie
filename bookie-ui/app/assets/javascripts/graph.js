@@ -1,3 +1,6 @@
+//To do: figure out how time zones will work.
+
+
 function formatPercent(value) {
   return Math.floor(value * 100) + '%'
 }
@@ -19,6 +22,8 @@ var MSECS_PER_DAY = 24 * 3600 * 1000
 var MAX_CONCURRENT_REQUESTS = 10
 
 var date_start, date_end
+
+var active_requests = {}
 
 function initControls() {
   var dateBoxes = $('#date_range').children('.date_box')
@@ -106,6 +111,7 @@ function addGraph(type) {
     {
       xaxis: {
         mode: "time",
+		timezone: "browser",
         minTickSize: [1, "day"],
       },
       yaxis: {
@@ -135,7 +141,8 @@ function getSummary(day, params) {
   }
   queryParams[0] += 'Time'
   queryParams[1] += start + ',' + end
-  $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
+  request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
+  	delete active_requests[request]
     addPoint(day, data)
     var next_date = new Date(day)
     next_date.setDate(next_date.getDate() + MAX_CONCURRENT_REQUESTS)
@@ -143,6 +150,7 @@ function getSummary(day, params) {
       getSummary(next_date, params)
     }
   })
+  active_requests[request] = true
 }
 
 var plots = {}
@@ -157,13 +165,21 @@ function addPoint(date, summary) {
 }
 
 function resetPoints() {
+  //Cancel all active requests.
+  //To do: make sure no requests are still wandering in.
+  for(var request in active_requests) {
+    request.abort()
+  }
+  active_requests = {}
+
   for(type in PLOT_TYPES) {
     plot_data[type] = []
   }
   
   var end = new Date(date_end)
   end.setDate(end.getDate() - 1)
-  
+
+ 
   //Currently broken
   /*$('.graph').each(function() {
     var graph = $(this)
@@ -173,6 +189,12 @@ function resetPoints() {
     xaxis.max = end.valueOf()
   })*/
 }
+
+//Calculates the resolution value that should be used for the selected time interval
+function resolution() {
+
+}
+
 
 function drawPoints() {
   for(type in plot_data) {

@@ -239,11 +239,11 @@ describe Bookie::Database do
     
     describe "#summary" do
       before(:all) do
-        Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
-        @base_time = Time.local(2012)
+        Time.expects(:now).returns(Time.utc(2012) + 36000 * 4).at_least_once
+        @base_time = Time.utc(2012)
         @jobs = Bookie::Database::Job
         @length = @jobs.all.length
-        @summary = Helpers::create_summaries(@jobs, Time.local(2012))
+        @summary = Helpers::create_summaries(@jobs, Time.utc(2012))
       end
       
       it "produces correct summary totals" do
@@ -294,7 +294,7 @@ describe Bookie::Database do
             :system => Bookie::Database::System.first,
             :command_name => '',
             :cpu_time => 100,
-            :start_time => Time.local(2013),
+            :start_time => Time.utc(2013),
             :wall_time => 3600 * 24 * 2,
             :memory => 10000,
             :exit_code => 0
@@ -318,7 +318,7 @@ describe Bookie::Database do
         :system => Bookie::Database::System.first,
         :command_name => '',
         :cpu_time => 100,
-        :start_time => Time.local(2012),
+        :start_time => Time.utc(2012),
         :wall_time => 1000,
         :memory => 10000,
         :exit_code => 0
@@ -472,7 +472,7 @@ describe Bookie::Database do
       
       it "produces correct summaries" do
         d = Date.new(2012)
-        range = d.to_time ... (d + 1).to_time
+        range = d.to_utc_time ... (d + 1).to_utc_time
         Bookie::Database::JobSummary.summarize(d)
         sums = Bookie::Database::JobSummary.all
         found_sums = Set.new
@@ -483,7 +483,7 @@ describe Bookie::Database do
           check_job_sums(sum, sum_2)
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
-        #Is it producing all of the values needed?
+        #Is it catching all of the combinations of categories?
         Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
           values = [values.user_id, values.system_id, values.command_name]
           found_sums.include?(values).should eql true
@@ -505,6 +505,7 @@ describe Bookie::Database do
     describe "#summary" do
       before(:each) do
         Bookie::Database::JobSummary.delete_all
+		#To do: stop messing with Time.now? (could be rather confusing to the reader...)
         t = Time.utc(2012, 1, 3)
         Time.expects(:now).at_least(0).returns(t)
       end
@@ -512,24 +513,21 @@ describe Bookie::Database do
       #To do: test inclusive ranges?
       it "produces correct summaries" do
         #To consider: flesh out some more?
-        date_start = Date.new(2012)
-        date_end = date_start
-        date_bound = date_start + 3
-        while date_start < date_bound
-          while date_end < date_bound
-            range = date_start ... date_end
-            time_range = date_start.to_time ... date_end.to_time
-            sum1 = Bookie::Database::JobSummary.summary(:range => range)
+        time_start = Time.utc(2012)
+        time_end = time_start
+        time_bound = time_start + 3.days
+        while time_start < time_bound
+          while time_end < time_bound
+            time_range = time_start ... time_end
+            sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
             sum2 = Bookie::Database::Job.summary(time_range)
             check_job_sums(sum1, sum2)
-            Bookie::Database::JobSummary.summary(:range => time_range).should eql sum1
-            date_end += 1
+            time_end += 1.days
           end
-          date_start += 1
+          time_start += 1.days
         end
-        date_start = Date.new(2012)
-        time_start = date_start.to_time
-        time_end = (date_start + 1).to_time
+        time_start = Time.utc(2012)
+        time_end = time_start + 1.days
         [0, -7200, 7200].each do |offset_begin|
           [0, -7200, 7200].each do |offset_end|
             range_offset = time_start + offset_end ... time_end + offset_end
@@ -540,16 +538,16 @@ describe Bookie::Database do
         end
       end
       
-      def check_time_bounds(date_max = Date.new(2012) + 1)
-        date_min = Date.new(2012)
+      def check_time_bounds(time_max = Time.utc(2012) + 1.days)
+        time_min = Time.utc(2012)
         check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
-        Bookie::Database::JobSummary.order(:date).first.date.should eql date_min
-        Bookie::Database::JobSummary.order('date DESC').first.date.should eql date_max
+        Bookie::Database::JobSummary.order(:date).first.date.should eql time_min.to_date
+        Bookie::Database::JobSummary.order('date DESC').first.date.should eql time_max.utc.to_date
       end
       
       it "correctly finds the default time bounds" do
         #The last daily summary in this range isn't cached because Time.now could be partway through a day.
-        check_time_bounds(Time.now.to_date - 1)
+        check_time_bounds
         systems = Bookie::Database::System.active_systems
         Bookie::Database::JobSummary.delete_all
         #Check the case where all systems are decommissioned.
@@ -557,7 +555,7 @@ describe Bookie::Database do
         begin
           systems.each do |sys|
             end_times[sys.id] = sys.end_time
-            sys.end_time = Time.now
+            sys.end_time = Time.utc(2012) + 2.days
             sys.save!
           end
           check_time_bounds
@@ -610,8 +608,15 @@ describe Bookie::Database do
       
       it "caches summaries" do
         Bookie::Database::JobSummary.summary
+        Bookie::Database::JobSummary.expects(:summarize).never
+        range = Time.utc(2012) ... Time.utc(2012) + 1.days
+        Bookie::Database::JobSummary.summary(:range => range)
+      end
+
+      it "uses the cached summaries" do
+        Bookie::Database::JobSummary.summary
         Bookie::Database::Job.expects(:summary).never
-        range = Date.new(2012) ... Date.new(2012) + 1
+        range = Time.utc(2012) ... Time.utc(2012) + 1.days
         Bookie::Database::JobSummary.summary(:range => range)
       end
     end
@@ -627,7 +632,7 @@ describe Bookie::Database do
         :memory_time => 1000000,
         :successful => 1,
       }
-      
+
       sum = Bookie::Database::JobSummary.new(fields)
       sum.valid?.should eql true
       
@@ -759,11 +764,11 @@ describe Bookie::Database do
     
     describe "#summary" do
       before(:all) do
-        Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
-        @base_time = Time.local(2012)
+        Time.expects(:now).returns(Time.utc(2012) + 3600 * 40).at_least_once
+        @base_time = Time.utc(2012)
         @systems = Bookie::Database::System
-        @summary = Helpers::create_summaries(@systems, Time.local(2012))
-        @summary_wide = @systems.summary(Time.local(2012) - 3600 ... Time.local(2012) + 3600 * 40 + 3600)
+        @summary = Helpers::create_summaries(@systems, Time.utc(2012))
+        @summary_wide = @systems.summary(Time.utc(2012) - 3600 ... Time.utc(2012) + 3600 * 40 + 3600)
       end
       
       it "produces correct summaries" do
@@ -800,7 +805,7 @@ describe Bookie::Database do
           end
           summary_all_systems_ended = @systems.summary()
           summary_all_systems_ended.should eql @summary[:all]
-          summary_all_systems_ended = @systems.summary(Time.local(2012) ... Time.now + 3600)
+          summary_all_systems_ended = @systems.summary(Time.utc(2012) ... Time.now + 3600)
           s2 = @summary[:all].dup
           s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
           summary_all_systems_ended.should eql s2
@@ -840,7 +845,7 @@ describe Bookie::Database do
       it "finds the correct system" do
         Bookie::Database::System.find_current(@sender_2).id.should eql 2
         Bookie::Database::System.find_current(@sender_2, Time.now).id.should eql 2
-        Bookie::Database::System.find_current(@sender_1, Date.new(2012, 1, 1).to_time).id.should eql 1
+        Bookie::Database::System.find_current(@sender_1, Time.utc(2012)).id.should eql 1
       end
       
       it "correctly detects the lack of a matching system" do
@@ -891,7 +896,7 @@ describe Bookie::Database do
         :cores => 2,
         :memory => 1000000,
         :system_type => Bookie::Database::SystemType.first,
-        :start_time => Time.local(2012)
+        :start_time => Time.utc(2012)
       }
       
       Bookie::Database::System.new(fields).valid?.should eql true
@@ -916,7 +921,7 @@ describe Bookie::Database do
       end
       
       system = Bookie::Database::System.new(fields)
-      system.end_time = Time.local(2012)
+      system.end_time = Time.utc(2012)
       system.valid?.should eql true
       system.end_time += 5
       system.valid?.should eql true

@@ -1,3 +1,5 @@
+#To do: document all uses of Lock#synchronize?
+
 require 'bookie/config'
 
 require 'active_record'
@@ -241,7 +243,7 @@ module Bookie
       belongs_to :user
       belongs_to :system
 
-	  attr_accessible :date, :user_id, :system_id, :command_name, :num_jobs, :successful, :cpu_time, :memory_time
+      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :num_jobs, :successful, :cpu_time, :memory_time
       
       def self.by_date(date)
         where('job_summaries.date = ?', date)
@@ -293,18 +295,25 @@ module Bookie
         summary
       end
       
+      ##
+      #Create a cached summary for the given date
+      #
+      #The date is interpreted as being in UTC.
+      #
+      #If there is nothing to summarize, a dummy summary will be created.
       def self.summarize(date)
         jobs = Job
         unscoped = self.unscoped
-        time_range = date.to_time ... (date + 1).to_time
+        time_min = date.to_utc_time 
+        time_range = time_min ... time_min + 1.days
         day_jobs = jobs.by_time_range_inclusive(time_range)
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
-		  user = User.select(:id).first
-		  group = Group.select(:id).first
-		  #If there are no users, we can't create the dummy summary, so just return.
-		  #To do: unit test.
-		  return unless user
+          user = User.select(:id).first
+          group = Group.select(:id).first
+          #If there are no users, we can't create the dummy summary, so just return.
+          #To do: unit test.
+          return unless user
           #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
           Lock[:job_summaries].synchronize do
             sum = unscoped.find_or_new(date, User.select(:id).first.id, System.select(:id).first.id, '')
@@ -346,41 +355,44 @@ module Bookie
             first_started_system = System.order(:start_time).first
             range = first_started_system.start_time ... end_time
           else
-            range = Date.new ... Date.new
+            range = Time.new ... Time.new
           end
         end
         range = range.normalized
         
+        num_jobs = 0
         cpu_time = 0
         memory_time = 0
+        successful = 0
         
-        #Could there be partial days at the beginning/end?
-        date_range = range
-        unless range.begin.kind_of?(Date) && range.end.kind_of?(Date)
-          date_begin = range.begin.to_date
-          unless date_begin.to_time == range.begin
-            date_begin += 1
-            time_before_max = [date_begin.to_time, range.end].min
-            time_before_min = range.begin
-            summary = jobs.summary(time_before_min ... time_before_max)
+        #Is the beginning somewhere between days?
+        date_begin = range.begin.utc.to_date
+        unless date_begin.to_utc_time == range.begin
+          date_begin += 1
+          time_before_max = [date_begin.to_utc_time, range.end].min
+          time_before_min = range.begin
+          summary = jobs.summary(time_before_min ... time_before_max)
+          cpu_time += summary[:cpu_time]
+          memory_time += summary[:memory_time]
+          successful += summary[:successful]
+        end
+
+        #Is the end somewhere between days?
+        date_end = range.end.utc.to_date
+        time_after_min = date_end.to_utc_time
+        unless time_after_min <= range.begin
+          time_after_max = range.end
+          time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
+          puts "time_after_range: #{time_after_range.inspect}"
+          unless time_after_range.empty?
+            summary = jobs.summary(time_after_range)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
+            successful += summary[:successful]
           end
-
-          date_end = range.end.to_date
-          time_after_min = date_end.to_time
-          unless time_after_min <= range.begin
-            time_after_max = range.end
-            time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
-            unless time_after_range.empty?
-              summary = jobs.summary(time_after_range)
-              cpu_time += summary[:cpu_time]
-              memory_time += summary[:memory_time]
-            end
-          end
-          
-          date_range = date_begin ... date_end
         end
+        
+        date_range = date_begin ... date_end
         
         unscoped = self.unscoped
         date = date_range.begin
@@ -390,19 +402,16 @@ module Bookie
           summaries.all.each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time
+            successful += summary[:successful]
           end
           date += 1
         end
         
-        time_range = Range.new(range.begin.to_time, range.end.to_time, range.exclude_end?)
-        jobs = jobs.by_time_range_inclusive(time_range)
-		if range && range.empty
-		  num_jobs = 0
-		  successful = 0
-		else
-		  num_jobs = jobs.count
-		  #To do: better unit testing on successful
-		  successful = jobs.where('jobs.exit_code = 0').count
+        jobs = jobs.by_time_range_inclusive(range)
+        if range && range.empty?
+          num_jobs = 0
+        else
+          num_jobs = jobs.count
         end
 
         {
@@ -943,3 +952,12 @@ class Range
 #     Range.new(new_begin, new_end, exclude_end)
 #   end
 end
+
+##
+#Reopened to add some useful methods
+class Date
+  def to_utc_time
+    Time.utc(year, month, day)
+  end
+end
+

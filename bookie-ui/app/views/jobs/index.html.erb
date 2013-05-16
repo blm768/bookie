@@ -25,16 +25,12 @@
         <td><%= @jobs_summary[:num_jobs] %></td>
       </tr>
       <tr>
-        <th>Total wall time</th>
-        <td><%= @jobs_summary[:wall_time] %> seconds</td>
-      </tr>
-      <tr>
         <th>Total CPU time</th>
         <td><%= @jobs_summary[:cpu_time] %> seconds</td>
       </tr>
       <tr>
         <th>% Successful</th>
-        <td><%= "%.2f%%" % (@jobs_summary[:successful] * 100) %></td>
+        <td><%= "%.2f%%" % (@jobs_summary[:successful]) %></td>
       </tr>
       <tr>
         <th>Available CPU time</th>

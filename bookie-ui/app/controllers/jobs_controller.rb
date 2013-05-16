@@ -80,6 +80,7 @@ class JobsController < ApplicationController
     
     
     #To do: ordering?
+    Bookie::Database::JobSummary.delete_all
     @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
 
     @systems_summary = systems.summary(summary_time_range)
