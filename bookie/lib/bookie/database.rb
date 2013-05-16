@@ -243,7 +243,7 @@ module Bookie
       belongs_to :user
       belongs_to :system
 
-      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :num_jobs, :successful, :cpu_time, :memory_time
+      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :successful, :cpu_time, :memory_time
       
       def self.by_date(date)
         where('job_summaries.date = ?', date)
@@ -316,7 +316,6 @@ module Bookie
           #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
           Lock[:job_summaries].synchronize do
             sum = unscoped.find_or_new(date, user.id, system.id, '')
-            sum.num_jobs = 0
             sum.cpu_time = 0
             sum.memory_time = 0
             sum.successful = 0
@@ -329,7 +328,6 @@ module Bookie
             Lock[:job_summaries].synchronize do
               sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
               #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
-              sum.num_jobs = summary[:jobs].length
               sum.cpu_time = summary[:cpu_time]
               sum.memory_time = summary[:memory_time]
               sum.successful = summary[:successful]
@@ -420,13 +418,13 @@ module Bookie
         }
       end
       
-      validates_presence_of :user_id, :system_id, :date, :num_jobs, :cpu_time, :memory_time, :successful
+      validates_presence_of :user_id, :system_id, :date, :cpu_time, :memory_time, :successful
       
       validates_each :command_name do |record, attr, value|
         record.errors.add(attr, 'must not be nil') if value == nil
       end
       
-      validates_each :num_jobs, :cpu_time, :memory_time, :successful do |record, attr, value|
+      validates_each :cpu_time, :memory_time, :successful do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end
     end
@@ -821,7 +819,6 @@ Please make sure that all previous systems with this hostname have been marked a
             t.references :system, :null => false
             t.date :date, :null => false
             t.string :command_name, :null => false
-            t.integer :num_jobs, :null => false
             t.integer :cpu_time, :null => false
             t.integer :memory_time, :null => false
             t.integer :successful, :null => false

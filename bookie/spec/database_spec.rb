@@ -31,7 +31,6 @@ module Helpers
   end
   
   def check_job_sums(js_sum, j_sum)
-    js_sum[:num_jobs].should eql j_sum[:jobs].length
     [:cpu_time, :memory_time, :successful].each do |field|
       js_sum[field].should eql j_sum[field]
     end
@@ -358,7 +357,6 @@ describe Bookie::Database do
                   :system => system,
                   :command_name => command_name,
                   :date => date,
-                  :num_jobs => 0,
                   :cpu_time => 0,
                   :memory_time => 0,
                   :successful => 0
@@ -452,7 +450,6 @@ describe Bookie::Database do
         Bookie::Database::JobSummary.delete_all
         s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
         s.persisted?.should eql false
-        s.num_jobs = 0
         s.cpu_time = 0
         s.memory_time = 0
         s.successful = 0
@@ -496,7 +493,6 @@ describe Bookie::Database do
         sums = Bookie::Database::JobSummary.by_date(d).all
         sums.length.should eql 1
         sum = sums[0]
-        sum.num_jobs.should eql 0
         sum.cpu_time.should eql 0
         sum.memory_time.should eql 0
 
@@ -638,7 +634,6 @@ describe Bookie::Database do
         :system => Bookie::Database::System.first,
         :command_name => '',
         :date => Date.new(2012),
-        :num_jobs => 1,
         :cpu_time => 100,
         :memory_time => 1000000,
         :successful => 1,
