@@ -351,10 +351,8 @@ module Bookie
         end
         range = range.normalized
         
-        num_jobs = 0
         cpu_time = 0
         memory_time = 0
-        successful = 0
         
         #Could there be partial days at the beginning/end?
         date_range = range
@@ -367,7 +365,6 @@ module Bookie
             summary = jobs.summary(time_before_min ... time_before_max)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
-            successful += summary[:successful]
           end
 
           date_end = range.end.to_date
@@ -379,7 +376,6 @@ module Bookie
               summary = jobs.summary(time_after_range)
               cpu_time += summary[:cpu_time]
               memory_time += summary[:memory_time]
-              successful += summary[:successful]
             end
           end
           
@@ -394,15 +390,21 @@ module Bookie
           summaries.all.each do |summary|
             cpu_time += summary.cpu_time
             memory_time += summary.memory_time
-            successful += summary.successful
           end
           date += 1
         end
         
         time_range = Range.new(range.begin.to_time, range.end.to_time, range.exclude_end?)
         jobs = jobs.by_time_range_inclusive(time_range)
-        num_jobs = (range && range.empty?) ? 0 : jobs.count
-        
+		if range && range.empty
+		  num_jobs = 0
+		  successful = 0
+		else
+		  num_jobs = jobs.count
+		  #To do: better unit testing on successful
+		  successful = jobs.where('jobs.exit_code = 0').count
+        end
+
         {
           :num_jobs => num_jobs,
           :cpu_time => cpu_time,
