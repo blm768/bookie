@@ -3,7 +3,7 @@ require 'bookie_database_all'
 require 'date'
 
 class JobsController < ApplicationController
-  PAGE_SIZE = 20
+  JOBS_PER_PAGE = 20
   
   FILTER_ARG_COUNTS = {
     'System' => 1,
@@ -21,11 +21,10 @@ class JobsController < ApplicationController
     summaries = Bookie::Database::JobSummary
     systems = Bookie::Database::System
         
-    summary_start_time = nil
-    summary_end_time = nil
-    
     @page_num = params[:page].to_i
     @page_num = 1 unless @page_num && @page_num > 0
+
+    summary_time_range = nil
         
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
@@ -59,6 +58,9 @@ class JobsController < ApplicationController
         jobs = jobs.by_command_name(values[0])
         summaries = summaries.by_command_name(values[0])
       when 'Time'
+        summary_start_time = nil
+        summary_end_time = nil
+    
         start_time_text = values[0]
         end_time_text = values[1]
         begin
@@ -71,14 +73,15 @@ class JobsController < ApplicationController
         rescue
           flash.now[:error] = "Invalid end time '#{end_time_text}'"
         end
+        summary_time_range = summary_start_time ... summary_end_time
       end
       @prev_filters << [type, values]
     end
     
-    summary_time_range = summary_start_time ... summary_end_time
     
     #To do: ordering?
-    @jobs_summary = summaries.summary(:jobs => jobs, summary_time_range)
+    @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
+
     @systems_summary = systems.summary(summary_time_range)
     
     
@@ -92,10 +95,17 @@ class JobsController < ApplicationController
     #To be passed to the view
     @show_details = (params[:show_details] == "true")
     if @show_details
-      @page_start = PAGE_SIZE * (@page_num - 1)
-      @page_end = @page_start + PAGE_SIZE
-      num_jobs = @jobs_summary[:jobs].length
-      @num_pages = num_jobs / PAGE_SIZE + ((num_jobs % PAGE_SIZE) > 0 ? 1 : 0)
+      if summary_time_range
+        @jobs = Bookie::Database::Job.by_time_range_inclusive(summary_time_range)
+      else
+        @jobs = Bookie::Database::Job
+      end
+      @jobs = @jobs.order(:end_time)
+      @page_start = JOBS_PER_PAGE * (@page_num - 1)
+      num_jobs = @jobs_summary[:num_jobs]
+      @num_pages = num_jobs / JOBS_PER_PAGE + ((num_jobs % JOBS_PER_PAGE) > 0 ? 1 : 0)
+      @num_pages = 1 if @num_pages == 0
+      @jobs = jobs.offset(@page_start).limit(JOBS_PER_PAGE)
     end
     
     respond_to do |format|

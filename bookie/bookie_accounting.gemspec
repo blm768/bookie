@@ -17,9 +17,10 @@ Gem::Specification.new do |gem|
   gem.version       = Bookie::VERSION
   
   gem.add_dependency('activerecord')
-  #For some reason, this is needed for Ruby 1.8.7 using RVM on CentOS.
+  gem.add_dependency('json')
+  #For some reason, this is needed when using Bundler.
   #To do: remove when no longer needed
-  #gem.add_dependency('mysql2')
+  gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
   gem.add_dependency('spreadsheet')
   gem.add_development_dependency('mocha')

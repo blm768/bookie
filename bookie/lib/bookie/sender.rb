@@ -47,8 +47,6 @@ module Bookie
       #If there are no jobs, return.
       return unless time_min
       
-      #To do: add an option to resume an interrupted send.
-      
       #Send the job data:
       each_job(filename) do |job|
         next if filtered?(job)

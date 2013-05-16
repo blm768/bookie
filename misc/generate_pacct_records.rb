@@ -11,7 +11,7 @@ count = 1000
 users = ['root', 'bin', 'daemon']
 groups = ['root', 'bin', 'daemon']
 
-base_time = Date.new(2012, 1, 1).to_time.to_i
+base_time = Time.utc(2012).to_time.to_i
 
 rand = Random.new(Time.new.to_i)
 

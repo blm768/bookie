@@ -240,6 +240,8 @@ module Bookie
     
       belongs_to :user
       belongs_to :system
+
+	  attr_accessible :date, :user_id, :system_id, :command_name, :num_jobs, :successful, :cpu_time, :memory_time
       
       def self.by_date(date)
         where('job_summaries.date = ?', date)
@@ -298,6 +300,11 @@ module Bookie
         day_jobs = jobs.by_time_range_inclusive(time_range)
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
+		  user = User.select(:id).first
+		  group = Group.select(:id).first
+		  #If there are no users, we can't create the dummy summary, so just return.
+		  #To do: unit test.
+		  return unless user
           #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
           Lock[:job_summaries].synchronize do
             sum = unscoped.find_or_new(date, User.select(:id).first.id, System.select(:id).first.id, '')

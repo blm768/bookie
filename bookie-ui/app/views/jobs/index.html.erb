@@ -22,7 +22,7 @@
       <caption>Summary</caption>
       <tr>
         <th>Number of jobs</th>
-        <td><%= @jobs_summary[:jobs].length %></td>
+        <td><%= @jobs_summary[:num_jobs] %></td>
       </tr>
       <tr>
         <th>Total wall time</th>
@@ -64,7 +64,7 @@
           <th>Memory</th>
           <th>Exit code</th>
         </tr>
-        <% @jobs_summary[:jobs][@page_start ... @page_end].each do |job| %>
+        <% @jobs.each do |job| %>
           <tr>
             <td><%= job.user.name %></td>
             <td><%= job.user.group.name %></td>
