@@ -1,3 +1,5 @@
+// vim: ts=2:sw=2:et
+
 //To do: figure out how time zones will work.
 
 
@@ -41,8 +43,10 @@ function initControls() {
     date.setMonth(date.getMonth() + 1)
   })
   
-  $('#set_date_range').click(function() {
+  //To do: check to see if any graphs are displayed?
+  $('#do_graph').click(function() {
     var inputs = dateBoxes.children()
+  //Check to see if the form is filled out.
     var complete = true
     inputs.filter('input').each(function() {
       if(this.value.length == 0) {
@@ -110,14 +114,14 @@ function addGraph(type) {
     [],
     {
       xaxis: {
-        mode: "time",
-		timezone: "browser",
-        minTickSize: [1, "day"],
-      },
+      mode: "time",
+      timezone: "browser",
+      minTickSize: [1, "day"],
+    },
       yaxis: {
-        min: 0,
-        tickDecimals: 2,
-        tickFormatter: type_data.formatter,
+      min: 0,
+      tickDecimals: 2,
+      tickFormatter: type_data.formatter,
       },
     }
   ))
@@ -125,7 +129,7 @@ function addGraph(type) {
   drawPoints()
 }
 
-function getSummary(day, params) {
+function getSummary(day, params, request_index) {
   day = new Date(day.valueOf())
   var start = dateToString(day)
   var next_day = new Date(day.valueOf())
@@ -141,16 +145,15 @@ function getSummary(day, params) {
   }
   queryParams[0] += 'Time'
   queryParams[1] += start + ',' + end
-  request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
-  	delete active_requests[request]
+  var request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
     addPoint(day, data)
     var next_date = new Date(day)
     next_date.setDate(next_date.getDate() + MAX_CONCURRENT_REQUESTS)
     if(next_date < date_end) {
-      getSummary(next_date, params)
+      getSummary(next_date, params, request_index)
     }
   })
-  active_requests[request] = true
+  active_requests[request_index] = request
 }
 
 var plots = {}
@@ -166,11 +169,15 @@ function addPoint(date, summary) {
 
 function resetPoints() {
   //Cancel all active requests.
-  //To do: make sure no requests are still wandering in.
-  for(var request in active_requests) {
-    request.abort()
+  for(var i = 0; i < active_requests.length; ++i) {
+    var request = active_requests[i]
+    if(request) {
+      request.abort()
+      //Cut out the callback so it can't spawn the next request in line.
+      request.done(function() {})
+     }
   }
-  active_requests = {}
+  active_requests = []
 
   for(type in PLOT_TYPES) {
     plot_data[type] = []
@@ -230,14 +237,15 @@ function onFilterChange(evt) {
   
   var params = getFilterData()
   
-  var day = new Date(date_start.valueOf())
   var date_max = new Date(date_start)
   date_max.setDate(date_max.getDate() + MAX_CONCURRENT_REQUESTS)
   date_max = Math.min(date_end, date_max)
   
-  while(day < date_max) {
-    getSummary(day, params)
-    day.setDate(day.getDate() + 1)
+  var d = new Date(date_start)
+  for(var i = 0; i < MAX_CONCURRENT_REQUESTS; ++i) {
+    if date 
+    getSummary(day, params, i)
+  	d.setDate(d.getDate() + 1)
   }
 }
 
@@ -252,3 +260,4 @@ $(document).ready(function() {
     })
   })
 })
+
