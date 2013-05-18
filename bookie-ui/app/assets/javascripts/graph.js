@@ -25,7 +25,7 @@ var MAX_CONCURRENT_REQUESTS = 10
 
 var date_start, date_end
 
-var active_requests = {}
+var active_requests = []
 
 function initControls() {
   var dateBoxes = $('#date_range').children('.date_box')
@@ -151,6 +151,8 @@ function getSummary(day, params, request_index) {
     next_date.setDate(next_date.getDate() + MAX_CONCURRENT_REQUESTS)
     if(next_date < date_end) {
       getSummary(next_date, params, request_index)
+    } else {
+      active_requests[request_index] = null
     }
   })
   active_requests[request_index] = request
@@ -173,11 +175,12 @@ function resetPoints() {
     var request = active_requests[i]
     if(request) {
       request.abort()
+      //To do: remove?
       //Cut out the callback so it can't spawn the next request in line.
-      request.done(function() {})
+      //request.done(function() {})
      }
+     active_requests[i] = null
   }
-  active_requests = []
 
   for(type in PLOT_TYPES) {
     plot_data[type] = []
@@ -243,8 +246,10 @@ function onFilterChange(evt) {
   
   var d = new Date(date_start)
   for(var i = 0; i < MAX_CONCURRENT_REQUESTS; ++i) {
-    if date 
-    getSummary(day, params, i)
+    if(d >= date_max) {
+      break
+    }
+    getSummary(d, params, i)
   	d.setDate(d.getDate() + 1)
   }
 }
