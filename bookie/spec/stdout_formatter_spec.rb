@@ -34,6 +34,7 @@ describe Bookie::Formatters::Stdout do
   end
   
   it "correctly formats jobs" do
+    with_utc do
     @formatter.print_jobs(@jobs.order(:start_time).limit(2))
     @formatter.flush
     @m.buf.should eql <<-eos
@@ -42,10 +43,11 @@ User            Group           System               System type          Start 
 root            root            test1                Standalone           2012-01-01 00:00:00        2012-01-01 01:00:00        01:00:00     00:01:40     200kb (avg)          vi                   0          
 test            default         test1                Standalone           2012-01-01 01:00:00        2012-01-01 02:00:00        01:00:00     00:01:40     200kb (avg)          emacs                1          
 eos
+    end
   end
-  
+    
   it "correctly formats summaries" do
-    Time.expects(:now).returns(Time.local(2012) + 36000 * 4).at_least_once
+    Time.expects(:now).returns(Time.utc(2012) + 36000 * 4).at_least_once
     @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     @formatter.flush
     @m.buf.should eql <<-eos

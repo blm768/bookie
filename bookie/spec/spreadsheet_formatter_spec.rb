@@ -74,22 +74,24 @@ describe Bookie::Formatters::Spreadsheet do
   end
   
   it "correctly formats jobs" do
-    @formatter.print_jobs(@jobs.limit(2).all)
-    w = @m.worksheet('Details')
-    w.last_row_index.should eql 2
-    w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
-    w.mock_columns.each do |col|
-      col.width.should_not eql nil
+    with_utc do
+      @formatter.print_jobs(@jobs.limit(2).all)
+      w = @m.worksheet('Details')
+      w.last_row_index.should eql 2
+      w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
+      w.mock_columns.each do |col|
+        col.width.should_not eql nil
+      end
+      w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
+      w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
+        "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'vi', 0]
+      w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
+        "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'emacs', 1]
     end
-    w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
-    w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
-      "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'vi', 0]
-    w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
-      "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'emacs', 1]
   end
   
   it "correctly formats summaries" do
-    Time.expects(:now).returns(Time.local(2012) + 3600 * 40).at_least_once
+    Time.expects(:now).returns(Time.utc(2012) + 3600 * 40).at_least_once
     @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     w = @m.worksheet('Summary')
     w.column(0).width.should_not eql nil

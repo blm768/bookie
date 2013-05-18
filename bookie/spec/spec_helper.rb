@@ -118,4 +118,12 @@ module Helpers
       job.save!
     end
   end
+
+  def with_utc
+    prev = ENV['TZ']
+    ENV['TZ'] = 'UTC'
+    yield
+  ensure
+    ENV['TZ'] = prev
+  end
 end
