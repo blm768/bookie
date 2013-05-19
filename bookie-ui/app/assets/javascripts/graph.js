@@ -15,15 +15,12 @@ var PLOT_TYPES = {
   'CPU time used': {}
 }
 
-function dateToString(date) {
-  return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate()
-}
-
 var MSECS_PER_DAY = 24 * 3600 * 1000
 
-var MAX_CONCURRENT_REQUESTS = 10
+//To do: find the "right" value for this.
+var MAX_CONCURRENT_REQUESTS = 5
 
-var date_start, date_end
+var time_start, time_end
 
 var active_requests = []
 
@@ -55,12 +52,12 @@ function initControls() {
       }
     })
     if(complete) {
-      date_start = new Date(
+      time_start = new Date(
         parseInt($('#year_start').val()), 
         parseInt($('#month_start').val()),
         parseInt($('#day_start').val())
       )
-      date_end = new Date(
+      time_end = new Date(
         parseInt($('#year_end').val()), 
         parseInt($('#month_end').val()),
         parseInt($('#day_end').val())
@@ -108,7 +105,6 @@ function addGraph(type) {
   
   var type_data = PLOT_TYPES[type]
   
-  //To do: how to handle overlapping attempts to graph?
   graph.data('plot', $.plot(
     graph,
     [],
@@ -129,12 +125,12 @@ function addGraph(type) {
   drawPoints()
 }
 
-function getSummary(day, params, request_index) {
-  day = new Date(day.valueOf())
-  var start = dateToString(day)
-  var next_day = new Date(day.valueOf())
-  next_day.setDate(next_day.getDate() + 1)
-  var end = dateToString(next_day)
+//The object passed as start_time should not be modified after calling this function.
+function getSummary(start_time, interval, params, request_index) {
+  var start = start_time.toISOString()
+  var end_time = new Date(start_time)
+  end_time.setSeconds(end_time.getSeconds() + interval)
+  var end = end_time.toISOString()
   
   var queryParams = ['filter_types=' + params[0].join(','), 'filter_values=' + params[1].join(',')]
   if(params[0].length > 0) {
@@ -146,11 +142,11 @@ function getSummary(day, params, request_index) {
   queryParams[0] += 'Time'
   queryParams[1] += start + ',' + end
   var request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
-    addPoint(day, data)
-    var next_date = new Date(day)
-    next_date.setDate(next_date.getDate() + MAX_CONCURRENT_REQUESTS)
-    if(next_date < date_end) {
-      getSummary(next_date, params, request_index)
+    addPoint(start_time, data)
+    var next_start = new Date(start_time)
+    next_start.setSeconds(next_start.getSeconds() + interval * MAX_CONCURRENT_REQUESTS)
+    if(next_start < time_end) {
+      getSummary(next_start, interval, params, request_index)
     } else {
       active_requests[request_index] = null
     }
@@ -175,9 +171,10 @@ function resetPoints() {
     var request = active_requests[i]
     if(request) {
       request.abort()
-      //To do: remove?
       //Cut out the callback so it can't spawn the next request in line.
-      //request.done(function() {})
+      //(If the request has already come in, but its callback has not been called, I'm not sure if abort() will prevent the call.)
+      //To consider: verify and possibly remove
+      request.done(function() {})
      }
      active_requests[i] = null
   }
@@ -186,23 +183,25 @@ function resetPoints() {
     plot_data[type] = []
   }
   
-  var end = new Date(date_end)
+  var end = new Date(time_end)
   end.setDate(end.getDate() - 1)
 
- 
   //Currently broken
-  /*$('.graph').each(function() {
+  /*
+  $('.graph').each(function() {
     var graph = $(this)
     var plot = graph.data('plot')
     var xaxis = plot.getAxes().xaxis
-    xaxis.min = date_start.valueOf()
+    xaxis.min = time_start.valueOf()
     xaxis.max = end.valueOf()
   })*/
+
+  drawPoints()
 }
 
 //Calculates the resolution value that should be used for the selected time interval
 function resolution() {
-
+  //var difference = 
 }
 
 
@@ -234,23 +233,26 @@ function onFilterChange(evt) {
     evt.preventDefault()
   }
   resetPoints()
-  if(!date_start || !date_end) {
+  if(!time_start || !time_end) {
     return
   }
   
   var params = getFilterData()
+
+  var time_step = 3600 * 24
   
-  var date_max = new Date(date_start)
-  date_max.setDate(date_max.getDate() + MAX_CONCURRENT_REQUESTS)
-  date_max = Math.min(date_end, date_max)
+  var time_max = new Date(time_start)
+  time_max.setSeconds(time_max.getSeconds() + time_step * MAX_CONCURRENT_REQUESTS)
+  time_max = Math.min(time_end, time_max)
   
-  var d = new Date(date_start)
+  //Start the first batch of requests.
+  var d = new Date(time_start)
   for(var i = 0; i < MAX_CONCURRENT_REQUESTS; ++i) {
-    if(d >= date_max) {
+    if(d >= time_max) {
       break
     }
-    getSummary(d, params, i)
-  	d.setDate(d.getDate() + 1)
+    getSummary(new Date(d), time_step, params, i)
+  	d.setSeconds(d.getSeconds() + time_step)
   }
 }
 

@@ -130,7 +130,7 @@ module Bookie
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
       #- <tt>:successful</tt>: the number of jobs that have completed successfully
       #
-      #This method should probably not be used with other queries that filter by start/end time.
+      #This method should probably not be chained with other queries that filter by start/end time.
       def self.summary(time_range = nil)
         time_range = time_range.normalized if time_range
         jobs = self
