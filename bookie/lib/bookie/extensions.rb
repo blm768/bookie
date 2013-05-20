@@ -68,3 +68,17 @@ class Date
   end
 end
 
+##
+#Reopened to add some useful methods
+class Integer
+  def seconds_to_duration_string
+    seconds = self % 60
+    minutes = self / 60
+    hours = self / 3600
+    days = self / (3600 * 24)
+    weeks = days / 7
+    days = days % 7
+
+    "#{weeks} weeks, #{days} days, %02i:%02i:%02i".format(hours, minutes, seconds)
+  end
+end

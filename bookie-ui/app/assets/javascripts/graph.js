@@ -1,5 +1,7 @@
 // vim: ts=2:sw=2:et
 
+"use strict";
+
 //To do: figure out how time zones will work.
 
 
@@ -12,16 +14,24 @@ var PLOT_TYPES = {
   'Successful jobs': {
     formatter: formatPercent
   },
-  'CPU time used': {}
+  'CPU time used': {},
 }
 
-var MSECS_PER_HOUR = 3600 * 1000
+var MSECS_PER_MINUTE = 60 * 1000
+var MSECS_PER_HOUR = 60 * MSECS_PER_MINUTE
 var MSECS_PER_DAY = MSECS_PER_HOUR * 24
 var MSECS_PER_WEEK = MSECS_PER_DAY * 7
 //This doesn't account for leap years, but it's not used for anything where exact precision is critical.
 var MSECS_PER_YEAR = MSECS_PER_DAY * 365
 
-//The rough goal for graph resolution
+//Base time steps for resolution purposes
+//To do: change/add bases?
+var TIME_STEP_BASES = [
+  MSECS_PER_DAY,
+  MSECS_PER_HOUR,
+]
+
+//The minimum number of points to display on the graph
 //To do: make configurable?
 var NUM_GRAPH_POINTS = 20
 
@@ -137,7 +147,8 @@ function addGraph(type) {
 function getSummary(start_time, interval, params, request_index) {
   var start = start_time.toISOString()
   var end_time = new Date(start_time)
-  end_time.setSeconds(end_time.getSeconds() + interval)
+  end_time.setTime(end_time.getTime() + interval)
+  end_time = Math.min(end_time, time_end)
   var end = end_time.toISOString()
   
   var queryParams = ['filter_types=' + params[0].join(','), 'filter_values=' + params[1].join(',')]
@@ -152,7 +163,7 @@ function getSummary(start_time, interval, params, request_index) {
   var request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
     addPoint(start_time, data)
     var next_start = new Date(start_time)
-    next_start.setSeconds(next_start.getSeconds() + interval * MAX_CONCURRENT_REQUESTS)
+    next_start.setTime(next_start.getTime() + interval * MAX_CONCURRENT_REQUESTS)
     if(next_start < time_end) {
       getSummary(next_start, interval, params, request_index)
     } else {
@@ -187,7 +198,7 @@ function resetPoints() {
      active_requests[i] = null
   }
 
-  for(type in PLOT_TYPES) {
+  for(var type in PLOT_TYPES) {
     plot_data[type] = []
   }
   
@@ -209,22 +220,33 @@ function resetPoints() {
 
 //Calculates the time step value that should be used for the selected time interval
 function timeStep() {
-  var difference = time_end.valueOf() - time_start.valueOf()
+  var difference = time_end.getTime() - time_start.getTime()
   var time_step = difference / NUM_GRAPH_POINTS
 
-  alert(time_step)
+  //Fit the time interval to one of the base timesteps.
+  for(var i = 0; i < TIME_STEP_BASES.length; ++i) {
+    var base = TIME_STEP_BASES[i];
+    var num_bases = Math.floor(difference / base)
+    //Is this base timestep the right fit?
+    if(num_bases >= NUM_GRAPH_POINTS) {
+      //Set time_step to be a multiple of base.
+      var bases_per_point = Math.floor(num_bases / NUM_GRAPH_POINTS)
+      time_step = base * bases_per_point
+      break
+    }
+  }
 
   return time_step
 }
 
 
 function drawPoints() {
-  for(type in plot_data) {
+  for(var type in plot_data) {
     plot_data[type].sort(function(a, b) {
       return a[0] - b[0]
     })
   }
-  graphs = $('.graph')
+  var graphs = $('.graph')
   graphs.each(function() {
     var graph = $(this)
     var type = graph.data('type')
@@ -246,7 +268,8 @@ function onFilterChange(evt) {
     evt.preventDefault()
   }
   resetPoints()
-  if(!time_start || !time_end) {
+  //To do: error messages?
+  if(!time_start || !time_end || time_start >= time_end) {
     return
   }
   

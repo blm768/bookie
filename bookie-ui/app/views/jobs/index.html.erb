@@ -34,7 +34,7 @@
       </tr>
       <tr>
         <th>Available CPU time</th>
-        <td><%= @systems_summary[:avail_cpu_time] %></td>
+        <td><%= @systems_summary[:avail_cpu_time] %> seconds</td>
       </tr>
       <tr>
         <th>% CPU time used</th>
@@ -42,7 +42,7 @@
       </tr>
       <tr>
         <th>Available memory (average)</th>
-        <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
+        <td><%= @systems_summary[:avail_memory_avg].to_i %> KB</td>
       </tr>
     </table>
     <% if @show_details %>
