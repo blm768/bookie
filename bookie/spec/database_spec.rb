@@ -588,6 +588,7 @@ describe Bookie::Database do
         Bookie::Database::JobSummary.any?.should eql false
       end
       
+      #To do: use users that are actually in the database.
       it "correctly handles filtered summaries" do
         filters = {
           :user_name => 'blm',

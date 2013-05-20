@@ -15,7 +15,15 @@ var PLOT_TYPES = {
   'CPU time used': {}
 }
 
-var MSECS_PER_DAY = 24 * 3600 * 1000
+var MSECS_PER_HOUR = 3600 * 1000
+var MSECS_PER_DAY = MSECS_PER_HOUR * 24
+var MSECS_PER_WEEK = MSECS_PER_DAY * 7
+//This doesn't account for leap years, but it's not used for anything where exact precision is critical.
+var MSECS_PER_YEAR = MSECS_PER_DAY * 365
+
+//The rough goal for graph resolution
+//To do: make configurable?
+var NUM_GRAPH_POINTS = 20
 
 //To do: find the "right" value for this.
 var MAX_CONCURRENT_REQUESTS = 5
@@ -159,9 +167,9 @@ var plots = {}
 var plot_data = {}
 
 function addPoint(date, summary) {
-  plot_data['Number of jobs'].push([date.valueOf(), summary['Count']])
-  plot_data['Successful jobs'].push([date.valueOf(), summary['Successful']])
-  plot_data['CPU time used'].push([date.valueOf(), summary['CPU time used']])
+  plot_data['Number of jobs'].push([date.getTime(), summary['Count']])
+  plot_data['Successful jobs'].push([date.getTime(), summary['Successful']])
+  plot_data['CPU time used'].push([date.getTime(), summary['CPU time used']])
   drawPoints()
 }
 
@@ -199,9 +207,14 @@ function resetPoints() {
   drawPoints()
 }
 
-//Calculates the resolution value that should be used for the selected time interval
-function resolution() {
-  //var difference = 
+//Calculates the time step value that should be used for the selected time interval
+function timeStep() {
+  var difference = time_end.valueOf() - time_start.valueOf()
+  var time_step = difference / NUM_GRAPH_POINTS
+
+  alert(time_step)
+
+  return time_step
 }
 
 
@@ -239,10 +252,10 @@ function onFilterChange(evt) {
   
   var params = getFilterData()
 
-  var time_step = 3600 * 24
+  var time_step = timeStep()
   
   var time_max = new Date(time_start)
-  time_max.setSeconds(time_max.getSeconds() + time_step * MAX_CONCURRENT_REQUESTS)
+  time_max.setTime(time_max.getTime() + time_step * MAX_CONCURRENT_REQUESTS)
   time_max = Math.min(time_end, time_max)
   
   //Start the first batch of requests.
@@ -252,7 +265,7 @@ function onFilterChange(evt) {
       break
     }
     getSummary(new Date(d), time_step, params, i)
-  	d.setSeconds(d.getSeconds() + time_step)
+  	d.setTime(d.getTime() + time_step)
   }
 }
 
@@ -263,7 +276,7 @@ $(document).ready(function() {
       $('#filter_form').submit(onFilterChange)
       initControls()
       resetPoints()
-      var filterForm = $('#filters').parent()
+      addGraph('Number of jobs')
     })
   })
 })

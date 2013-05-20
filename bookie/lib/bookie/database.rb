@@ -247,6 +247,15 @@ module Bookie
       def self.by_date(date)
         where('job_summaries.date = ?', date)
       end
+
+      #To do: unit test.
+      def self.by_date_range(range)
+        if range.exclude_end?
+          where('? <= job_summaries.date AND job_summaries.date < ?', range.begin, range.end)
+        else
+          where('? <= job_summaries.date AND job_summaries.date <= ?', range.begin, range.end)
+        end
+      end
       
       def self.by_user(user)
         where('job_summaries.user_id = ?', user.id)
@@ -295,7 +304,7 @@ module Bookie
       end
       
       ##
-      #Create a cached summary for the given date
+      #Create cached summaries for the given date
       #
       #The date is interpreted as being in UTC.
       #
@@ -308,13 +317,15 @@ module Bookie
         time_min = date.to_utc_time 
         time_range = time_min ... time_min + 1.days
         day_jobs = jobs.by_time_range_inclusive(time_range)
+
+        #Find the sets of unique values.
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
           user = User.select(:id).first
           system = System.select(:id).first
           #If there are no users or no systems, we can't create the dummy summary, so just return.
           return unless user && system
-          #Create a dummy cache so summary() doesn't keep trying to rebuild the cache:
+          #Create a dummy summary so summary() doesn't keep trying to create one.
           Lock[:job_summaries].synchronize do
             sum = unscoped.find_or_new(date, user.id, system.id, '')
             sum.cpu_time = 0
@@ -392,22 +403,36 @@ module Bookie
         date_range = date_begin ... date_end
         
         unscoped = self.unscoped
-        date = date_range.begin
-        while date_range.cover?(date) do
-          summarize(date) if unscoped.by_date(date).empty?
-          summaries = by_date(date)
-          summaries.all.each do |summary|
-            cpu_time += summary.cpu_time
-            memory_time += summary.memory_time
-            successful += summary[:successful]
+        summaries = by_date_range(date_range).order(:date).all
+        index = 0
+        date_range.each do |date|
+          new_index = index
+          sum = summaries[new_index]
+          while sum && sum.date == date do
+            cpu_time += sum.cpu_time
+            memory_time += sum.memory_time
+            successful += sum.successful
+            new_index += 1
+            sum = summaries[new_index]
           end
-          date += 1
+          #Did we actually process any summaries?
+          if new_index == index
+            #Nope. Create the summaries.
+            #To consider: optimize out the query?
+            unscoped.summarize(date)
+            sums = by_date(date)
+            sums.each do |sum|
+              cpu_time += sum.cpu_time
+              memory_time += sum.memory_time
+              successful += sum.successful
+            end
+          end
         end
         
-        jobs = jobs.by_time_range_inclusive(range)
         if range && range.empty?
           num_jobs = 0
         else
+          jobs = jobs.by_time_range_inclusive(range)
           num_jobs = jobs.count
         end
 
