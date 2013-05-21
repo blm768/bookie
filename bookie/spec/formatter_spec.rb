@@ -31,6 +31,7 @@ describe Bookie::Formatter do
   
   it "correctly formats durations" do
     Bookie::Formatter.format_duration(1.seconds + 2.minutes + 3.hours + 4.days + 5.weeks).should eql '5 weeks, 4 days, 03:02:01'
+    Bookie::Formatter.format_duration(1.weeks + 1.days).should eql '1 week, 1 day, 00:00:00'
   end
   
   it "correctly calculates fields for jobs" do

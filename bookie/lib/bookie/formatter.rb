@@ -147,7 +147,7 @@ module Bookie
       weeks = days / 7
       days = days % 7
 
-      "%i weeks, %i days, %02i:%02i:%02i" % [weeks, days, hours, minutes, seconds]
+      "%i week%s, %i day%s, %02i:%02i:%02i" % [weeks, weeks == 1 ? '' : 's', days, days == 1 ? '' : 's', hours, minutes, seconds]
     end
   end
   
