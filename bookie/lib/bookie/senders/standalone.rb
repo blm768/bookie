@@ -30,7 +30,7 @@ end
 #Originates from the <tt>pacct</tt> gem
 module Pacct
   ##
-  #Originates from the <tt>pacct</tt> gem; redefined here to include Bookie::Sender::ModelHelpers
+  #Originates from the <tt>pacct</tt> gem; reopened here to include Bookie::Sender::ModelHelpers
   class Entry
     include Bookie::ModelHelpers
   end

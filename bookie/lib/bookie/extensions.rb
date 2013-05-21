@@ -63,6 +63,8 @@ end
 ##
 #Reopened to add some useful methods
 class Date
+  ##
+  #Converts the Date to a Time, using UTC as the time zone
   def to_utc_time
     Time.utc(year, month, day)
   end

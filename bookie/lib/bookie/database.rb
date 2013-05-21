@@ -4,9 +4,8 @@ require 'bookie/extensions'
 require 'active_record'
 
 module Bookie
-  #Contains ActiveRecord structures for the central database
-  #
-  #For a list of fields in the various models, see {Database Tables}[link:rdoc/database_rdoc.html]
+  ##
+  #Contains database-related code and models
   module Database
   
     ##
@@ -237,6 +236,10 @@ module Bookie
       end
     end
     
+    ##
+    #A cached summary of Jobs in the database
+    #
+    #Most summary operations should be performed through this class to improve efficiency.
     class JobSummary < ActiveRecord::Base
       self.table_name = :job_summaries
     
@@ -245,10 +248,14 @@ module Bookie
 
       attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :cpu_time, :memory_time
       
+      ##
+      #Filters by date
       def self.by_date(date)
         where('job_summaries.date = ?', date)
       end
 
+      ##
+      #Filters by a date range
       def self.by_date_range(range)
         range = range.normalized
         if range.exclude_end?
@@ -258,40 +265,60 @@ module Bookie
         end
       end
       
+      ##
+      #Filters by user
       def self.by_user(user)
         where('job_summaries.user_id = ?', user.id)
       end
       
+      ##
+      #Filters by user name
       def self.by_user_name(name)
         joins(:user).where('users.name = ?', name)
       end
       
+      ##
+      #Filters by group
       def self.by_group(group)
         joins(:user).where('users.group_id = ?', group.id)
       end
       
+      ##
+      #Filters by group name
       def self.by_group_name(name)
         group = Group.find_by_name(name)
         return by_group(group) if group
         limit(0)
       end
       
+      ##
+      #Filters by system
       def self.by_system(system)
         where('job_summaries.system_id = ?', system.id)
       end
       
+      ##
+      #Filters by system name
       def self.by_system_name(name)
         joins(:system).where('systems.name = ?', name)
       end
       
+      ##
+      #Filters by system type
       def self.by_system_type(type)
         joins(:system).where('systems.system_type_id = ?', type.id)
       end
       
+      ##
+      #Filters by command name
       def self.by_command_name(cmd)
         where('job_summaries.command_name = ?', cmd)
       end
       
+      ##
+      #Attempts to find a JobSummary with the given date, user_id, system_id, and command_name
+      #
+      #If one does not exist, a new JobSummary will be instantiated (but not saved to the database).
       def self.find_or_new(date, user_id, system_id, command_name)
         str = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).to_sql
         summary = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).first
@@ -347,6 +374,19 @@ module Bookie
         end
       end
       
+      ##
+      #Returns a summary of jobs in the database
+      #
+      #The following options are supported:
+      #- [<tt>:range</tt>] restricts the summary to a specific time interval (specified as a Range of Time objects)
+      #- [<tt>:jobs</tt>] the jobs on which the summary should operate
+      #
+      #Internally, this may call JobSummary::summary, which uses Lock#synchronize, so this should not be used inside a transaction block.
+      #
+      #When filtering, the same filters must be applied to both the Jobs and the JobSummaries. For example:
+      # jobs = Bookie::Database::Job.by_user_name('root')
+      # summaries = Bookie::Database::Job.by_user_name('root')
+      # puts summaries.summary(:jobs => jobs)
       def self.summary(opts = {})
         jobs = opts[:jobs] || Job
         range = opts[:range]
@@ -452,7 +492,7 @@ module Bookie
     end
     
     ##
-    #A group
+    #A group of users
     class Group < ActiveRecord::Base
       has_many :users
       
@@ -545,7 +585,6 @@ module Bookie
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
       #
       #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
-      #
       def self.find_current(sender, time = nil)
         time ||= Time.now
         config = sender.config
