@@ -55,4 +55,11 @@ eos
 "Memory used (average)", "0.0114%"
 eos
   end
+
+  it "correctly quotes values" do
+    Formatter = Bookie::Formatters::CommaDump
+    Formatter.quote("test").should eql '"test"'
+    Formatter.quote('"test"').should eql '"""test"""'
+    Formatter.quote(0).should eql '"0"'
+  end
 end
