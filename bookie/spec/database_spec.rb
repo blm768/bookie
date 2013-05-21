@@ -375,6 +375,16 @@ describe Bookie::Database do
           sum.date.should eql d
         end
       end
+
+      it "correctly filters by date range" do
+        d = Date.new(2012)
+        sums = Bookie::Database::JobSummary
+        sums.by_date_range(d .. d).count.should eql sums.by_date(d).count
+        sums.by_date_range(d ... d).count.should eql 0
+        sums.by_date_range(d + 1 .. d).count.should eql 0
+        sums.by_date_range(d .. d + 1).count.should eql sums.by_date(d).count + sums.by_date(d + 1).count
+        sums.by_date_range(d ... d + 1).count.should eql sums.by_date(d).count
+      end
       
       it "correctly filters by user" do
         u = Bookie::Database::User.first

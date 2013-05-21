@@ -250,6 +250,7 @@ module Bookie
 
       #To do: unit test.
       def self.by_date_range(range)
+        range = range.normalized
         if range.exclude_end?
           where('? <= job_summaries.date AND job_summaries.date < ?', range.begin, range.end)
         else

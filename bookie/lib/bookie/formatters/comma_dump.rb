@@ -22,7 +22,6 @@ module Bookie
       
       ##
       #Quotes a value for use as a CSV element
-      #To do: unit test.
       def self.quote(val)
         %{"#{val.to_s.gsub('"', '""')}"}
       end
