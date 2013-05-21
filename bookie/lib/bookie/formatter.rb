@@ -131,15 +131,22 @@ module Bookie
     protected :fields_for_each_job
     
     ##
-    #Formats a duration in HH:MM:SS format
+    #Formats a duration in a human-readable format
     #
     #<tt>dur</tt> should be a number in seconds.
     def self.format_duration(dur)
-      dur = Integer(dur)
+      days = dur / (3600 * 24)
+      dur -= days * (3600 * 24)
       hours = dur / 3600
-      minutes = (dur - hours * 3600) / 60
-      seconds = dur % 60
-      return "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')[0 .. 1]}:#{seconds.to_s.rjust(2, '0')[0 .. 1]}"
+      dur -= hours * 3600
+      minutes = dur / 60
+      dur -= minutes * 60
+      seconds = dur
+
+      weeks = days / 7
+      days = days % 7
+
+      "%i weeks, %i days, %02i:%02i:%02i" % [weeks, days, hours, minutes, seconds]
     end
   end
   

@@ -30,7 +30,7 @@ describe Bookie::Formatter do
   end
   
   it "correctly formats durations" do
-    Bookie::Formatter.format_duration(3600 * 6 + 60 * 5 + 4).should eql '06:05:04'
+    Bookie::Formatter.format_duration(1.seconds + 2.minutes + 3.hours + 4.days + 5.weeks).should eql '5 weeks, 4 days, 03:02:01'
   end
   
   it "correctly calculates fields for jobs" do
@@ -43,8 +43,8 @@ describe Bookie::Formatter do
             'Standalone',
             '2012-01-01 00:00:00',
             '2012-01-01 01:00:00',
-            '01:00:00',
-            '00:01:40',
+            '0 weeks, 0 days, 01:00:00',
+            '0 weeks, 0 days, 00:01:40',
             '200kb (avg)',
             'vi',
             0,
@@ -72,7 +72,7 @@ describe Bookie::Formatter do
         )
         @formatter.print_summary(@jobs, @summaries, Bookie::Database::System, Time.utc(2012) ... Time.utc(2012))
         @formatter.flush
-        $field_values.should eql [0, "00:00:00", "0.0000%", "00:00:00", "0.0000%", "0 kb", "0.0000%"]
+        $field_values.should eql [0, "0 weeks, 0 days, 00:00:00", "0.0000%", "0 weeks, 0 days, 00:00:00", "0.0000%", "0 kb", "0.0000%"]
       end
     end
     

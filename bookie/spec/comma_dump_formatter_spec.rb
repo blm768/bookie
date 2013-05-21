@@ -36,8 +36,8 @@ describe Bookie::Formatters::CommaDump do
       @formatter.print_jobs(@jobs.order(:start_time).limit(2).all)
       @m.buf.should eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Command, Exit code
-root, root, test1, Standalone, 2012-01-01 00:00:00, 2012-01-01 01:00:00, 01:00:00, 00:01:40, 200kb (avg), vi, 0
-test, default, test1, Standalone, 2012-01-01 01:00:00, 2012-01-01 02:00:00, 01:00:00, 00:01:40, 200kb (avg), emacs, 1
+"root", "root", "test1", "Standalone", "2012-01-01 00:00:00", "2012-01-01 01:00:00", "0 weeks, 0 days, 00:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "vi", "0"
+"test", "default", "test1", "Standalone", "2012-01-01 01:00:00", "2012-01-01 02:00:00", "0 weeks, 0 days, 00:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "emacs", "1"
 eos
     end
   end
@@ -49,7 +49,7 @@ eos
 Number of jobs, 40
 Total CPU time, 01:06:40
 Successful, 50.0000%
-Available CPU time, 140:00:00
+Available CPU time, 0 weeks, 5 days, 20:00:00
 CPU time used, 0.7937%
 Available memory (average), 1750000 kb
 Memory used (average), 0.0114%

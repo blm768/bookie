@@ -68,23 +68,3 @@ class Date
   end
 end
 
-##
-#Reopened to add some useful methods
-class Integer
-  def seconds_to_duration_string
-    val = self
-
-    days = val / (3600 * 24)
-    val -= days * (3600 * 24)
-    hours = val / 3600
-    val -= hours * 3600
-    minutes = val / 60
-    val -= minutes * 60
-    seconds = val
-
-    weeks = days / 7
-    days = days % 7
-
-    "%i weeks, %i days, %02i:%02i:%02i" % [weeks, days, hours, minutes, seconds]
-  end
-end
