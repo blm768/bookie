@@ -5,13 +5,25 @@ class JobStub
   attr_accessor :group_name
   attr_accessor :command_name
   attr_accessor :start_time
-  attr_accessor :end_time
   attr_accessor :wall_time
   attr_accessor :cpu_time
   attr_accessor :memory
   attr_accessor :exit_code
   
   include Bookie::ModelHelpers
+
+  def self.from_job(job)
+    stub = self.new
+    stub.user_name = job.user.name
+    stub.group_name = job.user.group.name
+    stub.command_name = job.command_name
+    stub.start_time = job.start_time
+    stub.wall_time = job.wall_time
+    stub.cpu_time = job.cpu_time
+    stub.memory = job.memory
+    stub.exit_code = job.exit_code
+    stub
+  end
 end
 
 describe Bookie::Sender do
@@ -96,8 +108,8 @@ describe Bookie::Sender do
         job.user_name = 'blm'
         job.group_name = 'blm'
         job.command_name = 'vi'
-        job.start_time = t
-        job.wall_time = offset
+        job.start_time = t + offset
+        job.wall_time = 1000
         job.cpu_time = 2
         job.memory = 300
         job.exit_code = 0
@@ -111,6 +123,24 @@ describe Bookie::Sender do
     jobs = Bookie::Database::Job.by_system_name(@config.hostname).order(:end_time).all
     jobs[0].system.should eql @sys_1
     jobs[1].system.should eql @sys_2
+  end
+
+  it "correctly finds duplicates" do
+    job = Bookie::Database::Job.first
+    stub = JobStub.from_job(job)
+    duplicate = @sender.duplicate(stub, job.system)
+    duplicate.should eql job
+    @sender.duplicate(stub, @sys_2).should eql nil
+    [:user_name, :group_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
+      old_val = stub.send(field)
+      if old_val.is_a?(String)
+        stub.send("#{field}=", 'string')
+      else
+        stub.send("#{field}=", old_val + 1)
+      end
+      @sender.duplicate(stub, @sys_2).should eql nil
+      stub.send("#{field}=", old_val)
+    end
   end
   
   it "deletes cached summaries that overlap the new jobs" do
@@ -212,5 +242,9 @@ describe Bookie::ModelHelpers do
     djob.cpu_time.should eql @job.cpu_time
     djob.memory.should eql @job.memory
     djob.exit_code.should eql @job.exit_code
+  end
+
+  it "correctly calculates end time" do
+    @job.end_time.should eql @job.start_time + @job.wall_time
   end
 end

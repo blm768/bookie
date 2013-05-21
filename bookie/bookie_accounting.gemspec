@@ -19,8 +19,9 @@ Gem::Specification.new do |gem|
   gem.add_dependency('activerecord')
   gem.add_dependency('json')
   #For some reason, this is needed when using Bundler.
-  #To do: remove when no longer needed
-  gem.add_dependency('mysql2')
+  if ENV['USE_MYSQL']
+    gem.add_dependency('mysql2')
+  end
   gem.add_dependency('pacct')
   gem.add_dependency('spreadsheet')
   gem.add_development_dependency('mocha')

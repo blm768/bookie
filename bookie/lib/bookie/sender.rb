@@ -34,13 +34,10 @@ module Bookie
       #Grab data from the first job:  
       each_job(filename) do |job|
         next if filtered?(job)
-        end_time = job.start_time + job.wall_time
-        system = Bookie::Database::System.find_current(self, end_time)
-        duplicate = system.jobs.find_by_end_time(end_time)
-        #To do: tighten conditions for duplicate detection?
-        raise "Jobs already exist in the database for '#{filename}'." if duplicate
+        system = Bookie::Database::System.find_current(self, job.end_time)
+        raise "Jobs already exist in the database for '#{filename}'." if duplicate(job, system)
         time_min = job.start_time
-        time_max = end_time
+        time_max = job.end_time
         break
       end
       
@@ -83,10 +80,9 @@ module Bookie
       #Grab data from the first job:  
       each_job(filename) do |job|
         next if filtered?(job)
-        end_time = job.start_time + job.wall_time
-        system = Bookie::Database::System.find_current(self, end_time)
+        system = Bookie::Database::System.find_current(self, job.end_time)
         time_min = job.start_time
-        time_max = end_time
+        time_max = job.end_time
         break
       end
       
@@ -98,15 +94,7 @@ module Bookie
           system = Database::System.find_current(self, job.end_time)
         end
         #To consider: optimize this query?
-        model = Database::Job.where({
-          :start_time => job.start_time,
-          :wall_time => job.wall_time,
-          :system_id => system.id,
-          :command_name => job.command_name,
-          :cpu_time => job.cpu_time,
-          :memory => job.memory,
-          :exit_code => job.exit_code
-        }).by_user_name(job.user_name).by_group_name(job.group_name).first
+        model = duplicate(job, system)
         break unless model
         time_min = (model.start_time < time_min) ? model.start_time : time_min
         time_max = (model.end_time > time_max) ? model.end_time : time_max
@@ -119,8 +107,7 @@ module Bookie
     ##
     #The name of the Bookie::Database::SystemType that systems using this sender will have
     def system_type
-      #To consider: cache?
-      Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
+      @system_type ||= Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
     end
     
     ##
@@ -128,6 +115,19 @@ module Bookie
     #
     def filtered?(job)
       @config.excluded_users.include?job.user_name
+    end
+    
+    ##
+    #Finds the first job that is a duplicate of the provided job
+    def duplicate(job, system)
+      system.jobs.where({
+          :start_time => job.start_time,
+          :wall_time => job.wall_time,
+          :command_name => job.command_name,
+          :cpu_time => job.cpu_time,
+          :memory => job.memory,
+          :exit_code => job.exit_code
+        }).by_user_name(job.user_name).by_group_name(job.group_name).first
     end
     
     #Used internally by #send_data and #undo_send
@@ -149,15 +149,20 @@ module Bookie
       job = Bookie::Database::Job.new
       job.command_name = self.command_name
       job.start_time = self.start_time
-      job.end_time = self.start_time + self.wall_time
       job.wall_time = self.wall_time
       job.cpu_time = self.cpu_time
       job.memory = self.memory
       job.exit_code = self.exit_code
-      return job
+      job
+    end
+
+    ##
+    #Returns the end time
+    def end_time
+      start_time + wall_time
     end
   end
-  
+
   #Contains all sender plugins
   module Senders
     

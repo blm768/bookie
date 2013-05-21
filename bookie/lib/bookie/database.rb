@@ -57,6 +57,8 @@ module Bookie
       def end_time
         return start_time + wall_time
       end
+
+      #To consider: disable #end_time= ?
       
       def self.by_user(user)
         where('jobs.user_id = ?', user.id)
@@ -83,7 +85,7 @@ module Bookie
       def self.by_group_name(group_name)
         group = Group.find_by_name(group_name)
         return joins(:user).where('users.group_id = ?', group.id) if group
-        limit(0)
+        where('1=0')
       end
       
       ##
@@ -133,7 +135,7 @@ module Bookie
       #
       #This method should probably not be chained with other queries that filter by start/end time.
       #
-      #To do: filter out jobs with 0 CPU time?
+      #To consider: filter out jobs with 0 CPU time?
       def self.summary(time_range = nil)
         time_range = time_range.normalized if time_range
         jobs = self
@@ -288,7 +290,7 @@ module Bookie
       def self.by_group_name(name)
         group = Group.find_by_name(name)
         return by_group(group) if group
-        limit(0)
+        where('1=0')
       end
       
       ##
@@ -630,7 +632,6 @@ Please make sure that all previous systems with this hostname have been marked a
         systems = System
         if time_range
           time_range = time_range.normalized
-          #To consider: optimize as union of queries?
           systems = systems.where(
             'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
             time_range.last,
@@ -814,7 +815,6 @@ Please make sure that all previous systems with this hostname have been marked a
             t.datetime :start_time, :null => false
             t.datetime :end_time
             t.integer :cores, :null => false
-            #To consider: replace with a float? (more compact)
             t.integer :memory, :null => false, :limit => 8
           end
           change_table :systems do |t|
