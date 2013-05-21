@@ -116,8 +116,10 @@ module Bookie
       def self.by_time_range_inclusive(time_range)
         if time_range.empty?
           where('1=0')
-        else
+        elsif time_range.exclude_end?
           where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
+        else
+          where('? <= jobs.end_time AND jobs.start_time <= ?', time_range.first, time_range.last)
         end
       end
       
@@ -131,11 +133,13 @@ module Bookie
       #- <tt>:successful</tt>: the number of jobs that have completed successfully
       #
       #This method should probably not be chained with other queries that filter by start/end time.
+      #
+      #To do: filter out jobs with 0 CPU time?
       def self.summary(time_range = nil)
         time_range = time_range.normalized if time_range
         jobs = self
         jobs = jobs.by_time_range_inclusive(time_range) if time_range
-        jobs = jobs.where('jobs.cpu_time > 0').all_with_relations
+        jobs = jobs.all_with_relations
         cpu_time = 0
         successful_jobs = 0
         memory_time = 0
@@ -573,8 +577,10 @@ Please make sure that all previous systems with this hostname have been marked a
       #
       #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
       #
-      #To do: make this and other summaries operate differently on inclusive and exclusive ranges.
-      #(Current behavior is as if the range were always exclusive.)
+      #Notes:
+      #
+      #Results may be slightly off when an inclusive range is used.
+      #To consider: is this worth fixing?
       def self.summary(time_range = nil)
         #To consider: how to handle time zones with Rails apps?
         current_time = Time.now

@@ -203,11 +203,15 @@ describe Bookie::Database do
     describe "#by_time_range_inclusive" do
       it "correctly filters by inclusive time range" do
         jobs = @jobs.by_time_range_inclusive(@base_time ... @base_time + 3600 * 2 + 1)
-        jobs.length.should eql 3
-        jobs = @jobs.by_time_range_inclusive(@base_time + 1 ... @base_time + 3600 * 2 - 1)
-        jobs.length.should eql 2
-        jobs = @jobs.by_time_range_inclusive(Time.at(0) ... Time.at(3))
+        jobs.count.should eql 3
+        jobs = @jobs.by_time_range_inclusive(@base_time + 1 ... @base_time + 3600 * 2)
+        jobs.count.should eql 2
+        jobs = @jobs.by_time_range_inclusive(@base_time ... @base_time)
         jobs.length.should eql 0
+        jobs = @jobs.by_time_range_inclusive(@base_time .. @base_time + 3600 * 2)
+        jobs.count.should eql 3
+        jobs = @jobs.by_time_range_inclusive(@base_time .. @base_time)
+        jobs.count.should eql 1
       end
       
       it "correctly handles empty/inverted ranges" do
@@ -242,7 +246,7 @@ describe Bookie::Database do
         @base_time = Time.utc(2012)
         @jobs = Bookie::Database::Job
         @length = @jobs.all.length
-        @summary = Helpers::create_summaries(@jobs, Time.utc(2012))
+        @summary = Helpers::create_summaries(@jobs, @base_time)
       end
       
       it "produces correct summary totals" do
@@ -288,6 +292,13 @@ describe Bookie::Database do
       it "correctly handles inverted ranges" do
         @jobs.summary(Time.now() ... Time.now() - 1).should eql @summary[:empty]
         @jobs.summary(Time.now() .. Time.now() - 1).should eql @summary[:empty]
+      end
+
+      it "distinguishes between inclusive and exclusive ranges" do
+        sum = @jobs.summary(@base_time ... @base_time + 3600)
+        sum[:jobs].length.should eql 1
+        sum = @jobs.summary(@base_time .. @base_time + 3600)
+        sum[:jobs].length.should eql 2
       end
     end
     
@@ -502,39 +513,51 @@ describe Bookie::Database do
   
     describe "#summary" do
       before(:each) do
+        @base_time = Time.utc(2012)
         Bookie::Database::JobSummary.delete_all
         t = Time.utc(2012, 1, 3)
         Time.expects(:now).at_least(0).returns(t)
       end
       
-      #To do: test inclusive ranges?
       it "produces correct summaries" do
         #To consider: flesh out some more?
-        time_start = Time.utc(2012)
+        time_start = @base_time
         time_end = time_start
         time_bound = time_start + 3.days
         while time_start < time_bound
           while time_end < time_bound
-            time_range = time_start ... time_end
-            sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
-            sum2 = Bookie::Database::Job.summary(time_range)
-            check_job_sums(sum1, sum2)
+            [true, false].each do |exclude_end|
+              time_range = Range.new(time_start, time_end, exclude_end)
+              sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
+              sum2 = Bookie::Database::Job.summary(time_range)
+              check_job_sums(sum1, sum2)
+            end
             time_end += 1.days
           end
           time_start += 1.days
         end
-        time_start = Time.utc(2012)
+        time_start = @base_time
         time_end = time_start + 1.days
         [0, -7200, 7200].each do |offset_begin|
           [0, -7200, 7200].each do |offset_end|
-            range_offset = time_start + offset_end ... time_end + offset_end
-            sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
-            sum2 = Bookie::Database::Job.summary(range_offset)
-            check_job_sums(sum1, sum2)
+            [true, false].each do |exclude_end|
+              range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
+              sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
+              sum2 = Bookie::Database::Job.summary(range_offset)
+              check_job_sums(sum1, sum2)
+            end
           end
         end
       end
-      
+
+      it "distinguishes between inclusive and exclusive ranges" do
+        Summary = Bookie::Database::JobSummary
+        sum = Summary.summary(:range => (@base_time ... @base_time + 3600 * 2))
+        sum[:num_jobs].should eql 2
+        sum = Summary.summary(:range => (@base_time .. @base_time + 3600 * 2))
+        sum[:num_jobs].should eql 3
+      end
+
       def check_time_bounds(time_max = Time.utc(2012) + 1.days)
         time_min = Time.utc(2012)
         check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
