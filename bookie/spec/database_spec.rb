@@ -468,7 +468,7 @@ describe Bookie::Database do
       
       it "produces correct summaries" do
         d = Date.new(2012)
-        range = d.to_utc_time ... (d + 1).to_utc_time
+        range = base_time ... base_time + 1.days
         Bookie::Database::JobSummary.summarize(d)
         sums = Bookie::Database::JobSummary.all
         found_sums = Set.new
@@ -864,11 +864,11 @@ describe Bookie::Database do
       
       it "correctly detects the lack of a matching system" do
         expect {
-          Bookie::Database::System.find_current(@sender_1, Date.new(2011, 1, 1).to_time)
+          Bookie::Database::System.find_current(@sender_1, base_time - 1.years)
         }.to raise_error(/^There is no system with hostname 'test1' in the database at /)
         @config_t1.expects(:hostname).at_least_once.returns('test1000')
         expect {
-          Bookie::Database::System.find_current(@sender_1, Date.new(2012, 1, 1).to_time)
+          Bookie::Database::System.find_current(@sender_1, base_time)
         }.to raise_error(/^There is no system with hostname 'test1000' in the database at /)
       end
       
