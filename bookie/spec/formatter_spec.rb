@@ -62,7 +62,7 @@ describe Bookie::Formatter do
   describe "#print_summary" do
     it "prints the correct summary fields" do
       with_utc do
-        Time.expects(:now).returns(Time.utc(2012) + 3600 * 40).at_least_once
+        Time.expects(:now).returns(base_time + 40.hours).at_least_once
         @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
         @formatter.flush
         $field_values.should eql [40, "0 weeks, 0 days, 01:06:40", "50.0000%", "0 weeks, 5 days, 20:00:00", "0.7937%", "1750000 kb", "0.0114%"]
@@ -71,7 +71,7 @@ describe Bookie::Formatter do
           :avail_memory_time => 0,
           :avail_memory_avg => 0
         )
-        @formatter.print_summary(@jobs, @summaries, Bookie::Database::System, Time.utc(2012) ... Time.utc(2012))
+        @formatter.print_summary(@jobs, @summaries, Bookie::Database::System, base_time ... base_time)
         @formatter.flush
         $field_values.should eql [0, "0 weeks, 0 days, 00:00:00", "0.0000%", "0 weeks, 0 days, 00:00:00", "0.0000%", "0 kb", "0.0000%"]
       end

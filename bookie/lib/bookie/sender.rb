@@ -51,6 +51,8 @@ module Bookie
         time_min = (model.start_time < time_min) ? model.start_time : time_min
         time_max = (model.end_time > time_max) ? model.end_time : time_max
         #To consider: handle files that don't have jobs sorted by end time?
+        #To consider: this should rarely happen in real life. Remove test?
+        #(This situation can only arise if log files from different versions of the system are concatenated before sending.)
         if system.end_time && model.end_time > system.end_time
           system = Database::System.find_current(self, model.end_time)
         end
@@ -94,6 +96,9 @@ module Bookie
           system = Database::System.find_current(self, job.end_time)
         end
         #To consider: optimize this query?
+        #(It should be possible to delete all of the jobs with end times between those of the first and last jobs of the file (exclusive),
+        #but jobs with end times matching those of the first/last jobs in the file might be from an earlier or later file, not this one.
+        #This assumes that the files all have jobs sorted by end time.
         model = duplicate(job, system)
         break unless model
         time_min = (model.start_time < time_min) ? model.start_time : time_min

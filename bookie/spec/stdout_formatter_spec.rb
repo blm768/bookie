@@ -47,7 +47,7 @@ eos
   end
     
   it "correctly formats summaries" do
-    Time.expects(:now).returns(Time.utc(2012) + 36000 * 4).at_least_once
+    Time.expects(:now).returns(base_time + 40.hours).at_least_once
     @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     @formatter.flush
     @m.buf.should eql <<-eos

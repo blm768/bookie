@@ -29,7 +29,6 @@ end
 describe Bookie::Sender do
   before(:all) do
     Bookie::Database::Migration.up
-    t = Time.utc(2012)
     fields = {
       :name => 'localhost',
       :system_type => Bookie::Sender.new(@config).system_type,
@@ -37,16 +36,16 @@ describe Bookie::Sender do
       :memory => @config.memory,
     }
     @sys_1 = Bookie::Database::System.new(fields)
-    @sys_1.start_time = t
-    @sys_1.end_time = t + 1000
+    @sys_1.start_time = base_time
+    @sys_1.end_time = base_time + 1000
     @sys_1.save!
     @sys_2 = Bookie::Database::System.new(fields)
-    @sys_2.start_time = t + 1001
+    @sys_2.start_time = base_time + 1001
     @sys_2.end_time = nil
     @sys_2.save!
     fields[:name] = 'dummy'
     @sys_dummy = Bookie::Database::System.new(fields)
-    @sys_dummy.start_time = t
+    @sys_dummy.start_time = base_time
     @sys_dummy.save!
   end
   
@@ -100,15 +99,14 @@ describe Bookie::Sender do
   it "chooses the correct systems" do
     Bookie::Database::Job.delete_all
     sender = Bookie::Sender.new(@config)
-        
+
     def sender.each_job(filename)
-      t = Time.utc(2012)
       [0, 1001].each do |offset|
         job = JobStub.new
         job.user_name = 'blm'
         job.group_name = 'blm'
         job.command_name = 'vi'
-        job.start_time = t + offset
+        job.start_time = Helpers::BASE_TIME + offset
         job.wall_time = 1000
         job.cpu_time = 2
         job.memory = 300

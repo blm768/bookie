@@ -52,8 +52,14 @@ end
 module Helpers
   extend self
 
+  BASE_TIME = Time.utc(2012)
+
+  #To get around the 'formal argument cannot be a constant' error
+  def base_time
+    BASE_TIME
+  end
+
   def generate_database
-    base_time = Time.utc(2012)
     #Create test database
     groups = {}
     group_names = ['root', 'default', 'admin', 'admin']

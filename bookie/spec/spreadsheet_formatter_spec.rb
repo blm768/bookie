@@ -91,7 +91,7 @@ describe Bookie::Formatters::Spreadsheet do
   end
   
   it "correctly formats summaries" do
-    Time.expects(:now).returns(Time.utc(2012) + 3600 * 40).at_least_once
+    Time.expects(:now).returns(base_time + 40.hours).at_least_once
     @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
     w = @m.worksheet('Summary')
     w.column(0).width.should_not eql nil
