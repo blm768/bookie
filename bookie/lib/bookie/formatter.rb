@@ -120,7 +120,7 @@ module Bookie
           job.system.system_type.name,
           job.start_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
           job.end_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
-          Formatter.format_duration(job.end_time - job.start_time),
+          Formatter.format_duration(job.end_time.to_i - job.start_time.to_i),
           Formatter.format_duration(job.cpu_time),
           "#{job.memory}kb#{memory_stat_type}",
           job.command_name,
@@ -133,8 +133,9 @@ module Bookie
     ##
     #Formats a duration in a human-readable format
     #
-    #<tt>dur</tt> should be a number in seconds.
+    #<tt>dur</tt> should be an integer representing the number of seconds.
     def self.format_duration(dur)
+      dur = dur.to_i
       days = dur / (3600 * 24)
       dur -= days * (3600 * 24)
       hours = dur / 3600
