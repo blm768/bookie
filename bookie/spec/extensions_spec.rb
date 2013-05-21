@@ -3,11 +3,11 @@ require 'spec_helper'
 describe Range do
   describe "#normalized" do
     it "correctly normalizes" do
-      (1 .. 2).normalized.should eql (1 .. 2)
-      (1 .. 1).normalized.should eql (1 .. 1)
-      (1 ... 1).normalized.should eql (1 ... 1)
-      (1 .. 0).normalized.should eql (1 ... 1)
-      (1 ... 0).normalized.should eql ( 1 ... 1 )
+      (1 .. 2).normalized.should eql(1 .. 2)
+      (1 .. 1).normalized.should eql(1 .. 1)
+      (1 ... 1).normalized.should eql(1 ... 1)
+      (1 .. 0).normalized.should eql(1 ... 1)
+      (1 ... 0).normalized.should eql( 1 ... 1 )
     end
   end
 

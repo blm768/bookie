@@ -84,9 +84,9 @@ describe Bookie::Formatters::Spreadsheet do
       end
       w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
       w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
-        "2012-01-01 01:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'vi', 0]
+        "2012-01-01 01:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'vi', 0]
       w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
-        "2012-01-01 02:00:00", "01:00:00", "00:01:40", "200kb (avg)", 'emacs', 1]
+        "2012-01-01 02:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'emacs', 1]
     end
   end
   
@@ -98,9 +98,9 @@ describe Bookie::Formatters::Spreadsheet do
     w.last_row_index.should eql 6
     w.mock_rows.should eql [
       ["Number of jobs", 40],
-      ["Total CPU time", "01:06:40"],
+      ["Total CPU time", "0 weeks, 0 days, 01:06:40"],
       ["Successful", "50.0000%"],
-      ["Available CPU time", "140:00:00"],
+      ["Available CPU time", "0 weeks, 5 days, 20:00:00"],
       ["CPU time used", "0.7937%"],
       ["Available memory (average)", "1750000 kb"],
       ["Memory used (average)", "0.0114%"],
