@@ -31,7 +31,7 @@ module Helpers
   end
   
   def check_job_sums(js_sum, j_sum)
-    [:cpu_time, :memory_time, :successful].each do |field|
+    [:cpu_time, :memory_time].each do |field|
       js_sum[field].should eql j_sum[field]
     end
     true
@@ -260,8 +260,7 @@ describe Bookie::Database do
         clipped_jobs.should eql 25
         @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
         @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
-        #Luckily for us, rounding down gives us the right answer. This is a bit fragile, though.
-        @summary[:clipped][:successful].should eql clipped_jobs / 2
+        @summary[:clipped][:successful].should eql clipped_jobs / 2 + 1
       end
       
       it "correctly handles summaries of empty sets" do
@@ -285,25 +284,6 @@ describe Bookie::Database do
           job.save!
         end
       end
-      
-      it "only considers finished jobs to be successful" do
-        begin
-          job = Bookie::Database::Job.create!(
-            :user => Bookie::Database::User.first,
-            :system => Bookie::Database::System.first,
-            :command_name => '',
-            :cpu_time => 100,
-            :start_time => Time.utc(2013),
-            :wall_time => 3600 * 24 * 2,
-            :memory => 10000,
-            :exit_code => 0
-          )
-          @jobs.summary(job.start_time ... job.start_time + 3600 * 24)[:successful].should eql 0
-        ensure
-          job.delete if job
-        end
-      end
-    
       
       it "correctly handles inverted ranges" do
         @jobs.summary(Time.now() ... Time.now() - 1).should eql @summary[:empty]
@@ -462,11 +442,11 @@ describe Bookie::Database do
         s.persisted?.should eql false
         s.cpu_time = 0
         s.memory_time = 0
-        s.successful = 0
         s.save!
       end
       
       it "uses the old summary if present" do
+        #Uses the JobSummary created in the previous test
         s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
         s.persisted?.should eql true
       end
@@ -598,11 +578,10 @@ describe Bookie::Database do
         Bookie::Database::JobSummary.any?.should eql false
       end
       
-      #To do: use users that are actually in the database.
       it "correctly handles filtered summaries" do
         filters = {
-          :user_name => 'blm',
-          :group_name => 'blm',
+          :user_name => 'test',
+          :group_name => 'admin',
           :command_name => 'vi',
         }
         filters.each do |filter, value|
@@ -647,7 +626,6 @@ describe Bookie::Database do
         :date => Date.new(2012),
         :cpu_time => 100,
         :memory_time => 1000000,
-        :successful => 1,
       }
 
       sum = Bookie::Database::JobSummary.new(fields)
@@ -659,7 +637,7 @@ describe Bookie::Database do
         job.valid?.should eql false
       end
       
-      [:cpu_time, :memory_time, :successful].each do |field|
+      [:cpu_time, :memory_time].each do |field|
         job = Bookie::Database::JobSummary.new(fields)
         m = job.method("#{field}=".intern)
         m.call(-1)

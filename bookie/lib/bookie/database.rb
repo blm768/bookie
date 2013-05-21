@@ -156,10 +156,7 @@ module Bookie
             #To consider: what should I do about jobs that only report a max memory value?
             memory_time += job.memory * clipped_wall_time
           end
-          #Only count the job as successful if it's actually finished by the end of the summary.
-          if job.exit_code == 0 && (!time_range || job.end_time < time_range.end) then
-            successful_jobs += 1
-          end
+          successful_jobs += 1 if job.exit_code == 0
         end
       
         return {
@@ -242,13 +239,12 @@ module Bookie
       belongs_to :user
       belongs_to :system
 
-      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :successful, :cpu_time, :memory_time
+      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :cpu_time, :memory_time
       
       def self.by_date(date)
         where('job_summaries.date = ?', date)
       end
 
-      #To do: unit test.
       def self.by_date_range(range)
         range = range.normalized
         if range.exclude_end?
@@ -331,7 +327,6 @@ module Bookie
             sum = unscoped.find_or_new(date, user.id, system.id, '')
             sum.cpu_time = 0
             sum.memory_time = 0
-            sum.successful = 0
             sum.save!
           end
         else
@@ -340,10 +335,8 @@ module Bookie
             summary = summary_jobs.summary(time_range)
             Lock[:job_summaries].synchronize do
               sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
-              #To consider: do we even need this field? (Time-range summaries don't use it because of overlap issues.)
               sum.cpu_time = summary[:cpu_time]
               sum.memory_time = summary[:memory_time]
-              sum.successful = summary[:successful]
               sum.save!
             end
           end
@@ -384,7 +377,6 @@ module Bookie
           summary = jobs.summary(time_before_min ... time_before_max)
           cpu_time += summary[:cpu_time]
           memory_time += summary[:memory_time]
-          successful += summary[:successful]
         end
 
         #Is the end somewhere between days?
@@ -397,7 +389,6 @@ module Bookie
             summary = jobs.summary(time_after_range)
             cpu_time += summary[:cpu_time]
             memory_time += summary[:memory_time]
-            successful += summary[:successful]
           end
         end
         
@@ -412,7 +403,6 @@ module Bookie
           while sum && sum.date == date do
             cpu_time += sum.cpu_time
             memory_time += sum.memory_time
-            successful += sum.successful
             new_index += 1
             sum = summaries[new_index]
           end
@@ -425,16 +415,17 @@ module Bookie
             sums.each do |sum|
               cpu_time += sum.cpu_time
               memory_time += sum.memory_time
-              successful += sum.successful
             end
           end
         end
         
         if range && range.empty?
           num_jobs = 0
+          successful = 0
         else
           jobs = jobs.by_time_range_inclusive(range)
           num_jobs = jobs.count
+          successful = jobs.where('jobs.exit_code = 0').count
         end
 
         {
@@ -445,13 +436,13 @@ module Bookie
         }
       end
       
-      validates_presence_of :user_id, :system_id, :date, :cpu_time, :memory_time, :successful
+      validates_presence_of :user_id, :system_id, :date, :cpu_time, :memory_time
       
       validates_each :command_name do |record, attr, value|
         record.errors.add(attr, 'must not be nil') if value == nil
       end
       
-      validates_each :cpu_time, :memory_time, :successful do |record, attr, value|
+      validates_each :cpu_time, :memory_time do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end
     end
@@ -848,8 +839,6 @@ Please make sure that all previous systems with this hostname have been marked a
             t.string :command_name, :null => false
             t.integer :cpu_time, :null => false
             t.integer :memory_time, :null => false
-            #To do: change semantics and remove?
-            t.integer :successful, :null => false
           end
           change_table :job_summaries do |t|
             t.index [:date, :user_id, :system_id, :command_name], :unique => true, :name => 'identity'
