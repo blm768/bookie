@@ -82,6 +82,9 @@ class JobsController < ApplicationController
       @prev_filters << [type, values]
     end
     
+    #To do: remove
+    summary_start_time ||= Time.utc(2012)
+    summary_end_time ||= Time.utc(2012) + 2.days
     
     #To do: ordering?
     Bookie::Database::JobSummary.delete_all
