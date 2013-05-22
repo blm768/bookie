@@ -582,6 +582,20 @@ module Bookie
       end
       
       ##
+      #Finds all systems whose running intervals overlap the given time range
+      #
+      #To do: unit test.
+      def self.by_time_range_inclusive(time_range)
+        if time_range.empty?
+          where('1=0')
+        elsif time_range.exclude_end?
+          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time < ?', time_range.first, time_range.last)
+        else
+          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time <= ?', time_range.first, time_range.last)
+        end
+      end
+
+      ##
       #Finds the current system for a given sender and time
       #
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
@@ -632,10 +646,8 @@ Please make sure that all previous systems with this hostname have been marked a
         systems = System
         if time_range
           time_range = time_range.normalized
-          systems = systems.where(
-            'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
-            time_range.last,
-            time_range.first)
+          #To do: unit test.
+          systems = systems.by_time_range_inclusive(time_range)
         end
         
         systems.all.each do |system|

@@ -13,8 +13,6 @@ var PLOT_TYPES = {
   },
   'CPU time used': {},
 }
-else
-flash_msg_now :error, 
 
 var MSECS_PER_MINUTE = 60 * 1000
 var MSECS_PER_HOUR = 60 * MSECS_PER_MINUTE

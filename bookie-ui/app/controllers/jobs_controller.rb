@@ -59,25 +59,7 @@ class JobsController < ApplicationController
         jobs = jobs.by_command_name(values[0])
         summaries = summaries.by_command_name(values[0])
       when 'Time'
-        summary_start_time = nil
-        summary_end_time = nil
-    
-        start_time_text = values[0]
-        end_time_text = values[1]
-        begin
-          summary_start_time = Time.parse(start_time_text)
-        rescue
-          flash_msg_now :error, %{Invalid start time '#{start_time_text}"}
-        end
-        begin
-          summary_end_time = Time.parse(end_time_text)
-        rescue => e
-          flash_msg_now :error, %{Invalid end time "#{end_time_text}"}
-          flash_msg_now :error, e.to_s
-        end
-        if summary_start_time && summary_end_time
-          summary_time_range = summary_start_time ... summary_end_time
-        end
+        summary_time_range = parse_time_range(*values)
       end
     end
 

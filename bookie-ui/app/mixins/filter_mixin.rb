@@ -53,4 +53,23 @@ module FilterMixin
   def error_field_blank(filter_type)
     flash_msg_now :error, %{Filter "#{filter_type}" has blank fields.}
   end
+
+  def parse_time_range(start_time_text, end_time_text)
+    start_time = nil
+    end_time = nil
+
+    begin
+      start_time = Time.parse(start_time_text)
+    rescue
+      flash_msg_now :error, %{Invalid start time '#{start_time_text}"}
+      return nil
+    end
+    begin
+      end_time = Time.parse(end_time_text)
+    rescue => e
+      flash_msg_now :error, %{Invalid end time "#{end_time_text}"}
+      return nil
+    end
+    start_time ... end_time
+  end
 end

@@ -31,7 +31,7 @@
         <th>Start time</th>
         <th>End time</th>
       </tr>
-      <% @systems.all.each do |system| %>
+      <% @systems_summary[:systems].all.each do |system| %>
         <tr>
           <td><%= system.name %></td>
           <td><%= system.system_type.name %></td>

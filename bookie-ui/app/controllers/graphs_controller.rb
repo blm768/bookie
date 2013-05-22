@@ -4,11 +4,11 @@ require 'date'
 
 class GraphsController < ApplicationController
   FILTERS = {
-    'System' => {:types => [:text]},
-    'User' => {:types => [:text]},
-    'Group' => {:types => [:text]},
-    'System type' => {:types => [:sys_type]},
-    'Command name' => {:types => [:text]},
+    'System' => [:text],
+    'User' => [:text],
+    'Group' => [:text],
+    'System type' => [:sys_type],
+    'Command name' => [:text],
   }
   
   include FilterMixin

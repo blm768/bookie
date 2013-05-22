@@ -12,11 +12,13 @@
 <body>
 
 <div id="messages">
-  <% #To do: ordering? %>
-  <% flash.each do |name, values| %>
-    <ul id="message_<%= name %>">
-      <% values.each do |value| %>
-        <li><%= value %></li>
+  <% [:error, :alert, :notice].each do |category| %>
+    <ul id="message_<%= category %>">
+      <% values = flash[category] %>
+      <% if values %>
+        <% values.each do |value| %>
+          <li><%= value %></li>
+        <% end %>
       <% end %>
     </ul>
   <% end %>
