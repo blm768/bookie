@@ -18,10 +18,10 @@ Gem::Specification.new do |gem|
   
   gem.add_dependency('activerecord')
   gem.add_dependency('json')
-  if ENV['USE_MYSQL']
-    gem.add_dependency('mysql2')
-    gem.add_dependency('activerecord-mysql2-adapter')
-  end
+  #We need this because Bundler has no concept of optional dependencies
+  #and complains about using non-dependency gems.
+  #To do: figure out how to remove (file issue?)
+  gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
   gem.add_dependency('spreadsheet')
   gem.add_development_dependency('mocha')
