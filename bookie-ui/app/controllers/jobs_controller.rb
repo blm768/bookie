@@ -94,11 +94,7 @@ class JobsController < ApplicationController
 
     @systems_summary = systems.summary(summary_time_range)
 
-    #Options available in enum-like filters
-    @filter_options = {
-      :sys_type => Bookie::Database::SystemType.select(:name).all.map{ |t| t.name }
-    }
-    
+    @filter_options = JobsController.filter_options
     
     avail_cpu_time = @systems_summary[:avail_cpu_time]
     avail_mem_time = @systems_summary[:avail_memory_time]
@@ -125,5 +121,12 @@ class JobsController < ApplicationController
       format.html
       format.json
     end
+  end
+
+  #Options available in enum-like filters (such as system type)
+  def self.filter_options
+    {
+      :sys_type => Bookie::Database::SystemType.select(:name).all.map{ |t| t.name }
+    }
   end
 end

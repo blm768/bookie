@@ -33,6 +33,7 @@
   </div>
   
   <%= render :partial => 'shared/filters', :locals => {
-    :filter_options => GraphsController::FILTER_ARG_COUNTS,
+    :filter_types => JobsController::FILTERS,
+    :filter_options => JobsController.filter_options,
   } %>
 </div>
