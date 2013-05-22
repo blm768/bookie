@@ -29,7 +29,9 @@ class JobsController < ApplicationController
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
-    each_filter(FILTERS) do |type, values|
+    each_filter(FILTERS) do |type, values, valid|
+      @prev_filters << [type, values]
+      next unless valid
       case type
       when 'System'
         jobs = jobs.by_system_name(values[0])
@@ -77,9 +79,8 @@ class JobsController < ApplicationController
           summary_time_range = summary_start_time ... summary_end_time
         end
       end
-      @prev_filters << [type, values]
     end
-    
+
     #To do: remove
     summary_time_range ||= Time.utc(2012) ... Time.utc(2012) + 2.days
     
