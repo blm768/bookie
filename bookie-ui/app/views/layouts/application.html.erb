@@ -12,8 +12,13 @@
 <body>
 
 <div id="messages">
-  <% flash.each do |name, value| %>
-    <span id="message_<%= name -%>"><%= value -%></span>
+  <% #To do: ordering? %>
+  <% flash.each do |name, values| %>
+    <ul id="message_<%= name %>">
+      <% values.each do |value| %>
+        <li><%= value %></li>
+      <% end %>
+    </ul>
   <% end %>
 </div>
 

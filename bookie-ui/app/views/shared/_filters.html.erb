@@ -7,7 +7,7 @@
           <% filter_attributes = filter_types[filter] %>
           <% types = filter_attributes[:types] %>
           <div class="filter"><%= filter %><div class="filter_remover">X</div>
-            <% values.each_index do |i| %>
+            <% types.each_index do |i| %>
               <% value = values[i] %>
               <% type = types[i] %>
               <% case type %>

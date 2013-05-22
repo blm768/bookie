@@ -33,7 +33,7 @@ class JobsController < ApplicationController
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
-    #To do: error on empty fields?
+    #To do: prevent duplicate filters?
     each_filter(FILTERS) do |type, values|
       case type
       when 'System'
@@ -53,10 +53,10 @@ class JobsController < ApplicationController
           summaries = summaries.by_system_type(sys_type)
           systems = systems.by_system_type(sys_type)
         else
-          jobs = jobs.where('false')
-          #To do: figure out how well this actually works.
-          summaries = summaries.where('false')
-          systems = systems.where('false')
+          jobs = jobs.where('1=0')
+          summaries = summaries.where('1=0')
+          systems = systems.where('1=0')
+          flash_msg_now :error, %{Unknown system type "#{values[0]}"}
         end
       when 'Command name'
         jobs = jobs.by_command_name(values[0])
@@ -70,14 +70,17 @@ class JobsController < ApplicationController
         begin
           summary_start_time = Time.parse(start_time_text)
         rescue
-          flash.now[:error] = "Invalid start time '#{start_time_text}'"
+          flash_msg_now :error, %{Invalid start time '#{start_time_text}"}
         end
         begin
           summary_end_time = Time.parse(end_time_text)
-        rescue
-          flash.now[:error] = "Invalid end time '#{end_time_text}'"
+        rescue => e
+          flash_msg_now :error, %{Invalid end time "#{end_time_text}"}
+          flash_msg_now :error, e.to_s
         end
-        summary_time_range = summary_start_time ... summary_end_time
+        if summary_start_time && summary_end_time
+          summary_time_range = summary_start_time ... summary_end_time
+        end
       end
       @prev_filters << [type, values]
     end
@@ -108,16 +111,14 @@ class JobsController < ApplicationController
     @show_details = (params[:show_details] == "true")
     if @show_details
       if summary_time_range
-        @jobs = Bookie::Database::Job.by_time_range_inclusive(summary_time_range)
-      else
-        @jobs = Bookie::Database::Job
+        jobs = jobs.by_time_range_inclusive(summary_time_range)
       end
-      @jobs = @jobs.order(:end_time)
+      jobs = jobs.order(:end_time)
       @page_start = JOBS_PER_PAGE * (@page_num - 1)
       num_jobs = @jobs_summary[:num_jobs]
       @num_pages = num_jobs / JOBS_PER_PAGE + ((num_jobs % JOBS_PER_PAGE) > 0 ? 1 : 0)
       @num_pages = 1 if @num_pages == 0
-      @jobs = jobs.offset(@page_start).limit(JOBS_PER_PAGE)
+      @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start)
     end
     
     respond_to do |format|

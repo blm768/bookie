@@ -1,4 +1,5 @@
 module ApplicationHelper
+  #To do: relocate?
   def options(values, selected = nil)
     text = ""
     values.each_pair do |value, label|

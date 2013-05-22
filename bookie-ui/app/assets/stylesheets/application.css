@@ -17,12 +17,18 @@
 
 #message_error {
   color: #A00;
+  list-style-type: none;
+  padding: 0;
 }
 #message_alert {
   color: #A50;
+  list-style-type: none;
+  padding: 0;
 }
 #message_notice {
   color: #0A0;
+  list-style-type: none;
+  padding: 0;
 }
 
 div#main {

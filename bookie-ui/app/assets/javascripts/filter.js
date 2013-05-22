@@ -91,7 +91,11 @@ function submitFilters() {
   var filterValuesInput = $('<input/>')
   filterValuesInput.attr('type', 'hidden')
   filterValuesInput.attr('name', 'filter_values')
-  //To do: prevent commas in the values from causing problems.
+  //Prevent commas in the filter values from causing problems
+  //by adding a second layer of URI encoding to the values:
+  for(var i = 0; i < filterData[1].length; ++i) {
+    filterData[1][i] = encodeURIComponent(filterData[1][i])
+  }
   filterValuesInput.val(filterData[1].join(','))
   filterForm.append(filterValuesInput)
   var includeDetails = $('#show_details')
