@@ -4,19 +4,28 @@
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
+          <% filter_attributes = filter_types[filter] %>
+          <% types = filter_attributes[:types] %>
           <div class="filter"><%= filter %><div class="filter_remover">X</div>
-            <% values.each do |value| %>
-              <input type="text" value="<%= value %>"></input>
+            <% values.each_index do |i| %>
+              <% value = values[i] %>
+              <% type = types[i] %>
+              <% case type %>
+              <% when :text %>
+                <input type="<%= type %>" value="<%= value %>"></input>
+              <% else %>
+                <select value="<%= value %>"></select>
+              <% end %>
             <% end %>
           </div>
         <% end %>
       <% end %>
     </span>
     <select id="add_filter">
-      <option value="0">Add filter</option>
-      <% filter_options.each do |name, num_values| %>
-        <% #The value attribute is hijacked to hold the number of values associated with the filter. %>
-        <option value="<%= num_values %>"><%= name %></option> 
+      <option value="">Add filter</option>
+      <% filter_types.each do |name, data| %>
+        <% #The value attribute is hijacked to hold the type of value associated with the filter. %>
+        <option value="<%= data[:types].join(' ') %>"><%= name %></option> 
       <% end %>
     </select>
     <% if defined? default_details %>

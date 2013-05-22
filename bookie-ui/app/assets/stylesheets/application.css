@@ -33,3 +33,11 @@ div#main {
 div#content {
   display: table-cell;
 }
+
+input[type=text] {
+  border: 1px solid;
+  border-color: #33A;
+}
+
+/* vim: ts=2:sw=2:et
+*/

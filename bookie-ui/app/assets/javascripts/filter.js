@@ -5,6 +5,7 @@ function initFilters() {
   //If filters have already been created by the server, tie events to them.
   $('.filter_remover').click(function() { $(this).parent().remove() })
   $('.filter').children('input[type=text]').change(function() {
+  	//Used when the filter form's submit event is cancelled
     this.blur()
   })
 
@@ -34,7 +35,8 @@ function addFilter() {
   remover.click(function() { filter.remove() })
   remover.append('X')
   filter.append(remover)
-  //The value attribute is hijacked to store the number of filter parameters.
+  //The value attribute is hijacked to store the type of filter parameters.
+  var types = opt.val().split(' ')
   for(var i = 0; i < parseInt(opt.val()); ++i) {
     var text = $('<input/>')
     text.attr('type', 'text')

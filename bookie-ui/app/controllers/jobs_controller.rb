@@ -5,13 +5,17 @@ require 'date'
 class JobsController < ApplicationController
   JOBS_PER_PAGE = 20
   
-  FILTER_ARG_COUNTS = {
-    'System' => 1,
-    'User' => 1,
-    'Group' => 1,
-    'System type' => 1,
-    'Command name' => 1,
-    'Time' => 2,
+  FILTERS = {
+    'System' => {:types => [:text]},
+    'User' => {:types => [:text]},
+    'Group' => {:types => [:text]},
+    'System type' => {:types => [:sys_type]},
+    'Command name' => {:types => [:text]},
+    'Time' => {:types => [:text, :text]},
+  }
+
+  FILTER_OPTIONS = {
+    :sys_type => ['test']
   }
   
   include FilterMixin
@@ -30,7 +34,7 @@ class JobsController < ApplicationController
     @prev_filters = []
     
     #To do: error on empty fields?
-    each_filter(FILTER_ARG_COUNTS) do |type, values|
+    each_filter(FILTERS) do |type, values|
       case type
       when 'System'
         jobs = jobs.by_system_name(values[0])
@@ -84,6 +88,9 @@ class JobsController < ApplicationController
     @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
 
     @systems_summary = systems.summary(summary_time_range)
+
+    #Options available in enum-like filters
+    @filter_options = FILTER_OPTIONS
     
     
     avail_cpu_time = @systems_summary[:avail_cpu_time]
