@@ -1,3 +1,5 @@
+require 'bookie_database_all'
+
 class SystemsController < ApplicationController
   FILTERS = {
     'Hostname' => [:text],
@@ -34,7 +36,11 @@ class SystemsController < ApplicationController
     end
     
     @systems_summary = systems.summary(summary_time_range)
-    @systems = systems.by_time_range_inclusive(summary_time_range)
+    if summary_time_range
+      @systems = systems.by_time_range_inclusive(summary_time_range)
+    else
+      @systems = systems
+    end
     
     render :template => 'systems/index'
   end

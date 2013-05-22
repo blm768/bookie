@@ -1,7 +1,5 @@
 require 'bookie_database_all'
 
-require 'date'
-
 class JobsController < ApplicationController
   JOBS_PER_PAGE = 20
   

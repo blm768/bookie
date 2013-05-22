@@ -781,6 +781,10 @@ describe Bookie::Database do
       end
     end
 
+    describe "#each_with_relations" do
+
+    end
+
     describe "#by_time_range_inclusive" do
       it "correctly filters by inclusive time range" do
         systems = @systems.by_time_range_inclusive(base_time ... base_time + 36000 * 2 + 1)
@@ -821,18 +825,23 @@ describe Bookie::Database do
         avg_mem = Float(1000000 * system_total_wall_time / (3600 * 40))
         clipped_avg_mem = Float(1000000 * system_clipped_wall_time) / (3600 * 25 - 1800)
         wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 42)
+        @summary[:all][:systems].length.should eql 4
         @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all][:avail_memory_avg].should eql avg_mem
+        @summary[:all_constrained][:systems].length.should eql 4
         @summary[:all_constrained][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all_constrained][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all_constrained][:avail_memory_avg].should eql avg_mem
+        @summary[:clipped][:systems].length.should eql 3
         @summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
         @summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000
         @summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
+        @summary_wide[:systems].length.should eql 4
         @summary_wide[:avail_cpu_time].should eql system_wide_cpu_time
         @summary_wide[:avail_memory_time].should eql 1000000 * system_wide_wall_time
         @summary_wide[:avail_memory_avg].should eql wide_avg_mem
+        @summary[:empty][:systems].length.should eql 0
         @summary[:empty][:avail_cpu_time].should eql 0
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0

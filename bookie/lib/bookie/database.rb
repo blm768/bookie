@@ -626,9 +626,10 @@ Please make sure that all previous systems with this hostname have been marked a
       #Produces a summary of all the systems for the given time interval
       #
       #Returns a hash with the following fields:
-      #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
-      #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
-      #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
+      #- [<tt>:systems</tt>] an array containing all systems that are active in the interval
+      #- [<tt>:avail_cpu_time</tt>] the total CPU time available for the interval
+      #- [<tt>:avail_memory_time</tt>] the total amount of memory-time available (in kilobyte-seconds)
+      #- [<tt>:avail_memory_avg</tt>] the average amount of memory available (in kilobytes)
       #
       #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
       #
@@ -649,8 +650,10 @@ Please make sure that all previous systems with this hostname have been marked a
           #To do: unit test.
           systems = systems.by_time_range_inclusive(time_range)
         end
+
+        all_systems = systems.all
         
-        systems.all.each do |system|
+        all_systems.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
           #Is there a time range constraint?
@@ -685,6 +688,7 @@ Please make sure that all previous systems with this hostname have been marked a
         end
           
         {
+          :systems => all_systems,
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
           :avail_memory_avg => if wall_time_range == 0 then 0.0 else Float(avail_memory_time) / wall_time_range end,
