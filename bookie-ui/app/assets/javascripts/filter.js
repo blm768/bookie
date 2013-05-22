@@ -1,3 +1,5 @@
+// vim: ts=2:sw=2:et
+
 function initFilters() {
   var addFilterSelect = $('#add_filter')
   addFilterSelect.change(addFilter)
@@ -5,7 +7,7 @@ function initFilters() {
   //If filters have already been created by the server, tie events to them.
   $('.filter_remover').click(function() { $(this).parent().remove() })
   $('.filter').children('input[type=text]').change(function() {
-  	//Used when the filter form's submit event is cancelled
+    //Used when the filter form's submit event is cancelled
     this.blur()
   })
 
@@ -20,11 +22,11 @@ function initFilters() {
 
 function addFilter() {
   var select = $('#add_filter')
-  if(select.val() == 0) {
+  if(select.val() == '') {
     return
   }
   var opt = select.children(':selected')
-  select.val(0)
+  select.val('')
   
   var filters = $('#filters')
   var filter = $('<div/>')
@@ -37,13 +39,23 @@ function addFilter() {
   filter.append(remover)
   //The value attribute is hijacked to store the type of filter parameters.
   var types = opt.val().split(' ')
-  for(var i = 0; i < parseInt(opt.val()); ++i) {
-    var text = $('<input/>')
-    text.attr('type', 'text')
-    text.change(function() {
+  for(var i = 0; i < types.length; ++i) {
+    var type = types[i]
+    var input
+    switch(type) {
+      case 'text':
+        input = $('<input/>')
+        input.attr('type', 'text')
+        break
+      default:
+        input = $('#select_prototype_' + type).clone()
+        input.removeAttr('id')
+        break
+    }
+    input.change(function() {
       this.blur()
     })
-    filter.append(text)
+    filter.append(input)
   }
   filters.append(filter)
 }
@@ -61,7 +73,7 @@ function getFilterData() {
     //To do (future): replace $.trim with String.trim() when browser support is sufficient.
     var text = $.trim($($this.contents()[0]).text())
     filterTypes.push(text)
-    $this.children('input').each(function() {
+    $this.children(':input').each(function() {
       filterValues.push(this.value)
     })
   })

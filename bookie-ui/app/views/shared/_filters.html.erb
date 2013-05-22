@@ -14,7 +14,11 @@
               <% when :text %>
                 <input type="<%= type %>" value="<%= value %>"></input>
               <% else %>
-                <select value="<%= value %>"></select>
+                <select value="<%= value %>">
+                  <% filter_options[type].each do |option| %>
+                    <option value="<%= option %>"><%= option %></option>
+                  <% end %>
+                </select>
               <% end %>
             <% end %>
           </div>
@@ -37,7 +41,7 @@
     <% filter_options.each do |name, options| %>
       <select id="select_prototype_<%= name %>">
         <% options.each do |option| %>
-          <option value="<%= option %>"></option>
+          <option value="<%= option %>"><%= option %></option>
         <% end %>
       </select>
     <% end %>

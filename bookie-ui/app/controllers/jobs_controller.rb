@@ -83,8 +83,7 @@ class JobsController < ApplicationController
     end
     
     #To do: remove
-    summary_start_time ||= Time.utc(2012)
-    summary_end_time ||= Time.utc(2012) + 2.days
+    summary_time_range ||= Time.utc(2012) ... Time.utc(2012) + 2.days
     
     #To do: ordering?
     Bookie::Database::JobSummary.delete_all
@@ -93,7 +92,9 @@ class JobsController < ApplicationController
     @systems_summary = systems.summary(summary_time_range)
 
     #Options available in enum-like filters
-    @filter_options = FILTER_OPTIONS
+    @filter_options = {
+      :sys_type => Bookie::Database::SystemType.select(:name).all.map{ |t| t.name }
+    }
     
     
     avail_cpu_time = @systems_summary[:avail_cpu_time]
