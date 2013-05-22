@@ -1,17 +1,14 @@
 class SystemsController < ApplicationController
+  FILTERS = {
+    'Hostname' => 
+  }
+
   def index
     #To do: add each_with_relations to System?
     @systems = Bookie::Database::System
     
-    summary_start_time = nil
-    summary_end_time = nil
-    
-    types = params[:filter_types]
-    values = params[:filter_values]
-    
     @prev_filters = []
     
-    #To do: error messages
     if types && values
       types.strip!
       types = types.split(',')

@@ -13,6 +13,8 @@ var PLOT_TYPES = {
   },
   'CPU time used': {},
 }
+else
+flash_msg_now :error, 
 
 var MSECS_PER_MINUTE = 60 * 1000
 var MSECS_PER_HOUR = 60 * MSECS_PER_MINUTE
@@ -22,17 +24,17 @@ var MSECS_PER_WEEK = MSECS_PER_DAY * 7
 var MSECS_PER_YEAR = MSECS_PER_DAY * 365
 
 //Base time steps for resolution purposes
-//To do: change/add bases?
+//To consider: change/add bases?
 var TIME_STEP_BASES = [
   MSECS_PER_DAY,
   MSECS_PER_HOUR,
 ]
 
 //The minimum number of points to display on the graph
-//To do: make configurable?
+//To consider: make configurable?
 var NUM_GRAPH_POINTS = 20
 
-//To do: find the "right" value for this.
+//To consider: find the optimal value for this?
 var MAX_CONCURRENT_REQUESTS = 5
 
 var time_start, time_end
@@ -205,6 +207,7 @@ function resetPoints() {
   end.setDate(end.getDate() - 1)
 
   //Currently broken
+  //To consider: Fix? Move?
   /*
   $('.graph').each(function() {
     var graph = $(this)

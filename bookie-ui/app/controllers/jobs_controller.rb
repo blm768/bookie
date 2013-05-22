@@ -6,12 +6,12 @@ class JobsController < ApplicationController
   JOBS_PER_PAGE = 20
   
   FILTERS = {
-    'System' => {:types => [:text]},
-    'User' => {:types => [:text]},
-    'Group' => {:types => [:text]},
-    'System type' => {:types => [:sys_type]},
-    'Command name' => {:types => [:text]},
-    'Time' => {:types => [:text, :text]},
+    'System' => [:text],
+    'User' => [:text],
+    'Group' => [:text],
+    'System type' => [:sys_type],
+    'Command name' => [:text],
+    'Time' => [:text, :text],
   }
 
   include FilterMixin
