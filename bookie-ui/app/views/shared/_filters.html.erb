@@ -33,5 +33,10 @@
     <% end %>
     <%= submit_tag("Filter") %>
   <% end %>
+  <div id="select_prototypes">
+    <% filter_options.each do |name, value| %>
+      <%= name %>
+    <% end %>
+  </div>
 </div>
 
