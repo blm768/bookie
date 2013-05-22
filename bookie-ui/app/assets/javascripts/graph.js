@@ -2,9 +2,6 @@
 
 "use strict";
 
-//To do: figure out how time zones will work.
-
-
 function formatPercent(value) {
   return Math.floor(value * 100) + '%'
 }
@@ -148,7 +145,9 @@ function getSummary(start_time, interval, params, request_index) {
   var start = start_time.toISOString()
   var end_time = new Date(start_time)
   end_time.setTime(end_time.getTime() + interval)
-  end_time = Math.min(end_time, time_end)
+  if(end_time < time_end) {
+    end_time = time_end
+  }
   var end = end_time.toISOString()
   
   var queryParams = ['filter_types=' + params[0].join(','), 'filter_values=' + params[1].join(',')]

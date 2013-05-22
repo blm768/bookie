@@ -14,10 +14,6 @@ class JobsController < ApplicationController
     'Time' => {:types => [:text, :text]},
   }
 
-  FILTER_OPTIONS = {
-    :sys_type => ['test']
-  }
-  
   include FilterMixin
 
   def index
