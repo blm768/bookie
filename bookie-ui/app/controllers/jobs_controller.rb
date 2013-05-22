@@ -29,7 +29,6 @@ class JobsController < ApplicationController
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
-    #To do: prevent duplicate filters?
     each_filter(FILTERS) do |type, values|
       case type
       when 'System'

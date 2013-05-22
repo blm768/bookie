@@ -10,7 +10,13 @@ module FilterMixin
       #Filter values are URI-encoded twice to make sure commas are escaped.
       filter_values.map!{ |s| URI.unescape(s) }
       value_index = 0
+      used_filter_types = Set.new
       filter_types.each do |type|
+        if used_filter_types.include?(type)
+          flash_msg_now :error, "Only one filter of each type may be used at a time."
+          next
+        end
+        used_filter_types.add(type)
         value_types = filter_value_types[type]
         unless value_types
           flash_msg_now :error, %{Unknown filter type "#{type}"}
