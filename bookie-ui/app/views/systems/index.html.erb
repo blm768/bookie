@@ -1,5 +1,8 @@
+<% require 'bookie/formatter' %>
+
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag 'filtered_list', :media => :all %>
+  <%= stylesheet_link_tag "list", :media => "all" %>
+  <%= stylesheet_link_tag "filter", :media => "all" %>
 <% end %>
 
 <% content_for :scripts do %>
@@ -9,16 +12,16 @@
 <h1>Systems</h1>
 
 <div id="main">
-  <div id="tables">
+  <div id="content">
     <table id="summary">
       <caption>Summary</caption>
       <tr>
         <th>Available CPU time</th>
-        <td><%= @systems_summary[:avail_cpu_time] %></td>
+        <td><%= Bookie::Formatter.format_duration(@systems_summary[:avail_cpu_time]) %></td>
       </tr>
       <tr>
         <th>Available memory (average)</th>
-        <td><%= @systems_summary[:avail_memory_avg].to_i %></td>
+        <td><%= @systems_summary[:avail_memory_avg] %> KB</td>
       </tr>
     </table>
     <table id="details">
@@ -35,20 +38,17 @@
         <tr>
           <td><%= system.name %></td>
           <td><%= system.system_type.name %></td>
-          <td><%= system.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
-          <td><%= system.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
           <td><%= system.cores %></td>
           <td><%= system.memory %>kb</td>
+          <td><%= system.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td><%= system.end_time ? system.end_time.strftime("%Y-%m-%d %H:%M:%S") : "None" %></td>
         </tr>
       <% end %>
     </table>
   </div>
 
   <%= render :partial => 'shared/filters', :locals => {
-    :filter_options => {
-      'Hostname' => 1,
-      'Time' => 2,
-    },
-    :default_details => true
+    :filter_types => SystemsController::FILTERS,
+    :filter_options => JobsController::filter_options,
   } %>
 </div>

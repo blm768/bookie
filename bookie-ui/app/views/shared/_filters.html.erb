@@ -31,8 +31,8 @@
         <option value="<%= value_types.join(' ') %>"><%= name %></option> 
       <% end %>
     </select>
-    <% if defined? default_details %>
-      <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
+    <% if defined? show_details %>
+      <label><%= check_box_tag("show_details", "true", show_details) %>Show details</label>
     <% end %>
     <%= submit_tag("Filter") %>
   <% end %>
