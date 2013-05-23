@@ -19,16 +19,29 @@ module Helpers
     summaries
   end
   
-  def test_relations(job, relations)
+  def test_job_relations(job, relations)
+    #Make sure all relations with the same value have the same object_id:
     rels = [job.user, job.user.group, job.system, job.system.system_type]
+    unbound_object_id = Object.instance_method(:object_id)
     rels.each do |r|
       if relations.include?(r)
-        old_r = relations[r]
-        old_r.should eql r
+        relations[r].should eql unbound_object_id.bind(r).call
+      else
+        relations[r] = unbound_object_id.bind(r).call
       end
-      relations[r] = r
     end
   end
+
+  def test_system_relations(system, relations)
+    t = system.system_type
+    unbound_object_id = Object.instance_method(:object_id)
+    if relations.include?(t)
+      relations[t].should eql unbound_object_id.bind(t).call
+    else
+      relations[t] = unbound_object_id.bind(t).call
+    end
+  end
+
   
   def check_job_sums(js_sum, j_sum)
     [:cpu_time, :memory_time].each do |field|
@@ -233,8 +246,13 @@ describe Bookie::Database do
       it "loads all relations" do
         jobs = Bookie::Database::Job.limit(5)
         relations = {}
-        jobs.all_with_relations.each do |job|
-          test_relations(job, relations)
+        jobs = jobs.all_with_relations
+        Bookie::Database::User.expects(:new).never
+        Bookie::Database::Group.expects(:new).never
+        Bookie::Database::System.expects(:new).never
+        Bookie::Database::SystemType.expects(:new).never
+        jobs.each do |job|
+          test_job_relations(job, relations)
         end
       end
     end
@@ -781,8 +799,16 @@ describe Bookie::Database do
       end
     end
 
-    describe "#each_with_relations" do
-
+    describe "#all_with_relations" do
+      it "loads all relations" do
+        systems = Bookie::Database::System.limit(5)
+        relations = {}
+        systems = systems.all_with_relations
+        Bookie::Database::SystemType.expects(:new).never
+        systems.each do |system|
+          test_system_relations(system, relations)
+        end
+      end
     end
 
     describe "#by_time_range_inclusive" do

@@ -178,40 +178,38 @@ module Bookie
       #Relations are not cached between calls.
       def self.all_with_relations
         jobs = all
-        transaction do
-          users = {}
-          groups = {}
-          systems = {}
-          system_types = {}
-          jobs.each do |job|
-            system = systems[job.system_id]
-            if system
-              job.system = system
-            else
-              system = job.system
-              systems[system.id] = system
-            end
-            system_type = system_types[system.system_type_id]
-            if system_type
-              system.system_type = system_type
-            else
-              system_type = system.system_type
-              system_types[system_type.id] = system_type
-            end
-            user = users[job.user_id]
-            if user
-              job.user = user
-            else
-              user = job.user
-              users[user.id] = user
-            end
-            group = groups[user.group_id]
-            if group
-              user.group = group
-            else
-              group = user.group
-              groups[group.id] = group
-            end
+        users = {}
+        groups = {}
+        systems = {}
+        system_types = {}
+        jobs.each do |job|
+          system = systems[job.system_id]
+          if system
+            job.system = system
+          else
+            system = job.system
+            systems[system.id] = system
+          end
+          system_type = system_types[system.system_type_id]
+          if system_type
+            system.system_type = system_type
+          else
+            system_type = system.system_type
+            system_types[system_type.id] = system_type
+          end
+          user = users[job.user_id]
+          if user
+            job.user = user
+          else
+            user = job.user
+            users[user.id] = user
+          end
+          group = groups[user.group_id]
+          if group
+            user.group = group
+          else
+            group = user.group
+            groups[group.id] = group
           end
         end
         
@@ -623,6 +621,25 @@ Please make sure that all previous systems with this hostname have been marked a
       end
       
       ##
+      #Returns an array of all systems, pre-loading relations to reduce the need for extra queries
+      #
+      #Relations are not cached between calls.
+      def self.all_with_relations
+        systems = all
+        system_types = {}
+        systems.each do |system|
+          system_type = system_types[system.system_type_id]
+          if system_type
+            system.system_type = system_type
+          else
+            system_type = system.system_type
+            system_types[system_type.id] = system_type
+          end
+        end
+        systems
+      end
+ 
+      ##
       #Produces a summary of all the systems for the given time interval
       #
       #Returns a hash with the following fields:
@@ -651,7 +668,7 @@ Please make sure that all previous systems with this hostname have been marked a
           systems = systems.by_time_range_inclusive(time_range)
         end
 
-        all_systems = systems.all
+        all_systems = systems.all_with_relations
         
         all_systems.each do |system|
           system_start_time = system.start_time

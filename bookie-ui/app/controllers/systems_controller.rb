@@ -10,7 +10,6 @@ class SystemsController < ApplicationController
   include FilterMixin
 
   def index
-    #To do: add each_with_relations to System?
     systems = Bookie::Database::System
 
     summary_time_range = nil
