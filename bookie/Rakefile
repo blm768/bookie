@@ -15,8 +15,8 @@ task :rdoc do
   system("rdoc rdoc lib")
 end
 
-desc "Build RPM and dependencies (intended for IBEST internal use)"
-task :rpm_deps do
+desc "Build RPM and dependencies (intended for University of Idaho IBEST internal use)"
+task :rpm_deps => [:build] do
   require 'erb'
   require 'yaml'
 
@@ -27,9 +27,6 @@ task :rpm_deps do
       :gem_file => "bookie_accounting-#{Bookie::VERSION}.gem",
       :license => 'MIT',
       :skip_deps => Set.new(['sqlite3']),
-    },
-    'bundler' => {
-
     },
     'spreadsheet' => {
       :has_binaries => true,
@@ -136,7 +133,7 @@ def build_rpms(modules_to_build)
       end
     end
 
-    msg = `rpmbuild -bb #{spec_filename}`
+    msg = `rpmbuild -ba #{spec_filename}`
     unless $?.success?
       puts msg
       exit 1
