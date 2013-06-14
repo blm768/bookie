@@ -2,9 +2,6 @@
 
 "use strict";
 
-//To do: figure out how time zones will work.
-
-
 function formatPercent(value) {
   return Math.floor(value * 100) + '%'
 }
@@ -25,17 +22,17 @@ var MSECS_PER_WEEK = MSECS_PER_DAY * 7
 var MSECS_PER_YEAR = MSECS_PER_DAY * 365
 
 //Base time steps for resolution purposes
-//To do: change/add bases?
+//To consider: change/add bases?
 var TIME_STEP_BASES = [
   MSECS_PER_DAY,
   MSECS_PER_HOUR,
 ]
 
 //The minimum number of points to display on the graph
-//To do: make configurable?
+//To consider: make configurable?
 var NUM_GRAPH_POINTS = 20
 
-//To do: find the "right" value for this.
+//To consider: find the optimal value for this?
 var MAX_CONCURRENT_REQUESTS = 5
 
 var time_start, time_end
@@ -148,7 +145,9 @@ function getSummary(start_time, interval, params, request_index) {
   var start = start_time.toISOString()
   var end_time = new Date(start_time)
   end_time.setTime(end_time.getTime() + interval)
-  end_time = Math.min(end_time, time_end)
+  if(end_time < time_end) {
+    end_time = time_end
+  }
   var end = end_time.toISOString()
   
   var queryParams = ['filter_types=' + params[0].join(','), 'filter_values=' + params[1].join(',')]
@@ -206,6 +205,7 @@ function resetPoints() {
   end.setDate(end.getDate() - 1)
 
   //Currently broken
+  //To consider: Fix? Move?
   /*
   $('.graph').each(function() {
     var graph = $(this)

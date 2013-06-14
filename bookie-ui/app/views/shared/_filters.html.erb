@@ -4,18 +4,17 @@
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
-          <% filter_attributes = filter_types[filter] %>
-          <% types = filter_attributes[:types] %>
+          <% value_types = filter_types[filter] %>
           <div class="filter"><%= filter %><div class="filter_remover">X</div>
-            <% values.each_index do |i| %>
+            <% value_types.each_index do |i| %>
               <% value = values[i] %>
-              <% type = types[i] %>
-              <% case type %>
+              <% value_type = value_types[i] %>
+              <% case value_type %>
               <% when :text %>
-                <input type="<%= type %>" value="<%= value %>"></input>
+                <input type="<%= value_type %>" value="<%= value %>"></input>
               <% else %>
                 <select value="<%= value %>">
-                  <% filter_options[type].each do |option| %>
+                  <% filter_options[value_type].each do |option| %>
                     <option value="<%= option %>"><%= option %></option>
                   <% end %>
                 </select>
@@ -27,13 +26,13 @@
     </span>
     <select id="add_filter">
       <option value="">Add filter</option>
-      <% filter_types.each do |name, data| %>
+      <% filter_types.each do |name, value_types| %>
         <% #The value attribute is hijacked to hold the type of value associated with the filter. %>
-        <option value="<%= data[:types].join(' ') %>"><%= name %></option> 
+        <option value="<%= value_types.join(' ') %>"><%= name %></option> 
       <% end %>
     </select>
-    <% if defined? default_details %>
-      <label><%= check_box_tag("show_details", "true", default_details) %>Show details</label>
+    <% if defined? show_details %>
+      <label><%= check_box_tag("show_details", "true", show_details) %>Show details</label>
     <% end %>
     <%= submit_tag("Filter") %>
   <% end %>

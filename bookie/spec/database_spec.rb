@@ -19,16 +19,29 @@ module Helpers
     summaries
   end
   
-  def test_relations(job, relations)
+  def test_job_relations(job, relations)
+    #Make sure all relations with the same value have the same object_id:
     rels = [job.user, job.user.group, job.system, job.system.system_type]
+    unbound_object_id = Object.instance_method(:object_id)
     rels.each do |r|
       if relations.include?(r)
-        old_r = relations[r]
-        old_r.should eql r
+        relations[r].should eql unbound_object_id.bind(r).call
+      else
+        relations[r] = unbound_object_id.bind(r).call
       end
-      relations[r] = r
     end
   end
+
+  def test_system_relations(system, relations)
+    t = system.system_type
+    unbound_object_id = Object.instance_method(:object_id)
+    if relations.include?(t)
+      relations[t].should eql unbound_object_id.bind(t).call
+    else
+      relations[t] = unbound_object_id.bind(t).call
+    end
+  end
+
   
   def check_job_sums(js_sum, j_sum)
     [:cpu_time, :memory_time].each do |field|
@@ -233,8 +246,13 @@ describe Bookie::Database do
       it "loads all relations" do
         jobs = Bookie::Database::Job.limit(5)
         relations = {}
-        jobs.all_with_relations.each do |job|
-          test_relations(job, relations)
+        jobs = jobs.all_with_relations
+        Bookie::Database::User.expects(:new).never
+        Bookie::Database::Group.expects(:new).never
+        Bookie::Database::System.expects(:new).never
+        Bookie::Database::SystemType.expects(:new).never
+        jobs.each do |job|
+          test_job_relations(job, relations)
         end
       end
     end
@@ -760,6 +778,10 @@ describe Bookie::Database do
   end
   
   describe Bookie::Database::System do
+    before(:each) do
+      @systems = Bookie::Database::System
+    end
+
     it "correctly finds active systems" do
       Bookie::Database::System.active_systems.length.should eql 3
     end
@@ -776,7 +798,41 @@ describe Bookie::Database do
         Bookie::Database::System.by_system_type(t).length.should eql 2
       end
     end
-    
+
+    describe "#all_with_relations" do
+      it "loads all relations" do
+        systems = Bookie::Database::System.limit(5)
+        relations = {}
+        systems = systems.all_with_relations
+        Bookie::Database::SystemType.expects(:new).never
+        systems.each do |system|
+          test_system_relations(system, relations)
+        end
+      end
+    end
+
+    describe "#by_time_range_inclusive" do
+      it "correctly filters by inclusive time range" do
+        systems = @systems.by_time_range_inclusive(base_time ... base_time + 36000 * 2 + 1)
+        systems.count.should eql 3
+        systems = @systems.by_time_range_inclusive(base_time + 1 ... base_time + 36000 * 2)
+        systems.count.should eql 2
+        systems = @systems.by_time_range_inclusive(base_time ... base_time)
+        systems.length.should eql 0
+        systems = @systems.by_time_range_inclusive(base_time .. base_time + 36000 * 2)
+        systems.count.should eql 3
+        systems = @systems.by_time_range_inclusive(base_time .. base_time)
+        systems.count.should eql 1
+      end
+      
+      it "correctly handles empty/inverted ranges" do
+        (-1 .. 0).each do |offset|
+          systems = @systems.by_time_range_inclusive(base_time ... base_time + offset)
+          systems.count.should eql 0
+        end
+      end
+    end
+
     describe "#summary" do
       before(:all) do
         Time.expects(:now).returns(base_time + 3600 * 40).at_least_once
@@ -795,18 +851,23 @@ describe Bookie::Database do
         avg_mem = Float(1000000 * system_total_wall_time / (3600 * 40))
         clipped_avg_mem = Float(1000000 * system_clipped_wall_time) / (3600 * 25 - 1800)
         wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 42)
+        @summary[:all][:systems].length.should eql 4
         @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all][:avail_memory_avg].should eql avg_mem
+        @summary[:all_constrained][:systems].length.should eql 4
         @summary[:all_constrained][:avail_cpu_time].should eql system_total_cpu_time
         @summary[:all_constrained][:avail_memory_time].should eql 1000000 * system_total_wall_time
         @summary[:all_constrained][:avail_memory_avg].should eql avg_mem
+        @summary[:clipped][:systems].length.should eql 3
         @summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
         @summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000
         @summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
+        @summary_wide[:systems].length.should eql 4
         @summary_wide[:avail_cpu_time].should eql system_wide_cpu_time
         @summary_wide[:avail_memory_time].should eql 1000000 * system_wide_wall_time
         @summary_wide[:avail_memory_avg].should eql wide_avg_mem
+        @summary[:empty][:systems].length.should eql 0
         @summary[:empty][:avail_cpu_time].should eql 0
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0
@@ -1004,3 +1065,4 @@ describe Bookie::Database do
     end
   end
 end
+

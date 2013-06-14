@@ -12,8 +12,15 @@
 <body>
 
 <div id="messages">
-  <% flash.each do |name, value| %>
-    <span id="message_<%= name -%>"><%= value -%></span>
+  <% [:error, :alert, :notice].each do |category| %>
+    <ul id="message_<%= category %>">
+      <% values = flash[category] %>
+      <% if values %>
+        <% values.each do |value| %>
+          <li><%= value %></li>
+        <% end %>
+      <% end %>
+    </ul>
   <% end %>
 </div>
 

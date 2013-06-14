@@ -5,7 +5,7 @@ function initFilters() {
   addFilterSelect.change(addFilter)
   
   //If filters have already been created by the server, tie events to them.
-  $('.filter_remover').click(function() { $(this).parent().remove() })
+  $('.filter_remover').click(function() { removeFilter($(this).parent()) })
   $('.filter').children('input[type=text]').change(function() {
     //Used when the filter form's submit event is cancelled
     this.blur()
@@ -26,15 +26,19 @@ function addFilter() {
     return
   }
   var opt = select.children(':selected')
+  opt.prop('disabled', true)
   select.val('')
   
   var filters = $('#filters')
   var filter = $('<div/>')
   filter.addClass('filter')
-  filter.append(opt.text())
+  var type_span = $('<span/>')
+  type_span.addClass('filter_type')
+  type_span.append(opt.text())
+  filter.append(type_span)
   var remover = $('<div/>')
   remover.addClass('filter_remover')
-  remover.click(function() { filter.remove() })
+  remover.click(function() { removeFilter(filter) })
   remover.append('X')
   filter.append(remover)
   //The value attribute is hijacked to store the type of filter parameters.
@@ -61,6 +65,14 @@ function addFilter() {
 }
 
 function removeFilter(filter) {
+  var type = filter.children('.filter_type').text()
+  $('#add_filter').children().each(function() {
+    var $this = $(this)
+    if($this.text() == type) {
+      $this.prop('disabled', false)
+      return false
+    }
+  })
   filter.remove()
 }
 
@@ -70,7 +82,7 @@ function getFilterData() {
   var filterValues = []
   filters.children('.filter').each(function() {
     var $this = $(this)
-    //To do (future): replace $.trim with String.trim() when browser support is sufficient.
+    //To consider: replace $.trim with String.trim() when browser support is sufficient?
     var text = $.trim($($this.contents()[0]).text())
     filterTypes.push(text)
     $this.children(':input').each(function() {
@@ -91,7 +103,11 @@ function submitFilters() {
   var filterValuesInput = $('<input/>')
   filterValuesInput.attr('type', 'hidden')
   filterValuesInput.attr('name', 'filter_values')
-  //To do: prevent commas in the values from causing problems.
+  //Prevent commas in the filter values from causing problems
+  //by adding a second layer of URI encoding to the values:
+  for(var i = 0; i < filterData[1].length; ++i) {
+    filterData[1][i] = encodeURIComponent(filterData[1][i])
+  }
   filterValuesInput.val(filterData[1].join(','))
   filterForm.append(filterValuesInput)
   var includeDetails = $('#show_details')
@@ -106,3 +122,4 @@ function submitFilters() {
     }
   }
 }
+

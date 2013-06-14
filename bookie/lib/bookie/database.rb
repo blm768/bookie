@@ -178,40 +178,38 @@ module Bookie
       #Relations are not cached between calls.
       def self.all_with_relations
         jobs = all
-        transaction do
-          users = {}
-          groups = {}
-          systems = {}
-          system_types = {}
-          jobs.each do |job|
-            system = systems[job.system_id]
-            if system
-              job.system = system
-            else
-              system = job.system
-              systems[system.id] = system
-            end
-            system_type = system_types[system.system_type_id]
-            if system_type
-              system.system_type = system_type
-            else
-              system_type = system.system_type
-              system_types[system_type.id] = system_type
-            end
-            user = users[job.user_id]
-            if user
-              job.user = user
-            else
-              user = job.user
-              users[user.id] = user
-            end
-            group = groups[user.group_id]
-            if group
-              user.group = group
-            else
-              group = user.group
-              groups[group.id] = group
-            end
+        users = {}
+        groups = {}
+        systems = {}
+        system_types = {}
+        jobs.each do |job|
+          system = systems[job.system_id]
+          if system
+            job.system = system
+          else
+            system = job.system
+            systems[system.id] = system
+          end
+          system_type = system_types[system.system_type_id]
+          if system_type
+            system.system_type = system_type
+          else
+            system_type = system.system_type
+            system_types[system_type.id] = system_type
+          end
+          user = users[job.user_id]
+          if user
+            job.user = user
+          else
+            user = job.user
+            users[user.id] = user
+          end
+          group = groups[user.group_id]
+          if group
+            user.group = group
+          else
+            group = user.group
+            groups[group.id] = group
           end
         end
         
@@ -582,6 +580,20 @@ module Bookie
       end
       
       ##
+      #Finds all systems whose running intervals overlap the given time range
+      #
+      #To do: unit test.
+      def self.by_time_range_inclusive(time_range)
+        if time_range.empty?
+          where('1=0')
+        elsif time_range.exclude_end?
+          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time < ?', time_range.first, time_range.last)
+        else
+          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time <= ?', time_range.first, time_range.last)
+        end
+      end
+
+      ##
       #Finds the current system for a given sender and time
       #
       #This method also checks that this system's specifications are the same as those in the database and raises an error if they are different.
@@ -609,12 +621,32 @@ Please make sure that all previous systems with this hostname have been marked a
       end
       
       ##
+      #Returns an array of all systems, pre-loading relations to reduce the need for extra queries
+      #
+      #Relations are not cached between calls.
+      def self.all_with_relations
+        systems = all
+        system_types = {}
+        systems.each do |system|
+          system_type = system_types[system.system_type_id]
+          if system_type
+            system.system_type = system_type
+          else
+            system_type = system.system_type
+            system_types[system_type.id] = system_type
+          end
+        end
+        systems
+      end
+ 
+      ##
       #Produces a summary of all the systems for the given time interval
       #
       #Returns a hash with the following fields:
-      #- <tt>:avail_cpu_time</tt>: the total CPU time available for the interval
-      #- <tt>:avail_memory_time</tt>: the total amount of memory-time available (in kilobyte-seconds)
-      #- <tt>:avail_memory_avg</tt>: the average amount of memory available (in kilobytes)
+      #- [<tt>:systems</tt>] an array containing all systems that are active in the interval
+      #- [<tt>:avail_cpu_time</tt>] the total CPU time available for the interval
+      #- [<tt>:avail_memory_time</tt>] the total amount of memory-time available (in kilobyte-seconds)
+      #- [<tt>:avail_memory_avg</tt>] the average amount of memory available (in kilobytes)
       #
       #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
       #
@@ -632,13 +664,13 @@ Please make sure that all previous systems with this hostname have been marked a
         systems = System
         if time_range
           time_range = time_range.normalized
-          systems = systems.where(
-            'systems.start_time < ? AND (systems.end_time IS NULL OR systems.end_time > ?)',
-            time_range.last,
-            time_range.first)
+          #To do: unit test.
+          systems = systems.by_time_range_inclusive(time_range)
         end
+
+        all_systems = systems.all_with_relations
         
-        systems.all.each do |system|
+        all_systems.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
           #Is there a time range constraint?
@@ -673,6 +705,7 @@ Please make sure that all previous systems with this hostname have been marked a
         end
           
         {
+          :systems => all_systems,
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
           :avail_memory_avg => if wall_time_range == 0 then 0.0 else Float(avail_memory_time) / wall_time_range end,
