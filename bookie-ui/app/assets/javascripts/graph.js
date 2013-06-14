@@ -55,10 +55,13 @@ function initControls() {
     date.setMonth(date.getMonth() + 1)
   })
   
-  //To do: check to see if any graphs are displayed?
   $('#do_graph').click(function() {
+    //If no graphs are being displayed, just return.
+    if($('.graph_container').length == 0) {
+      return
+    }
     var inputs = dateBoxes.children()
-  //Check to see if the form is filled out.
+    //Check to see if the form is filled out.
     var complete = true
     inputs.filter('input').each(function() {
       if(this.value.length == 0) {
@@ -268,7 +271,7 @@ function onFilterChange(evt) {
     evt.preventDefault()
   }
   resetPoints()
-  //To do: error messages?
+  //To consider: error messages?
   if(!time_start || !time_end || time_start >= time_end) {
     return
   }
