@@ -23,9 +23,7 @@ def older(file, *dep_files)
   false
 end
 
-#If there are errors related to rdoc, you may need to update it
-#To do: fix build dependency in SRPMs?
-desc "Build RPM and dependencies (intended for University of Idaho IBEST internal use)"
+desc "Build RPM and dependencies (designed for use on CentOS)"
 task :rpm_deps do
   gem_filenames = {
     "pacct" => "pacct-0.8.4-universal-linux.gem"

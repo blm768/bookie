@@ -1,5 +1,4 @@
 # Generated from <%= package.spec.file_name %> by gem2rpm -*- rpm-spec -*-
-<% doc_subpackage = false %>
 %global gemname <%= spec.name %>
 
 <% if nongem -%>
@@ -29,6 +28,8 @@ Requires: ruby(rubygems) <%= req %>
 Requires: rubygem(<%= d.name %>) <%= req  %>
 <% end -%>
 <% end -%>
+Requires: mysql-libs
+BuildRequires: mysql-devel
 BuildRequires: ruby(abi) = %{rubyabi}
 <% for req in spec.required_rubygems_version -%>
 BuildRequires: ruby(rubygems) <%= req %>
@@ -76,10 +77,7 @@ mkdir -p .%{gemdir}
 <% unless spec.extensions.empty? -%>
 export CONFIGURE_ARGS="--with-cflags='%{optflags}'"
 <% end -%>
-#To do: fix doc issue so docs can be installed on CentOS?
 gem install --local --install-dir .%{gemdir} \
-  --no-rdoc \
-  --no-ri \
 <% unless spec.executables.nil? or spec.executables.empty? -%>
             --bindir .%{_bindir} \
 <% end -%>
@@ -125,9 +123,9 @@ ln -s %{gemdir}/gems/%{gemname}-%{version}/<%= p %> %{buildroot}%{ruby_sitelib}
 %exclude %{geminstdir}/ext
 <% end -%>
 <% unless doc_subpackage -%>
-#%doc %{gemdir}/doc/%{gemname}-%{version}
+%doc %{gemdir}/doc/%{gemname}-%{version}
 <% for f in spec.extra_rdoc_files -%>
-#%doc %{geminstdir}/<%= f %>
+%doc %{geminstdir}/<%= f %>
 <% end -%>
 <% end -%>
 %exclude %{gemdir}/cache/%{gemname}-%{version}.gem
