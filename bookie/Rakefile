@@ -15,131 +15,65 @@ task :rdoc do
   system("rdoc rdoc lib")
 end
 
-desc "Build RPM and dependencies (intended for University of Idaho IBEST internal use)"
-task :rpm_deps => [:build] do
-  require 'erb'
-  require 'yaml'
-
-  build_rpms({
-    'bookie_accounting' => {
-      :is_app => true,
-      :has_binaries => true,
-      :gem_file => "bookie_accounting-#{Bookie::VERSION}.gem",
-      :license => 'MIT',
-      :skip_deps => Set.new(['sqlite3']),
-    },
-    'spreadsheet' => {
-      :has_binaries => true,
-      :license => 'GPL3',
-    },
-    'ruby-ole' => {
-      :license => 'MIT',
-    },
-    'pacct' => {
-      :license => 'MIT',
-    },
-  })
-end
-
-def find_gem_file(gem_name)
-  Dir.glob("#{gem_name}-*.gem")[0]
-end
- 
-def build_rpms(modules_to_build)
-  this_dir = Dir.pwd
-  pkg_dir = File.join(this_dir, 'pkg')
-
-  home_dir = Etc.getpwuid.dir
-
-  rpmbuild_dir = File.join(home_dir, 'rpmbuild')
-  spec_dir = File.join(rpmbuild_dir, 'SPECS')
-  src_dir = File.join(rpmbuild_dir, 'SOURCES')
-  rpm_dir = File.join(rpmbuild_dir, 'RPMS')
-
-  [spec_dir, src_dir].each do |dir|
-    FileUtils.mkdir_p(dir)
+#Returns whether the given file is older than its dependencies (or doesn't even exist)
+def older(file, *dep_files)
+  dep_files.each do |dep_file|
+    return true if !File.exists?(file) || File.mtime(file) < File.mtime(dep_file)
   end
+  false
+end
 
-  #To do: packaging for Ruby versions other than 1.8
-  template = ERB.new(File.read('rpm/spec_template.erb'))
+#If there are errors related to rdoc, you may need to update it
+#To do: fix build dependency in SRPMs?
+desc "Build RPM and dependencies (intended for University of Idaho IBEST internal use)"
+task :rpm_deps do
+  gem_filenames = {
+    "pacct" => "pacct-0.8.4-universal-linux.gem"
+  }
+
   lockfile = Bundler::LockfileParser.new(Bundler.read_file("Gemfile.lock"))
+
+  home_dir = ENV['HOME']
+  spec_dir = File.join(home_dir, 'rpmbuild/SPECS')
+  src_dir = File.join(home_dir, 'rpmbuild/SOURCES')
+  rpm_dir = File.join(home_dir, 'rpmbuild/RPMS')
+
+  FileUtils.mkdir_p(spec_dir)
+  FileUtils.mkdir_p(src_dir)
+
   lockfile.specs.each do |spec|
-    extra_data = modules_to_build[spec.name]
-    next unless extra_data
+    puts "#{spec.name} (#{spec.version})"
 
-    gem_name = spec.name
-    version = spec.version
+    spec_filename = File.join(spec_dir, "rubygem-#{spec.name}.spec")
 
-    puts gem_name
+    gem_filename = gem_filenames[spec.name] || "#{spec.name}-#{spec.version}.gem"
 
-    #Has the RPM already been built?
-    next if Dir.glob(File.join(rpm_dir, "*/(rubygem-)?#{gem_name}-#{version}-*.rpm")).length > 0
-    
-    ruby_version = RUBY_VERSION.split('.')[0 .. 1].join('.')
+    system("gem fetch #{spec.name} -v #{spec.version}") unless File.exists?(gem_filename)
 
-    #Get the gem.
-    Dir.chdir(src_dir)
-    gem_file = extra_data[:gem_file]
-    if gem_file
-      FileUtils.cp(File.join(pkg_dir, gem_file), '.')
-    else
-      gem_file = find_gem_file(gem_name)
-      #To do: handle old versions of gems existing in src_dir
-      system("gem fetch #{gem_name} -v #{version}") unless gem_file && File.exists?(gem_file)
-      gem_file ||= find_gem_file(gem_name)
-    end
-    fail "Unable to find gem file for #{gem_name}" unless gem_file
-    gem = File.basename(gem_file, '.gem')
-    s = YAML.load(`gem spec #{gem_file}`)
+    template = "rpm/#{spec.name}.erb"
+    template = "rpm/default.erb" unless File.exists?(template)
 
-    #Build the RPM spec.
-    Dir.chdir(spec_dir)
-    if s.licenses.length > 0
-      license = s.licenses.join(' AND ')
-    else
-      license = extra_data[:license]
-    end
-    url = s.homepage
-    summary = s.summary
-    description = s.description
-    requires = []
-    build_requires = []
-    s.dependencies.each do |dep|
-      case dep.type
-      when :development
-        build_requires.push(dep)
-      else
-        requires.push(dep)
-      end
-    end
-    requires.map!{ |r| "rubygem-#{r.name}" }
-    
-    is_app = extra_data[:is_app]
-    has_binaries = extra_data[:has_binaries]
+    system("gem2rpm #{gem_filename} -t #{template} > #{spec_filename}") if older(spec_filename, gem_filename, template)
 
-    if is_app
-      spec_filename = "#{gem_name}.spec"
-    else
-      spec_filename = "rubygem-#{gem_name}.spec"
-    end
-    spec_filename = File.join(spec_dir, spec_filename)
+    src = File.join(src_dir, gem_filename)
+    FileUtils.cp(gem_filename, src_dir) if older(src, gem_filename)
 
-    File.open(spec_filename, "w") do |file|
-      template_filename = File.join(this_dir, "rpm/#{gem_name}.spec.erb")
-      if File.exists?(template_filename)
-         file.write(ERB.new(File.read(template_filename)).result(binding))
-      else
-        file.write(template.result(binding))
-      end
-    end
-
-    msg = `rpmbuild -ba #{spec_filename}`
-    unless $?.success?
-      puts msg
+    rpm_glob = File.join(rpm_dir, "*/rubygem-#{spec.name}-#{spec.version}-*.rpm")
+    rpm_glob_results = Dir.glob(rpm_glob)
+    if rpm_glob_results.length > 1
+      puts "Multiple RPMs exist for #{spec.name} (#{spec.version}):"
+      rpm_glob_results.each{ |r| puts "    #{r}" }
+      puts "Unable to resolve dependency due to ambiguous target"
       exit 1
     end
-  end
 
-  Dir.chdir(this_dir)
+    if rpm_glob_results.length == 0 || older(rpm_glob_results[0], spec_filename)
+      msg = `rpmbuild -bb #{spec_filename}`
+      unless $?.success?
+        puts msg
+        exit 1
+      end
+    end
+  end
 end
 
