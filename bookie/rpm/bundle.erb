@@ -1,0 +1,61 @@
+#Borrows a few tricks from the gem2rpm default template
+
+%define gemdir /etc/bookie
+%define _prefix %{gemdir}
+
+Name: 		bookie_accounting
+Version:	<%= bookie_spec.version %>
+Release:	1%{?dist}
+Summary:	<%= bookie_spec.summary[0 ... -1] %>
+
+#To do: change group?
+Group:		System Management
+License:	MIT
+URL:	    http://github.com/blm768/bookie	
+<% sources.each_with_index do |src, i| %>
+Source<%= i %>:	<%= src %>
+<% end %>
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
+BuildRequires:	ruby-devel, rubygems, mysql-devel, sqlite-devel
+Requires:		rubygems, mysql-libs, sqlite
+
+%description
+<% bookie_spec.description %>
+
+
+%prep
+export CONFIGURE_ARGS="--with-cflags='%{optflags}'"
+
+<% sources.each_with_index do |src, i| %>
+<% instdir = ".%{gemdir}/gems/#{File.basename(src, '.gem')}" %>
+gem install --local --install-dir <%= instdir %> \
+	--bindir .%{_bindir} \
+	--no-rdoc --no-ri \
+	-V \
+	--force %{SOURCE<%= i %>}
+<% end %>
+
+
+%build
+
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}%{gemdir}
+cp -r .%{gemdir}/* %{buildroot}%{gemdir}
+echo "{}" > %{buildroot}%{gemdir}/config.json
+chmod 600 %{buildroot}%{gemdir}/config.json
+
+
+%clean
+rm -rf %{buildroot}
+
+
+%files
+%defattr(-,root,root,-)
+%{gemdir}
+
+
+%changelog
+

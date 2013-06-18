@@ -3,6 +3,8 @@ require 'bundler'
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
+require 'erb'
+
 task :default => :spec
 
 desc "Run specs"
@@ -72,6 +74,59 @@ task :rpm_deps do
         exit 1
       end
     end
+  end
+end
+
+desc "Build RPM with all dependencies bundled"
+task "rpm_bundle" do
+  gem_filenames = {
+    "pacct" => "pacct-0.8.4-universal-linux.gem"
+  }
+
+  lockfile = Bundler::LockfileParser.new(Bundler.read_file("Gemfile.lock"))
+
+  home_dir = ENV['HOME']
+  spec_dir = File.join(home_dir, 'rpmbuild/SPECS')
+  src_dir = File.join(home_dir, 'rpmbuild/SOURCES')
+  rpm_dir = File.join(home_dir, 'rpmbuild/RPMS')
+
+  FileUtils.mkdir_p(spec_dir)
+  FileUtils.mkdir_p(src_dir)
+
+  spec_filename = File.join(spec_dir, "bookie_accounting.spec")
+
+  template = ERB.new(File.read("rpm/bundle.erb"))
+
+  specs = lockfile.specs
+
+  #To do: ensure that the rubygems version matches the local version?
+  bookie_spec = Gem::Specification.load("bookie_accounting.gemspec")
+
+  sources = []
+
+  pwd = Dir.pwd
+  Dir.chdir(src_dir)
+  specs.each do |spec|
+    puts "#{spec.name} (#{spec.version})"
+
+    #bookie_spec = spec if spec.name == "bookie_accounting"
+
+    gem_filename = gem_filenames[spec.name] || "#{spec.name}-#{spec.version}.gem"
+
+    system("gem fetch #{spec.name} -v #{spec.version}") unless File.exists?(gem_filename)
+
+    sources << gem_filename
+  end
+  Dir.chdir(pwd)
+
+  File.open(spec_filename, "w") do |f|
+    f.write(template.result(binding))
+  end
+
+  msg = `rpmbuild -ba #{spec_filename}`
+  unless $?.success?
+    puts msg
+    exit 1
   end
 end
 
