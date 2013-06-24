@@ -15,7 +15,7 @@ end
 
 require 'bookie/sender'
 
-config_file = '/etc/bookie/config.json'
+config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
 will_create = false
 will_decommission = false
 will_undo = false

@@ -11,7 +11,7 @@ jobs = Bookie::Database::Job
 summaries = Bookie::Database::JobSummary
 systems = Bookie::Database::System
 
-config_filename = '/etc/bookie/config.json'
+config_filename = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
 include_details = false
 
 output_type = :stdout

@@ -1,7 +1,7 @@
 #Borrows a few tricks from the gem2rpm default template
 
-%define gemdir /etc/bookie
-%define _prefix %{gemdir}
+%define _prefix /opt/bookie
+%define gemdir %{_prefix}
 
 Name: 		bookie_accounting
 Version:	<%= bookie_spec.version %>
@@ -28,8 +28,7 @@ Requires:		rubygems, mysql-libs, sqlite
 export CONFIGURE_ARGS="--with-cflags='%{optflags}'"
 
 <% sources.each_with_index do |src, i| %>
-<% instdir = ".%{gemdir}/gems/#{File.basename(src, '.gem')}" %>
-gem install --local --install-dir <%= instdir %> \
+  gem install --local --install-dir .%{gemdir} \
 	--bindir .%{_bindir} \
 	--no-rdoc --no-ri \
 	-V \
@@ -44,8 +43,19 @@ gem install --local --install-dir <%= instdir %> \
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{gemdir}
 cp -r .%{gemdir}/* %{buildroot}%{gemdir}
-echo "{}" > %{buildroot}%{gemdir}/config.json
-chmod 600 %{buildroot}%{gemdir}/config.json
+echo "{}" > %{buildroot}%{_prefix}/config.json
+chmod 600 %{buildroot}%{_prefix}/config.json
+cat > %{buildroot}%{_bindir}/bookie-env <<-EOF
+#!/bin/sh
+export GEM_HOME=%{gemdir}
+#To do: change path based on Ruby version.
+export GEM_PATH=\$GEM_HOME:/usr/lib/ruby/gems/1.8
+export PATH=%{_bindir}:\$PATH
+export BOOKIE_CONFIG=%{_prefix}/config.json
+
+eval "\$@"
+EOF
+chmod 700 %{buildroot}%{_bindir}/bookie-env
 
 
 %clean
