@@ -15,7 +15,7 @@ dependency "preparation"
 dependency "bookie_accounting"
 dependency "mysql2"
 
- version manifest file
+#version manifest file
 dependency "version-manifest"
 
 exclude "\.git*"
