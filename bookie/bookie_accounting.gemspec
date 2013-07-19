@@ -23,6 +23,9 @@ Gem::Specification.new do |gem|
   #To do: figure out how to remove (file issue?)
   gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
+  #Introduces the old ActiveRecord mass assignment security methods
+  #(until I update the database code for the new methods)
+  gem.add_dependency('protected_attributes')
   gem.add_dependency('spreadsheet')
 end
 
