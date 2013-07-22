@@ -36,7 +36,7 @@ describe Bookie::Formatter do
   
   it "correctly calculates fields for jobs" do
     with_utc do
-      @formatter.send(:fields_for_each_job, @jobs.limit(1).all) do |fields|
+      @formatter.send(:fields_for_each_job, @jobs.limit(1).to_a) do |fields|
         fields.should eql [
             'root',
             'root',

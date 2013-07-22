@@ -138,7 +138,7 @@ module Bookie
     #Used internally by #send_data and #undo_send
     def clear_summaries(date_min, date_max)      
       #Since joins don't mix with DELETE statements, we have to do this the hard way.
-      systems = Database::System.by_name(@config.hostname).all
+      systems = Database::System.by_name(@config.hostname).to_a
       systems.map!{ |sys| sys.id }
       Database::JobSummary.where('job_summaries.system_id in (?)', systems).where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end

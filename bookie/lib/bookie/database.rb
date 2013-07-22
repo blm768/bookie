@@ -2,6 +2,8 @@ require 'bookie/config'
 require 'bookie/extensions'
 
 require 'active_record'
+#To do: remove when code is updated.
+require 'protected_attributes'
 
 module Bookie
   ##
@@ -176,8 +178,10 @@ module Bookie
       #Returns an array of all jobs, pre-loading relations to reduce the need for extra queries
       #
       #Relations are not cached between calls.
+      #
+      #To do: use ActiveRecord's #includes instead of this scheme?
       def self.all_with_relations
-        jobs = all
+        jobs = self.all.to_a
         users = {}
         groups = {}
         systems = {}
@@ -439,7 +443,7 @@ module Bookie
         date_range = date_begin ... date_end
         
         unscoped = self.unscoped
-        summaries = by_date_range(date_range).order(:date).all
+        summaries = by_date_range(date_range).order(:date).to_a
         index = 0
         date_range.each do |date|
           new_index = index
@@ -625,7 +629,7 @@ Please make sure that all previous systems with this hostname have been marked a
       #
       #Relations are not cached between calls.
       def self.all_with_relations
-        systems = all
+        systems = self.all.to_a
         system_types = {}
         systems.each do |system|
           system_type = system_types[system.system_type_id]

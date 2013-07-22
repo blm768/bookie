@@ -118,7 +118,7 @@ describe Bookie::Sender do
     #The filename is just a dummy argument.
     sender.send_data('snapshot/pacct')
     
-    jobs = Bookie::Database::Job.by_system_name(@config.hostname).order(:end_time).all
+    jobs = Bookie::Database::Job.by_system_name(@config.hostname).order(:end_time).to_a
     jobs[0].system.should eql @sys_1
     jobs[1].system.should eql @sys_2
   end
@@ -177,7 +177,7 @@ describe Bookie::Sender do
       
       sender.send(:clear_summaries, date_start + 1, date_end - 1)
       
-      sums = Bookie::Database::JobSummary.all
+      sums = Bookie::Database::JobSummary.all.to_a
       sums.length.should eql 9
       sums.each do |sum|
         unless sum.system == @sys_dummy

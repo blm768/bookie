@@ -124,7 +124,7 @@ describe Bookie::Database do
     
     it "correctly filters by user" do
       user = Bookie::Database::User.by_name('test').order(:id).first
-      jobs = @jobs.by_user(user).all
+      jobs = @jobs.by_user(user).to_a
       jobs.each do |job|
         job.user.should eql user
       end
@@ -132,29 +132,29 @@ describe Bookie::Database do
     end
     
     it "correctly filters by user name" do
-      jobs = @jobs.by_user_name('root').all
+      jobs = @jobs.by_user_name('root').to_a
       jobs.length.should eql 10
       jobs[0].user.name.should eql "root"
-      jobs = @jobs.by_user_name('test').order(:end_time).all
+      jobs = @jobs.by_user_name('test').order(:end_time).to_a
       jobs.length.should eql 20
       jobs.each do |job|
         job.user.name.should eql 'test'
       end
       jobs[0].user_id.should_not eql jobs[-1].user_id
-      jobs = @jobs.by_user_name('user').all
+      jobs = @jobs.by_user_name('user').to_a
       jobs.length.should eql 0
     end
   
     it "correctly filters by group name" do
-      jobs = @jobs.by_group_name("root").all
+      jobs = @jobs.by_group_name("root").to_a
       jobs.length.should eql 10
       jobs.each do |job|
         job.user.group.name.should eql "root"
       end
-      jobs = @jobs.by_group_name("admin").order(:start_time).all
+      jobs = @jobs.by_group_name("admin").order(:start_time).to_a
       jobs.length.should eql 20
       jobs[0].user.name.should_not eql jobs[1].user.name
-      jobs = @jobs.by_group_name("test").all
+      jobs = @jobs.by_group_name("test").to_a
       jobs.length.should eql 0
     end
     
@@ -259,9 +259,8 @@ describe Bookie::Database do
     
     describe "#summary" do
       before(:all) do
-        Time.expects(:now).returns(base_time + 36000 * 4).at_least_once
         @jobs = Bookie::Database::Job
-        @length = @jobs.all.length
+        @length = @jobs.count
         @summary = Helpers::create_summaries(@jobs, base_time)
       end
       
@@ -355,8 +354,8 @@ describe Bookie::Database do
     describe "" do
       before(:all) do
         d = Date.new(2012)
-        Bookie::Database::User.all.each do |user|
-          Bookie::Database::System.all.each do |system|
+        Bookie::Database::User.find_each do |user|
+          Bookie::Database::System.find_each do |system|
             ['vi', 'emacs'].each do |command_name|
               (d ... d + 2).each do |date|
                 Bookie::Database::JobSummary.create!(
@@ -376,7 +375,7 @@ describe Bookie::Database do
       
       it "correctly filters by date" do
         d = Date.new(2012)
-        sums = Bookie::Database::JobSummary.by_date(d).all
+        sums = Bookie::Database::JobSummary.by_date(d).to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.date.should eql d
@@ -395,7 +394,7 @@ describe Bookie::Database do
       
       it "correctly filters by user" do
         u = Bookie::Database::User.first
-        sums = Bookie::Database::JobSummary.by_user(u).all
+        sums = Bookie::Database::JobSummary.by_user(u).to_a
         sums.length.should eql 16
         sums.each do |sum|
           sum.user.should eql u
@@ -403,7 +402,7 @@ describe Bookie::Database do
       end
       
       it "correctly filters by user name" do
-        sums = Bookie::Database::JobSummary.by_user_name('test').all
+        sums = Bookie::Database::JobSummary.by_user_name('test').to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.user.name.should eql 'test'
@@ -412,7 +411,7 @@ describe Bookie::Database do
       
       it "correctly filters by group" do
         g = Bookie::Database::Group.find_by_name('admin')
-        sums = Bookie::Database::JobSummary.by_group(g).all
+        sums = Bookie::Database::JobSummary.by_group(g).to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.user.group.should eql g
@@ -420,7 +419,7 @@ describe Bookie::Database do
       end
       
       it "correctly filters by group name" do
-        sums = Bookie::Database::JobSummary.by_group_name('admin').all
+        sums = Bookie::Database::JobSummary.by_group_name('admin').to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.user.group.name.should eql 'admin'
@@ -429,7 +428,7 @@ describe Bookie::Database do
       
       it "correctly filters by system" do
         s = Bookie::Database::System.first
-        sums = Bookie::Database::JobSummary.by_system(s).all
+        sums = Bookie::Database::JobSummary.by_system(s).to_a
         sums.length.should eql 16
         sums.each do |sum|
           sum.system.should eql s
@@ -437,7 +436,7 @@ describe Bookie::Database do
       end
       
       it "correctly filters by system name" do
-        sums = Bookie::Database::JobSummary.by_system_name('test1').all
+        sums = Bookie::Database::JobSummary.by_system_name('test1').to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.system.name.should eql 'test1'
@@ -446,7 +445,7 @@ describe Bookie::Database do
       
       it "correctly filters by system type" do
         s = Bookie::Database::SystemType.first
-        sums = Bookie::Database::JobSummary.by_system_type(s).all
+        sums = Bookie::Database::JobSummary.by_system_type(s).to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.system.system_type.should eql s
@@ -454,7 +453,7 @@ describe Bookie::Database do
       end
       
       it "correctly filters by command name" do
-        sums = Bookie::Database::JobSummary.by_command_name('vi').all
+        sums = Bookie::Database::JobSummary.by_command_name('vi').to_a
         sums.length.should eql 32
         sums.each do |sum|
           sum.command_name.should eql 'vi'
@@ -488,7 +487,7 @@ describe Bookie::Database do
         d = Date.new(2012)
         range = base_time ... base_time + 1.days
         Bookie::Database::JobSummary.summarize(d)
-        sums = Bookie::Database::JobSummary.all
+        sums = Bookie::Database::JobSummary.all.to_a
         found_sums = Set.new
         sums.each do |sum|
           sum.date.should eql Date.new(2012)
@@ -498,7 +497,7 @@ describe Bookie::Database do
           found_sums.add([sum.user.id, sum.system.id, sum.command_name])
         end
         #Is it catching all of the combinations of categories?
-        Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.all.each do |values|
+        Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.find_each do |values|
           values = [values.user_id, values.system_id, values.command_name]
           found_sums.include?(values).should eql true
         end
@@ -507,7 +506,7 @@ describe Bookie::Database do
       it "creates dummy summaries when there are no jobs" do
         d = Date.new(2012) + 5
         Bookie::Database::JobSummary.summarize(d)
-        sums = Bookie::Database::JobSummary.by_date(d).all
+        sums = Bookie::Database::JobSummary.by_date(d).to_a
         sums.length.should eql 1
         sum = sums[0]
         sum.cpu_time.should eql 0
@@ -603,8 +602,9 @@ describe Bookie::Database do
         Bookie::Database::JobSummary.delete_all
         empty = Bookie::Database::System.limit(0)
         #Check the case where there are no systems.
-        ActiveRecord::Relation.any_instance.expects(:'any?').at_least_once.returns(false)
-        ActiveRecord::Relation.any_instance.expects(:first).at_least_once.returns(nil)
+        #Stub out methods of System's "Relation" class:
+        Bookie::Database::System.where('1=1').class.any_instance.expects(:'any?').at_least_once.returns(false)
+        Bookie::Database::System.where('1=1').class.any_instance.expects(:first).at_least_once.returns(nil)
         sum = Bookie::Database::JobSummary.summary
         sum.should eql({
           :num_jobs => 0,
@@ -612,7 +612,6 @@ describe Bookie::Database do
           :memory_time => 0,
           :successful => 0,
         })
-        ActiveRecord::Relation.any_instance.unstub(:'any?')
         Bookie::Database::JobSummary.any?.should eql false
       end
       
@@ -688,7 +687,7 @@ describe Bookie::Database do
   
   describe Bookie::Database::User do
     it "correctly filters by name" do
-      users = Bookie::Database::User.by_name('test').all
+      users = Bookie::Database::User.by_name('test').to_a
       users.length.should eql 2
       users.each do |user|
         user.name.should eql 'test'
@@ -872,7 +871,7 @@ describe Bookie::Database do
         @summary[:empty][:avail_memory_time].should eql 0
         @summary[:empty][:avail_memory_avg].should eql 0.0
         begin
-          @systems.all.each do |system|
+          @systems.find_each do |system|
             unless system.id == 1
               system.end_time = Time.now
               system.save!
@@ -885,7 +884,7 @@ describe Bookie::Database do
           s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
           summary_all_systems_ended.should eql s2
         ensure
-          @systems.all.each do |system|
+          @systems.find_each do |system|
             unless system.id == 1
               system.end_time = nil
               system.save!
