@@ -53,4 +53,12 @@ BookieUi::Application.routes.draw do
   #     # (app/controllers/admin/products_controller.rb)
   #     resources :products
   #   end
+
+  root :to => 'jobs#index'
+
+  resources :jobs
+
+  resources :systems
+
+  resources :graph
 end
