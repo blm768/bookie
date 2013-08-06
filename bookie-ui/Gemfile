@@ -8,7 +8,7 @@ gem 'rails', '4.0.0'
 gem 'sqlite3'
 gem 'mysql2', '~> 0.3.13'
 
-gem 'bookie_accounting'
+gem 'bookie_accounting', '~> 1.1.2'
 
 #Needed for JS support
 gem 'therubyracer'

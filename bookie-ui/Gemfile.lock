@@ -118,7 +118,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bookie_accounting
+  bookie_accounting (~> 1.1.2)
   coffee-rails (~> 4.0.0)
   jquery-rails
   mysql2 (~> 0.3.13)
