@@ -1,0 +1,47 @@
+ul#navigation {
+  display: block;
+
+  width: 100%;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+
+  color: #FFF;
+  background-color: #000;
+
+  li {
+    display: inline-block;
+
+    width: 20em;
+    height: 30px;
+    margin: 0;
+    /*padding: {
+      left: 1em;
+      right: 1em;
+    }*/
+
+    line-height: 30px;
+
+    background-color: inherit;
+    
+    ul {
+      /* display: none; */
+    }
+
+    &:hover {
+      background-color: #BBB;
+    }
+
+    &:hover > ul {
+      display: block;
+      position: relative;
+
+      margin-left: -1em;
+      padding-left: 1em;
+    }
+  }
+}
+
+/* vim: ts=2:sw=2:et
+ */
+

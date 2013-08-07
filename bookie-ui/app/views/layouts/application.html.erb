@@ -11,6 +11,10 @@
 </head>
 <body>
 
+<%= yield :heading %>
+
+<%= render :partial => "shared/navbar" %>
+
 <div id="messages">
   <% [:error, :alert, :notice].each do |category| %>
     <ul id="message_<%= category %>">
@@ -23,8 +27,6 @@
     </ul>
   <% end %>
 </div>
-
-<%= yield :heading %>
 
 <%= yield %>
 
