@@ -61,11 +61,10 @@ class JobsController < ApplicationController
       end
     end
 
-    #To do: remove
+    #To do: remove.
     summary_time_range ||= Time.utc(2012) ... Time.utc(2012) + 2.days
     
     #To do: ordering?
-    Bookie::Database::JobSummary.delete_all
     @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
 
     @systems_summary = systems.summary(summary_time_range)
@@ -102,7 +101,7 @@ class JobsController < ApplicationController
   #Options available in enum-like filters (such as system type)
   def self.filter_options
     {
-      :sys_type => Bookie::Database::SystemType.select(:name).all.map{ |t| t.name }
+      :sys_type => Bookie::Database::SystemType.select(:name).to_a.map{ |t| t.name }
     }
   end
 end
