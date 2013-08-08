@@ -1,5 +1,5 @@
 ul#navigation {
-  display: block;
+  list-style: none;
 
   width: 100%;
   height: 30px;
@@ -9,23 +9,39 @@ ul#navigation {
   color: #FFF;
   background-color: #000;
 
+  a {
+    color: #FFF;
+    text-decoration: none;
+  }
+
   li {
     display: inline-block;
 
-    width: 20em;
+    width: auto;
     height: 30px;
     margin: 0;
-    /*padding: {
-      left: 1em;
-      right: 1em;
-    }*/
+    padding: {
+      left: 20px;
+      right: 20px;
+    }
+    border: {
+      right: 1px solid #BBB;
+    }
 
     line-height: 30px;
 
     background-color: inherit;
+
+    li {
+      display: block;
+    }
     
     ul {
-      /* display: none; */
+      display: none;
+
+      padding: 0;
+
+      background-color: #000;
     }
 
     &:hover {
@@ -34,10 +50,12 @@ ul#navigation {
 
     &:hover > ul {
       display: block;
-      position: relative;
+      position: absolute;
 
-      margin-left: -1em;
-      padding-left: 1em;
+      top: auto;
+      left: auto;
+
+      margin-left: -20px;
     }
   }
 }

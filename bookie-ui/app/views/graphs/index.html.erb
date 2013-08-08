@@ -8,7 +8,7 @@
   <%= javascript_include_tag "graph" %>
 <% end %>
 
-<h1>Graphs</h1>
+<% content_for :heading do %>Graphs<% end %>
 
 <div id="main">
   <div id="content">
@@ -18,7 +18,7 @@
           <input type="text" class="day" id="day_<%= bound %>"></input>
           <select class="month" id = "month_<%= bound %>">
             <% (0 .. 11).each do |i| %>
-              <option value="<%= i %>"><%= Date::ABBR_MONTHNAMES[i + 1] %></option>
+             <option value="<%= i %>"><%= Date::ABBR_MONTHNAMES[i + 1] %></option>
             <% end %>
           </select>
           <input type="text" class="year" id="year_<%= bound %>"></input>

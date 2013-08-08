@@ -60,5 +60,5 @@ BookieUi::Application.routes.draw do
 
   resources :systems
 
-  resources :graph
+  resources :graphs
 end
