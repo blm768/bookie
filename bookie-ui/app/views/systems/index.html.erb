@@ -6,10 +6,11 @@
 <% end %>
 
 <% content_for :scripts do %>
-  <%= javascript_include_tag 'filter' %>
+  <%= javascript_include_tag "filter" %>
+  <%= javascript_include_tag "filter_form" %>
 <% end %>
 
-<h1>Systems</h1>
+<% content_for :heading do %>Systems<% end %>
 
 <div id="main">
   <div id="content">

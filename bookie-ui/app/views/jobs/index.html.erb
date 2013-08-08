@@ -7,18 +7,10 @@
 
 <% content_for :scripts do %>
   <%= javascript_include_tag "filter" %>
-  <script type="text/javascript">
-    $(document).ready(function() {
-      initFilters()
-      var filterForm = $('#filters').parent()
-      filterForm.submit(submitFilters)
-    })
-  </script>
+  <%= javascript_include_tag "filter_form" %>
 <% end %>
 
-<% content_for :heading do %>
-<h1>Jobs</h1>
-<% end %>
+<% content_for :heading do %>Jobs<% end %>
 
 <div id="main">
   <div id="content">
@@ -86,7 +78,7 @@
   <% #To consider: what to do about time zone differences in filters? %>
   <%= render :partial => 'shared/filters', :locals => {
     :filter_types => JobsController::FILTERS,
-    :filter_options => @filter_options,
+    :filter_options => JobsController::filter_options,
     :show_details => @show_details,
   } %>
 </div>

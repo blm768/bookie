@@ -69,8 +69,6 @@ class JobsController < ApplicationController
 
     @systems_summary = systems.summary(summary_time_range)
 
-    @filter_options = JobsController.filter_options
-    
     avail_cpu_time = @systems_summary[:avail_cpu_time]
     avail_mem_time = @systems_summary[:avail_memory_time]
     @combined_summary = {
