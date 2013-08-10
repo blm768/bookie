@@ -40,7 +40,6 @@ class SystemsController < ApplicationController
     else
       @systems = systems
     end
-    
-    render :template => 'systems/index'
   end
 end
+

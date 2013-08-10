@@ -87,7 +87,7 @@ module Bookie
       def self.by_group_name(group_name)
         group = Group.find_by_name(group_name)
         return joins(:user).where('users.group_id = ?', group.id) if group
-        where('1=0')
+        self.none
       end
       
       ##
@@ -118,7 +118,7 @@ module Bookie
       #Finds all jobs whose running intervals overlap the given time range
       def self.by_time_range_inclusive(time_range)
         if time_range.empty?
-          where('1=0')
+          self.none
         elsif time_range.exclude_end?
           where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
         else
@@ -292,7 +292,7 @@ module Bookie
       def self.by_group_name(name)
         group = Group.find_by_name(name)
         return by_group(group) if group
-        where('1=0')
+        self.none
       end
       
       ##
@@ -499,7 +499,7 @@ module Bookie
     #A group of users
     class Group < ActiveRecord::Base
       has_many :users
-      
+
       ##
       #Finds a group by name, creating it if it doesn't exist
       #
@@ -527,6 +527,16 @@ module Bookie
       
       def self.by_name(name)
         where('users.name = ?', name)
+      end
+
+      def self.by_group(group)
+        return where('users.group_id = ?', group.id)
+      end
+
+      def self.by_group_name(name)
+        group = Group.find_by_name(name)
+        return by_group(group) if group
+        self.none
       end
       
       ##
@@ -589,7 +599,7 @@ module Bookie
       #To do: unit test.
       def self.by_time_range_inclusive(time_range)
         if time_range.empty?
-          where('1=0')
+          self.none
         elsif time_range.exclude_end?
           where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time < ?', time_range.first, time_range.last)
         else

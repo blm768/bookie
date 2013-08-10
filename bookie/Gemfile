@@ -5,5 +5,6 @@ gemspec
 gem 'bundler', :group => :development
 gem 'mocha', :group => :development
 gem 'rspec', :group => :development
+gem 'simplecov', :group => :development
 gem 'sqlite3', :group => :development
 

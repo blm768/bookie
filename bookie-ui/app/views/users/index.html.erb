@@ -1,0 +1,39 @@
+<% require 'bookie/formatter' %>
+
+<% content_for :stylesheets do %>
+  <%= stylesheet_link_tag "list", :media => "all" %>
+  <%= stylesheet_link_tag "filter", :media => "all" %>
+<% end %>
+
+<% content_for :scripts do %>
+  <%= javascript_include_tag "filter" %>
+  <%= javascript_include_tag "filter_form" %>
+<% end %>
+
+<% content_for :heading do %>Users<% end %>
+
+<div id="main">
+  <div id="content">
+    <table id="summary">
+      <caption>Summary</caption>
+    </table>
+    <table id="details">
+      <caption>Details</caption>
+      <tr>
+        <th>Name</th>
+        <th>Group</th>
+      </tr>
+      <% @users.all.each do |user| %>
+        <tr>
+          <td><%= user.name %></td>
+          <td><%= user.group.name %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <%= render :partial => 'shared/filters', :locals => {
+    :filter_types => UsersController::FILTERS,
+    :filter_options => {},
+  } %>
+</div>

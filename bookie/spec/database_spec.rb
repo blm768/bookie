@@ -424,6 +424,7 @@ describe Bookie::Database do
         sums.each do |sum|
           sum.user.group.name.should eql 'admin'
         end
+        Bookie::Database::JobSummary.by_group_name('fake_group').count.should eql 0
       end
       
       it "correctly filters by system" do
@@ -692,6 +693,16 @@ describe Bookie::Database do
       users.each do |user|
         user.name.should eql 'test'
       end
+    end
+
+    it "correctly filters by group" do
+      Bookie::Database::User.by_group(Bookie::Database::Group.find_by_name('admin')).count.should eql 2
+      Bookie::Database::User.by_group(Bookie::Database::Group.find_by_name('root')).count.should eql 1
+    end
+
+    it "correctly filters by group name" do
+      Bookie::Database::User.by_group_name('admin').count.should eql 2
+      Bookie::Database::User.by_group_name('fake_group').count.should eql 0
     end
     
     describe "#find_or_create" do
