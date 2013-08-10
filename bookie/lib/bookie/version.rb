@@ -1,4 +1,4 @@
 module Bookie
   #The library version
-  VERSION = "1.1.3"
+  VERSION = "1.2.3"
 end
