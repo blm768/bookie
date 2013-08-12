@@ -8,7 +8,7 @@ function formatPercent(value) {
 
 var PLOT_TYPES = {
   'Number of jobs': {},
-  'Successful jobs': {
+  '% Successful': {
     formatter: formatPercent
   },
   'CPU time used': {},
@@ -180,9 +180,17 @@ var plots = {}
 var plot_data = {}
 
 function addPoint(date, summary) {
-  plot_data['Number of jobs'].push([date.getTime(), summary['Count']])
-  plot_data['Successful jobs'].push([date.getTime(), summary['Successful']])
-  plot_data['CPU time used'].push([date.getTime(), summary['CPU time used']])
+  var time = date.getTime()
+  var count = summary['Count']
+  plot_data['Number of jobs'].push([time, count])
+  var successful
+  if(count == 0) {
+    successful = 0
+  } else {
+    successful = summary['Successful'] / count
+  }
+  plot_data['% Successful'].push([time, successful])
+  plot_data['CPU time used'].push([time, summary['CPU time used']])
   drawPoints()
 }
 
@@ -298,11 +306,13 @@ function onFilterChange(evt) {
 $(document).ready(function() {
   $.getScript('assets/flot/jquery.flot.js', function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
-      initFilters()
-      $('#filter_form').submit(onFilterChange)
-      initControls()
-      resetPoints()
-      addGraph('Number of jobs')
+      $.getScript('assets/flot/jquery.flot.resize.js', function() {
+        initFilters()
+        $('#filter_form').submit(onFilterChange)
+        initControls()
+        resetPoints()
+        addGraph('Number of jobs')
+      })
     })
   })
 })

@@ -27,7 +27,7 @@ GEM
       tzinfo (~> 0.3.37)
     arel (4.0.0)
     atomic (1.1.12)
-    bookie_accounting (1.1.3)
+    bookie_accounting (1.2.3)
       activerecord
       json
       mysql2
@@ -128,7 +128,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bookie_accounting (= 1.1.3)
+  bookie_accounting (= 1.2.3)
   coffee-rails (~> 4.0.0)
   jbuilder (~> 1.2)
   jquery-rails
