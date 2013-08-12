@@ -45,10 +45,10 @@
       <table id="details">
         <caption>Details</caption>
         <tr>
+          <th>Command</th>
           <th>User</th>
           <th>Group</th>
           <th>System</th>
-          <th>System type</th>
           <th>Start time</th>
           <th>End time</th>
           <th>Wall time</th>
@@ -58,14 +58,14 @@
         </tr>
         <% @jobs.each do |job| %>
           <tr>
+            <td><%= job.command_name %></td>
             <td><%= job.user.name %></td>
             <td><%= job.user.group.name %></td>
             <td><%= job.system.name %></td>
-            <td><%= job.system.system_type.name %></td>
             <td><%= job.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
             <td><%= job.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
-            <td><%= job.wall_time %> sec</td>
-            <td><%= job.cpu_time %> sec</td>
+            <td><%= Bookie::Formatter.format_duration(job.wall_time) %></td>
+            <td><%= Bookie::Formatter.format_duration(job.cpu_time) %></td>
             <td><%= job.memory %>kb</td>
             <td><%= job.exit_code %></td>
           </tr>
