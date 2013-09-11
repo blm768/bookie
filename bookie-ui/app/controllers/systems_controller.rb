@@ -10,7 +10,7 @@ class SystemsController < ApplicationController
   include FilterMixin
 
   def index
-    systems = Bookie::Database::System
+    systems = Bookie::Database::System.order(:name)
 
     summary_time_range = nil
     @prev_filters = []
@@ -40,6 +40,10 @@ class SystemsController < ApplicationController
     else
       @systems = systems
     end
+  end
+
+  def show
+    #@system = Bookie::Database::System.find
   end
 end
 

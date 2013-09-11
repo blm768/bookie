@@ -8,7 +8,7 @@ class UsersController < ApplicationController
   include FilterMixin
 
   def index
-    users = Bookie::Database::User
+    users = Bookie::Database::User.order(:name)
 
     @prev_filters = []
 

@@ -15,7 +15,7 @@ class JobsController < ApplicationController
   include FilterMixin
 
   def index
-    jobs = Bookie::Database::Job
+    jobs = Bookie::Database::Job.order(:end_time)
     summaries = Bookie::Database::JobSummary
     systems = Bookie::Database::System
         
