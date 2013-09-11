@@ -16,17 +16,17 @@
 /*Whole-application styles*/
 /*------------------------*/
 
-#message_error {
+#flash_error {
   color: #A00;
   list-style-type: none;
   padding: 0;
 }
-#message_alert {
+#flash_alert {
   color: #A50;
   list-style-type: none;
   padding: 0;
 }
-#message_notice {
+#flash_notice {
   color: #0A0;
   list-style-type: none;
   padding: 0;

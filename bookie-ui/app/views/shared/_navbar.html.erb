@@ -1,11 +1,20 @@
 <ul id="navigation">
   <li><a href="/jobs">Jobs</a>
     <ul>
-      <li><a href="/jobs">Summary</a></li>
-      <li><a href="/graphs">Graphs</a></li>
+      <li><%= link_to 'Summary', '/jobs' %></li>
+      <li><%= link_to 'Graphs', '/graphs' %></li>
     </ul>
   </li>
   <li><a href="/systems">Systems</a></li>
   <li><a href="/users">Users</a></li>
+  <% if web_user_signed_in? %>
+    <li>Account
+      <ul>
+        <li><%= link_to 'Log out', '/web_users/sign_out', :method => :delete %></li>
+      </ul>
+    </li>
+  <% else %>
+    <li><%= link_to 'Log in', '/web_users/sign_in' %></li>
+  <% end%>
 </ul>
 

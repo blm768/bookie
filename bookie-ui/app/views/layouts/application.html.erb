@@ -11,20 +11,15 @@
 </head>
 <body>
 
-<h1><%= yield :heading %></h1>
+<h1><%= @title %></h1>
 
 <%= render :partial => "shared/navbar" %>
 
 <div id="messages">
-  <% [:error, :alert, :notice].each do |category| %>
-    <ul id="message_<%= category %>">
-      <% values = flash[category] %>
-      <% if values %>
-        <% values.each do |value| %>
-          <li><%= value %></li>
-        <% end %>
-      <% end %>
-    </ul>
+  <% flash.each do |category, text| %>
+    <div id="flash_<%= category %>">
+      <%= text %>
+    </div>
   <% end %>
 </div>
 
