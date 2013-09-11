@@ -1,6 +1,8 @@
 require 'bookie_database_all'
 
 class SystemsController < ApplicationController
+  before_filter :authenticate_web_user!
+
   FILTERS = {
     'Hostname' => [:text],
     'System type' => [:sys_type],
