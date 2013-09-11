@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>BookieUi</title>
-  <%= stylesheet_link_tag    "application", :media => "all", "data-turbolinks-track" => true %>
+  <%= stylesheet_link_tag "application", :media => "all", "data-turbolinks-track" => true %>
   <%= yield :stylesheets %>
   <%= javascript_include_tag "application", "data-turbolinks-track" => true %>
   <%= yield :scripts %>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<h1><%= @title %></h1>
+<h1><%= yield :heading %></h1>
 
 <%= render :partial => "shared/navbar" %>
 
