@@ -17,7 +17,7 @@ class SystemsController < ApplicationController
     summary_time_range = nil
     @prev_filters = []
     
-    each_filter(FILTERS) do |type, values, valid|
+    @filter_errors = each_filter(FILTERS) do |type, values, valid|
       @prev_filters << [type, values]
       next unless valid
       case type
