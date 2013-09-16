@@ -5,7 +5,6 @@ class WebUser < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   #Based on https://github.com/plataformatec/devise/wiki/How-To:-Require-admin-to-activate-account-before-sign_in
-
   def active_for_authentication?
     super && approved?
   end
@@ -16,5 +15,10 @@ class WebUser < ActiveRecord::Base
     else
       super
     end
+  end
+
+  after_create :send_admin_email
+  def send_admin_email
+    AdminMailer.new_user_waiting_for_approval(self).deliver
   end
 end

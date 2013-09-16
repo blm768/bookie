@@ -13,6 +13,7 @@
               <% when :text %>
                 <input type="<%= value_type %>" value="<%= value %>"></input>
               <% else %>
+                <% #Any inputs that don't hold text are selection boxes. %>
                 <select value="<%= value %>">
                   <% filter_options[value_type].each do |option| %>
                     <option value="<%= option %>"><%= option %></option>
@@ -36,6 +37,7 @@
     <% end %>
     <%= submit_tag("Filter") %>
   <% end %>
+  <% #For each type of selection box, a prototype is added to the page in a hidden div. %>
   <div id="select_prototypes">
     <% filter_options.each do |name, options| %>
       <select id="select_prototype_<%= name %>">
