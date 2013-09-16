@@ -55,7 +55,11 @@ BookieUi::Application.routes.draw do
   #     resources :products
   #   end
 
-  root :to => 'jobs#index'
+  # See https://github.com/plataformatec/devise/wiki/How-To:-Require-authentication-for-all-pages
+  authenticated :web_user do
+    root :to => 'jobs#index', :as => :authenticated_root
+  end
+  root :to => redirect('/web_users/sign_in')
 
   resources :jobs
   resources :systems
