@@ -29,7 +29,7 @@ class JobsController < ApplicationController
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
-    each_filter(FILTERS) do |type, values, valid|
+    @filter_errors = each_filter(FILTERS) do |type, values, valid|
       @prev_filters << [type, values]
       next unless valid
       case type

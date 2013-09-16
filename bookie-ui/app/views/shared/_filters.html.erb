@@ -49,3 +49,16 @@
   </div>
 </div>
 
+<% content_for :filter_errors do %>
+  <% if @filter_errors.length > 0 %>
+    <div id="filter_errors">
+      <h2>Filter errors</h2>
+      <ul>
+        <% @filter_errors.each do |error| %>
+          <li><%= error %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<% end %>
+

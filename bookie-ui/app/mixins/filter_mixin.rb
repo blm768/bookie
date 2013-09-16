@@ -1,6 +1,12 @@
 module FilterMixin
   #Yields type of filter, filter values, and whether the filter appears to be valid
+  #
+  #Returns an array containing any error messages
+  #This array should be stashed in the @filter_errors instance variable of the controller
+  #in order to make it available to the view.
   def each_filter(filter_value_types)
+    errors = []
+
     filter_types = params[:filter_types]
     filter_values = params[:filter_values]
     if filter_types && filter_values
@@ -14,13 +20,13 @@ module FilterMixin
       used_filter_types = Set.new
       filter_types.each do |type|
         if used_filter_types.include?(type)
-          flash_msg_now :error, "Only one filter of each type may be used at a time."
+          errors << "Only one filter of each type may be used at a time."
           next
         end
         used_filter_types.add(type)
         value_types = filter_value_types[type]
         unless value_types
-          flash_msg_now :error, %{Unknown filter type "#{type}"}
+          errors << %{Unknown filter type "#{type}"}
           yield type, values, false
           next
         end
@@ -28,7 +34,7 @@ module FilterMixin
         next_value_index = value_index + num_values
         values = filter_values[value_index ... next_value_index]
         if values.length < num_values
-          error_field_blank(type)
+          errors << error_field_blank(type)
           yield type, values, false
           next
         end
@@ -40,7 +46,7 @@ module FilterMixin
           end
         end
         if has_blank
-          error_field_blank(type)
+          errors << error_field_blank(type)
           yield type, values, false
           next
         end
@@ -48,10 +54,12 @@ module FilterMixin
         value_index = next_value_index
       end
     end
+
+    errors
   end
 
   def error_field_blank(filter_type)
-    flash_msg_now :error, %{Filter "#{filter_type}" has blank fields.}
+    %{Filter "#{filter_type}" has blank fields.}
   end
 
   def parse_time_range(start_time_text, end_time_text)

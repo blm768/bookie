@@ -1,8 +1,8 @@
-div#content {
+#content {
   padding-right: 20px;
 }
 
-div#controls {
+#controls {
   display: table-cell;
   width: 300px;
   min-width: 300px;
@@ -22,11 +22,11 @@ div#controls {
   }
 }
 
-div#select_prototypes {
+#select_prototypes {
   display: none;
 }
 
-div.filter {
+.filter {
   background-color: #88AAFF;
   border: 1px solid #7799FF;
   padding-top: 0.4em;
@@ -50,6 +50,10 @@ div.filter {
       background-image: url(/assets/close_hover.png);
     }
   }
+}
+
+#filter_errors {
+  color: #AA0000;
 }
 
 /* vim: ts=2:sw=2:et
