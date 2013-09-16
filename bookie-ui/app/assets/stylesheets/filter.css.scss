@@ -40,8 +40,14 @@ div.filter {
     clear: both;
   }
   .filter_remover {
+    width: 16px;
+    height: 16px;
     float: right;
-    :hover {
+
+    background-image: url(/assets/close.png);
+    background-repeat: no-repeat;
+    &:hover {
+      background-image: url(/assets/close_hover.png);
     }
   }
 }

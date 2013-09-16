@@ -5,7 +5,7 @@
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
           <% value_types = filter_types[filter] %>
-          <div class="filter"><%= filter %><div class="filter_remover">X</div>
+          <div class="filter"><%= filter %><div class="filter_remover"></div>
             <% value_types.each_index do |i| %>
               <% value = values[i] %>
               <% value_type = value_types[i] %>
