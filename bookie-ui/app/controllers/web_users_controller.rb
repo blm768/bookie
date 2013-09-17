@@ -1,6 +1,6 @@
 class WebUsersController < ApplicationController
   def index
-    @web_users = WebUser.all
+    @web_users = WebUser.order(:email).to_a
   end
 
   def approve
@@ -19,7 +19,7 @@ class WebUsersController < ApplicationController
     web_user = WebUser.find(params[:id].to_i)
 
     #Don't delete the last approved Web user.
-    if WebUser.where(:approved => :true).count <= 1 && web_user.approved?
+    if WebUser.where(:approved => true).count <= 1 && web_user.approved?
       flash[:error] = 'Cannot delete user: there must always be at least one approved user.'
       redirect_to :back
       return
