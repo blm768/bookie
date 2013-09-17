@@ -1,20 +1,25 @@
-<ul id="navigation">
-  <li><a href="/jobs">Jobs</a>
-    <ul>
-      <li><%= link_to 'Summary', '/jobs' %></li>
-      <li><%= link_to 'Graphs', '/graphs' %></li>
-    </ul>
-  </li>
-  <li><a href="/systems">Systems</a></li>
-  <li><a href="/users">Users</a></li>
-  <% if web_user_signed_in? %>
-    <li>Account
+<div id="navigation">
+  <ul>
+    <li><a href="/jobs">Jobs</a>
       <ul>
-        <li><%= link_to 'Log out', '/web_users/sign_out', :method => :delete %></li>
+        <li><%= link_to 'Summary', '/jobs' %></li>
+        <li><%= link_to 'Graphs', '/graphs' %></li>
       </ul>
     </li>
-  <% else %>
-    <li><%= link_to 'Log in', '/web_users/sign_in' %></li>
-  <% end%>
-</ul>
+    <li><a href="/systems">Systems</a></li>
+    <li><a href="/users">Users</a></li>
+  </ul>
+  <ul id="account_tools">
+    <li>
+      <% if web_user_signed_in? %>
+        <%= current_web_user.email %>
+        <ul>
+          <li><%= link_to 'Log out', '/web_users/sign_out', :method => :delete %></li>
+        </ul>
+      <% else %>
+        <%= link_to 'Log in', '/web_users/sign_in' %>
+      <% end%>
+    </li>
+  </div>
+</div>
 

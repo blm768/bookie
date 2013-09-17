@@ -1,5 +1,4 @@
 BookieUi::Application.routes.draw do
-  devise_for :web_users
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
@@ -54,6 +53,9 @@ BookieUi::Application.routes.draw do
   #     # (app/controllers/admin/products_controller.rb)
   #     resources :products
   #   end
+
+  devise_for :web_users
+  resources :web_users
 
   # See https://github.com/plataformatec/devise/wiki/How-To:-Require-authentication-for-all-pages
   authenticated :web_user do
