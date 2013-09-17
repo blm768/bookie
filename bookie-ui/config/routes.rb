@@ -54,7 +54,19 @@ BookieUi::Application.routes.draw do
   #     resources :products
   #   end
 
-  devise_for :web_users
+  devise_for :web_users, skip: :registrations
+  #Disable account deletion on the "edit password" page.
+  #See https://github.com/plataformatec/devise/wiki/How-To:-Disable-user-from-destroying-his-account
+  devise_scope :web_user do
+    resource :registration,
+      only: [:new, :create, :edit, :update],
+      path: 'web_users',
+      path_names: { new: 'sign_up' },
+      controller: 'devise/registrations',
+      as: :web_user_registration do
+        get :cancel
+      end
+  end
   resources :web_users
 
   # See https://github.com/plataformatec/devise/wiki/How-To:-Require-authentication-for-all-pages
