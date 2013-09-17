@@ -1,8 +1,6 @@
 require 'bookie_database_all'
 
 class UsersController < ApplicationController
-  before_filter :authenticate_web_user!
-
   FILTERS = {
     'Group' => [:text]
   }

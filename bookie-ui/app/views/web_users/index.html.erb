@@ -15,10 +15,12 @@
       <caption>Users</caption>
       <tr>
         <th>E-mail address</th>
+        <th>Actions</th>
       </tr>
       <% @web_users.all.each do |web_user| %>
         <tr>
           <td><%= web_user.email %></td>
+          <td><%= link_to 'Delete', "/web_users/#{web_user.id}", :method => :delete %></td>
         </tr>
       <% end %>
     </table>

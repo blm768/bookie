@@ -1,8 +1,6 @@
 require 'bookie_database_all'
 
 class JobsController < ApplicationController
-  before_filter :authenticate_web_user!
-
   JOBS_PER_PAGE = 20
   
   FILTERS = {
