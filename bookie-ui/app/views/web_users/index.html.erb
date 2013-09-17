@@ -1,0 +1,27 @@
+<% content_for :stylesheets do %>
+  <%= stylesheet_link_tag "list", :media => "all" %>
+  <style type="text/css">
+    table {
+      width: auto;
+    }
+  </style>
+<% end %>
+
+<% content_for :heading do %>Web Users<% end %>
+
+<div id="main">
+  <div id="content">
+    <table id="web_users">
+      <caption>Users</caption>
+      <tr>
+        <th>E-mail address</th>
+      </tr>
+      <% @web_users.all.each do |web_user| %>
+        <tr>
+          <td><%= web_user.email %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+</div>
+
