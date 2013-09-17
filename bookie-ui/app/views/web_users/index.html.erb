@@ -22,10 +22,10 @@
           <td><%= web_user.email %></td>
           <td>
             <% unless web_user.approved? %>
-              <%= link_to 'Approve', '' %>
+              <%= link_to 'Approve', "#{web_user_path(web_user.id)}/approve", :method => :patch %>
             <% end %>
           </td>
-          <td><%= link_to 'Delete', "/web_users/#{web_user.id}", :method => :delete %></td>
+          <td><%= link_to 'Delete', web_user_path(web_user.id), :method => :delete %></td>
         </tr>
       <% end %>
     </table>

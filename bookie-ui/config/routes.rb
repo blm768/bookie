@@ -67,7 +67,12 @@ BookieUi::Application.routes.draw do
         get :cancel
       end
   end
-  resources :web_users
+  resources :web_users do
+    member do
+     patch 'approve'
+    end
+  end
+  
 
   # See https://github.com/plataformatec/devise/wiki/How-To:-Require-authentication-for-all-pages
   authenticated :web_user do

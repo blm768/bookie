@@ -3,6 +3,18 @@ class WebUsersController < ApplicationController
     @web_users = WebUser.all
   end
 
+  def approve
+    web_user = WebUser.find(params[:id].to_i)
+    if web_user
+      web_user.approved = true
+      web_user.save!
+      flash[:notice] = "User approved."
+    else
+      flash[:notice] = "Unable to find user."
+    end 
+    redirect_to :back
+  end
+
   def destroy
     web_user = WebUser.find(params[:id].to_i)
 
