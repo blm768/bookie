@@ -15,11 +15,16 @@
       <caption>Users</caption>
       <tr>
         <th>E-mail address</th>
-        <th>Actions</th>
+        <th colspan="2">Actions</th>
       </tr>
       <% @web_users.all.each do |web_user| %>
         <tr>
           <td><%= web_user.email %></td>
+          <td>
+            <% unless web_user.approved? %>
+              <%= link_to 'Approve', '' %>
+            <% end %>
+          </td>
           <td><%= link_to 'Delete', "/web_users/#{web_user.id}", :method => :delete %></td>
         </tr>
       <% end %>
