@@ -52,6 +52,7 @@ describe Bookie::Sender do
   
   before(:each) do
     @sender = Bookie::Sender.new(test_config)
+    Bookie::Database::Job.delete_all
   end
   
   it "correctly filters jobs" do
@@ -63,21 +64,18 @@ describe Bookie::Sender do
   end
   
   it "correctly sends jobs" do
-    old_excluded = test_config.excluded_users
-    test_config.excluded_users = Set.new
-    begin
-      @sender.send_data('snapshot/torque_large')
-      jobs = Bookie::Database::Job.all_with_relations
-      jobs.each do |job|
-        job.system.name.should eql test_config.hostname
-      end
-      jobs.length.should eql 100
-    ensure
-      test_config.excluded_users = old_excluded
+    config = test_config.clone
+    config.excluded_users = Set.new
+    @sender.send_data('snapshot/torque_large')
+    jobs = Bookie::Database::Job.all_with_relations
+    jobs.each do |job|
+      job.system.name.should eql config.hostname
     end
+    jobs.length.should eql 100
   end
   
   it "refuses to send jobs when jobs already have been sent from a file" do
+    @sender.send_data('snapshot/torque_large')
     expect {
       @sender.send_data('snapshot/torque_large')
     }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
@@ -94,7 +92,6 @@ describe Bookie::Sender do
   end
   
   it "chooses the correct systems" do
-    Bookie::Database::Job.delete_all
     sender = Bookie::Sender.new(test_config)
 
     def sender.each_job(filename)
@@ -121,6 +118,7 @@ describe Bookie::Sender do
   end
 
   it "correctly finds duplicates" do
+    @sender.send_data('snapshot/torque')
     job = Bookie::Database::Job.first
     stub = JobStub.from_job(job)
     duplicate = @sender.duplicate(stub, job.system)
@@ -139,7 +137,6 @@ describe Bookie::Sender do
   end
   
   it "deletes cached summaries that overlap the new jobs" do
-    Bookie::Database::Job.delete_all
     @sender.send_data('snapshot/torque_large')
     time_min = Bookie::Database::Job.order(:start_time).first.start_time
     time_max = Bookie::Database::Job.order('end_time DESC').first.end_time
@@ -150,7 +147,6 @@ describe Bookie::Sender do
   
   describe "#clear_summaries" do
     it "deletes cached summaries" do
-      Bookie::Database::Job.delete_all
       sender = Bookie::Sender.new(test_config)
       sender.send_data('snapshot/torque_large')
       
@@ -189,7 +185,6 @@ describe Bookie::Sender do
   
   describe "#undo_send" do
     it "removes the correct entries" do
-      Bookie::Database::Job.delete_all
       @sender.send_data('snapshot/torque_large')
       @sender.send_data('snapshot/torque')
       @sender.undo_send('snapshot/torque_large')
@@ -204,7 +199,6 @@ describe Bookie::Sender do
     end
     
     it "deletes cached summaries in the affected range" do
-      Bookie::Database::Job.delete_all
       @sender.send_data('snapshot/torque_large')
       time_min = Bookie::Database::Job.order(:start_time).first.start_time
       time_max = Bookie::Database::Job.order('end_time DESC').first.end_time

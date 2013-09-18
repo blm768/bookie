@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+#Declared early so the first "describe" clause works:
 module Bookie
   module Formatters
     module Spreadsheet
