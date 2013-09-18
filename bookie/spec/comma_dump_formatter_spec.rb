@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+#Declared early so the first "describe" clause works:
 module Bookie
   module Formatters
     module CommaDump
@@ -20,10 +21,6 @@ describe Bookie::Formatters::CommaDump do
     @m = IOMock.new
     File.expects(:open).returns(@m)
     @formatter = Bookie::Formatter.new(:comma_dump, 'test.csv')
-  end
-  
-  after(:all) do
-    FileUtils.rm('test.sqlite')
   end
   
   it "correctly opens files" do

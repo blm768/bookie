@@ -129,7 +129,7 @@ describe Bookie::Database do
 
     describe "#find_current" do
       before(:all) do
-        @config_t1 = @config.clone
+        @config_t1 = test_config.clone
         
         @config_t1.hostname = 'test1'
         @config_t1.system_type = 'standalone'
@@ -160,7 +160,7 @@ describe Bookie::Database do
       end
       
       it "correctly detects conflicts" do
-        config = @config.clone
+        config = test_config.clone
         config.hostname = 'test1'
         config.cores = 2
         config.memory = 1000000

@@ -175,6 +175,18 @@ module Helpers
   ensure
     ENV['TZ'] = prev
   end
+
+  def test_config
+    Helpers.test_config
+  end
+
+  def self.test_config
+    @test_config
+  end
+
+  def self.test_config=(config)
+    @test_config = config
+  end
 end
 
 RSpec.configure do |config|
@@ -183,8 +195,8 @@ RSpec.configure do |config|
   config.mock_with(:mocha)
 
   config.before(:suite) do
-    @config = Bookie::Config.new('snapshot/test_config.json')
-    @config.connect
+    Helpers.test_config = Bookie::Config.new('snapshot/test_config.json')
+    Helpers.test_config.connect
 
     Bookie::Database::Migration.up
     Helpers.generate_database

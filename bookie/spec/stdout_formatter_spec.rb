@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+#Declared early so the first "describe" clause works:
 module Bookie
   module Formatters
     module Stdout
@@ -20,10 +21,6 @@ describe Bookie::Formatters::Stdout do
     @m = IOMock.new
     File.expects(:open).returns(@m)
     @formatter = Bookie::Formatter.new(:stdout, 'mock.out')
-  end
-  
-  after(:all) do
-    FileUtils.rm('test.sqlite')
   end
   
   it "correctly opens files" do

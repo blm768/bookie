@@ -32,9 +32,9 @@ describe Bookie::Sender do
   before(:all) do
     fields = {
       :name => 'localhost',
-      :system_type => Bookie::Sender.new(@config).system_type,
-      :cores => @config.cores,
-      :memory => @config.memory,
+      :system_type => Bookie::Sender.new(test_config).system_type,
+      :cores => test_config.cores,
+      :memory => test_config.memory,
     }
     @sys_1 = Bookie::Database::System.new(fields)
     @sys_1.start_time = base_time
@@ -50,12 +50,8 @@ describe Bookie::Sender do
     @sys_dummy.save!
   end
   
-  after(:all) do
-    FileUtils.rm('test.sqlite')
-  end
-  
   before(:each) do
-    @sender = Bookie::Sender.new(@config)
+    @sender = Bookie::Sender.new(test_config)
   end
   
   it "correctly filters jobs" do
@@ -67,17 +63,17 @@ describe Bookie::Sender do
   end
   
   it "correctly sends jobs" do
-    old_excluded = @config.excluded_users
-    @config.excluded_users = Set.new
+    old_excluded = test_config.excluded_users
+    test_config.excluded_users = Set.new
     begin
       @sender.send_data('snapshot/torque_large')
       jobs = Bookie::Database::Job.all_with_relations
       jobs.each do |job|
-        job.system.name.should eql @config.hostname
+        job.system.name.should eql test_config.hostname
       end
       jobs.length.should eql 100
     ensure
-      @config.excluded_users = old_excluded
+      test_config.excluded_users = old_excluded
     end
   end
   
@@ -99,7 +95,7 @@ describe Bookie::Sender do
   
   it "chooses the correct systems" do
     Bookie::Database::Job.delete_all
-    sender = Bookie::Sender.new(@config)
+    sender = Bookie::Sender.new(test_config)
 
     def sender.each_job(filename)
       [0, 1001].each do |offset|
@@ -119,7 +115,7 @@ describe Bookie::Sender do
     #The filename is just a dummy argument.
     sender.send_data('snapshot/pacct')
     
-    jobs = Bookie::Database::Job.by_system_name(@config.hostname).order(:end_time).to_a
+    jobs = Bookie::Database::Job.by_system_name(test_config.hostname).order(:end_time).to_a
     jobs[0].system.should eql @sys_1
     jobs[1].system.should eql @sys_2
   end
@@ -155,7 +151,7 @@ describe Bookie::Sender do
   describe "#clear_summaries" do
     it "deletes cached summaries" do
       Bookie::Database::Job.delete_all
-      sender = Bookie::Sender.new(@config)
+      sender = Bookie::Sender.new(test_config)
       sender.send_data('snapshot/torque_large')
       
       user = Bookie::Database::User.first
@@ -163,7 +159,7 @@ describe Bookie::Sender do
       date_end = date_start + 4
       (date_start .. date_end).each do |date|
         [@sys_1, @sys_2, @sys_dummy].each do |system|
-          sum = Bookie::Database::JobSummary.create!(
+          Bookie::Database::JobSummary.create!(
             :date => date,
             :system => system,
             :user => user,
