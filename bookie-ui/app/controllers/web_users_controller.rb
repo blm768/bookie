@@ -25,10 +25,13 @@ class WebUsersController < ApplicationController
       return
     end
 
-    #TODO: how to handle deletion of logged-in users?
-
+    if current_web_user == web_user
+      redirect_to new_web_user_session_path
+    else
+      redirect_to :back
+    end
     web_user.delete
     flash[:notice] = 'User deleted.'
-    redirect_to :back
   end
 end
+
