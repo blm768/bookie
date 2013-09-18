@@ -385,7 +385,7 @@ module Bookie
       #- [<tt>:range</tt>] restricts the summary to a specific time interval (specified as a Range of Time objects)
       #- [<tt>:jobs</tt>] the jobs on which the summary should operate
       #
-      #Internally, this may call JobSummary::summary, which uses Lock#synchronize, so this should not be used inside a transaction block.
+      #Internally, this may call JobSummary::summarize, which uses Lock#synchronize, so this should not be used inside a transaction block.
       #
       #When filtering, the same filters must be applied to both the Jobs and the JobSummaries. For example:
       # jobs = Bookie::Database::Job.by_user_name('root')
@@ -465,6 +465,7 @@ module Bookie
               memory_time += sum.memory_time
             end
           end
+          index = new_index
         end
         
         if range && range.empty?
@@ -628,7 +629,7 @@ module Bookie
 Please make sure that all previous systems with this hostname have been marked as decommissioned.")
             end
           else
-            raise "There is no system with hostname '#{config.hostname}' in the database at #{time}."
+            raise "There is no system with hostname '#{config.hostname}' that was recorded as active at #{time}."
           end
         end
         system

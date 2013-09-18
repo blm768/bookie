@@ -32,7 +32,7 @@ describe Bookie::Database do
         systems = systems.all_with_relations
         Bookie::Database::SystemType.expects(:new).never
         systems.each do |system|
-          test_system_relations(system, relations)
+          test_system_relation_identity(system, relations)
         end
       end
     end
@@ -152,11 +152,11 @@ describe Bookie::Database do
       it "correctly detects the lack of a matching system" do
         expect {
           Bookie::Database::System.find_current(@sender_1, base_time - 1.years)
-        }.to raise_error(/^There is no system with hostname 'test1' in the database at /)
+        }.to raise_error(/^There is no system with hostname 'test1' that was recorded as active at /)
         @config_t1.expects(:hostname).at_least_once.returns('test1000')
         expect {
           Bookie::Database::System.find_current(@sender_1, base_time)
-        }.to raise_error(/^There is no system with hostname 'test1000' in the database at /)
+        }.to raise_error(/^There is no system with hostname 'test1000' that was recorded as active at /)
       end
       
       it "correctly detects conflicts" do

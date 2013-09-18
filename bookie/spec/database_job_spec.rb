@@ -152,7 +152,7 @@ describe Bookie::Database do
         Bookie::Database::System.expects(:new).never
         Bookie::Database::SystemType.expects(:new).never
         jobs.each do |job|
-          test_job_relations(job, relations)
+          test_job_relation_identity(job, relations)
         end
       end
     end

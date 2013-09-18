@@ -65,7 +65,7 @@ module Helpers
     summaries
   end
   
-  def test_job_relations(job, relations)
+  def test_job_relation_identity(job, relations)
     #Make sure all relations with the same value have the same object_id:
     rels = [job.user, job.user.group, job.system, job.system.system_type]
     unbound_object_id = Object.instance_method(:object_id)
@@ -78,7 +78,7 @@ module Helpers
     end
   end
 
-  def test_system_relations(system, relations)
+  def test_system_relation_identity(system, relations)
     t = system.system_type
     unbound_object_id = Object.instance_method(:object_id)
     if relations.include?(t)
