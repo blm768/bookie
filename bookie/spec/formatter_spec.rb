@@ -16,17 +16,13 @@ module Bookie
 end
 
 describe Bookie::Formatter do
+  Helpers.use_cleaner(self)
+
   before(:all) do
-    Bookie::Database::Migration.up
-    Helpers::generate_database
     Bookie::Formatter.any_instance.stubs(:require)
     @formatter = Bookie::Formatter.new(:mock)
     @jobs = Bookie::Database::Job
     @summaries = Bookie::Database::JobSummary
-  end
-  
-  after(:all) do
-    FileUtils.rm('test.sqlite')
   end
   
   it "correctly formats durations" do

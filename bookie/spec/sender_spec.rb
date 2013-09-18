@@ -27,8 +27,9 @@ class JobStub
 end
 
 describe Bookie::Sender do
+  Helpers.use_cleaner(self)
+
   before(:all) do
-    Bookie::Database::Migration.up
     fields = {
       :name => 'localhost',
       :system_type => Bookie::Sender.new(@config).system_type,

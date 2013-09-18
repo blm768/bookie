@@ -9,9 +9,9 @@ module Bookie
 end
 
 describe Bookie::Formatters::CommaDump do
+  Helpers.use_cleaner(self)
+
   before(:all) do
-    Bookie::Database::Migration.up
-    Helpers::generate_database
     @jobs = Bookie::Database::Job
     @summaries = Bookie::Database::JobSummary
   end
@@ -28,7 +28,7 @@ describe Bookie::Formatters::CommaDump do
   
   it "correctly opens files" do
     File.expects(:open).with('test.csv')
-    f = Bookie::Formatter::new(:comma_dump, 'test.csv')
+    Bookie::Formatter.new(:comma_dump, 'test.csv')
   end
   
   it "correctly formats jobs" do

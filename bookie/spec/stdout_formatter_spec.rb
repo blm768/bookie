@@ -9,9 +9,9 @@ module Bookie
 end
 
 describe Bookie::Formatters::Stdout do
+  Helpers.use_cleaner(self)
+
   before(:all) do
-    Bookie::Database::Migration.up
-    Helpers::generate_database
     @jobs = Bookie::Database::Job
     @summaries = Bookie::Database::JobSummary
   end

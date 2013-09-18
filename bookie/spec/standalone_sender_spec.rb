@@ -38,3 +38,4 @@ describe Pacct::Entry do
     Pacct::Entry.new.respond_to?(:to_model).should eql true
   end
 end
+

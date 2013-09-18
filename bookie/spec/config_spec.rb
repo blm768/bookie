@@ -9,7 +9,7 @@ describe Bookie::Config do
     config.db_type.should eql "sqlite3"
     config.server.should eql "localhost"
     config.port.should eql 8080
-    config.database.should eql "test.sqlite"
+    config.database.should eql ":memory:"
     config.username.should eql "blm768"
     config.password.should eql "test"
     config.excluded_users.should eql Set.new(["root"])

@@ -1,8 +1,11 @@
+require 'database_cleaner'
+
 if ENV['COVERAGE']
   require 'simplecov'
   SimpleCov.start
 end
 
+#TODO: remove?
 $LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
 
 require 'fileutils'
@@ -10,18 +13,37 @@ require 'mocha/api'
 
 require 'bookie'
 
+class IOMock
+  def initialize
+    @buf = ""
+  end
+  
+  def puts(str)
+    @buf << str.to_s
+    @buf << "\n"
+  end
+  
+  def write(str)
+    @buf << str.to_s
+  end
+  
+  def printf(format, *args)
+    @buf << sprintf(format, *args)
+  end
+  
+  def buf
+    @buf
+  end
+end
+
 module Helpers
-  def self.init_database(example_group)
+  def self.use_cleaner(example_group)
     example_group.before(:all) do
-      #unless @generated
-        Bookie::Database::Migration.up
-        Helpers::generate_database
-        #@generated = true
-      #end
+      DatabaseCleaner.start
     end
     
     example_group.after(:all) do
-      Bookie::Database::Migration.down
+      DatabaseCleaner.clean
     end
   end
   
@@ -73,53 +95,14 @@ module Helpers
     end
     true
   end
-end
-
-RSpec.configure do |config|
-  config.include Helpers
-
-  config.mock_with(:mocha)
-  
-  config.before(:all) do
-    @config = Bookie::Config.new('snapshot/test_config.json')
-    @config.connect
-  end
-end
-
-class IOMock
-  def initialize
-    @buf = ""
-  end
-  
-  def puts(str)
-    @buf << str.to_s
-    @buf << "\n"
-  end
-  
-  def write(str)
-    @buf << str.to_s
-  end
-  
-  def printf(format, *args)
-    @buf << sprintf(format, *args)
-  end
-  
-  def buf
-    @buf
-  end
-end
-
-module Helpers
-  extend self
 
   BASE_TIME = Time.utc(2012)
-
   #To get around the "formal argument cannot be a constant" error
   def base_time
     BASE_TIME
   end
 
-  def generate_database
+  def self.generate_database
     #Create test database
     groups = {}
     group_names = ['root', 'default', 'admin', 'admin']
@@ -159,13 +142,13 @@ module Helpers
         system = Bookie::Database::System.create!(
           :name => name,
           :system_type => system_types[i & 1],
-          :start_time => base_time + (36000 * i),
+          :start_time => BASE_TIME + (36000 * i),
           :cores => 2,
           :memory => 1000000)
         systems << system
       end
     end
-    systems[0].end_time = base_time + 36000
+    systems[0].end_time = BASE_TIME + 36000
     systems[0].save!
     for i in 0 ... 40 do
       job = Bookie::Database::Job.new
@@ -176,7 +159,7 @@ module Helpers
       else
         job.command_name = 'emacs'
       end
-      job.start_time = base_time + 3600 * i
+      job.start_time = BASE_TIME + 3600 * i
       job.wall_time = 3600
       job.cpu_time = 100
       job.memory = 200
@@ -191,6 +174,20 @@ module Helpers
     yield
   ensure
     ENV['TZ'] = prev
+  end
+end
+
+RSpec.configure do |config|
+  config.include Helpers
+
+  config.mock_with(:mocha)
+
+  config.before(:suite) do
+    @config = Bookie::Config.new('snapshot/test_config.json')
+    @config.connect
+
+    Bookie::Database::Migration.up
+    Helpers.generate_database
   end
 end
 

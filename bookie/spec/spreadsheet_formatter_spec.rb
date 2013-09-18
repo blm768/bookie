@@ -56,9 +56,9 @@ class MockColumn
 end
 
 describe Bookie::Formatters::Spreadsheet do
+  Helpers.use_cleaner(self)
+
   before(:all) do
-    Bookie::Database::Migration.up
-    Helpers::generate_database
     @jobs = Bookie::Database::Job
     @summaries = Bookie::Database::JobSummary
   end
@@ -67,10 +67,6 @@ describe Bookie::Formatters::Spreadsheet do
     @m = MockWorkbook.new
     Spreadsheet::Workbook.expects(:new).returns(@m)
     @formatter = Bookie::Formatter.new(:spreadsheet, 'test.xls')
-  end
-  
-  after(:all) do
-    FileUtils.rm('test.sqlite')
   end
   
   it "correctly formats jobs" do
