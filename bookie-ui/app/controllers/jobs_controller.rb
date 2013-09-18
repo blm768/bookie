@@ -61,9 +61,6 @@ class JobsController < ApplicationController
       end
     end
 
-    #TODO: remove.
-    summary_time_range ||= Time.utc(2012) ... Time.utc(2012) + 2.days
-    
     @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
 
     @systems_summary = systems.summary(summary_time_range)

@@ -10,9 +10,69 @@ require 'mocha/api'
 
 require 'bookie'
 
-#Predefined here so config can see it
 module Helpers
+  def self.init_database(example_group)
+    example_group.before(:all) do
+      #unless @generated
+        Bookie::Database::Migration.up
+        Helpers::generate_database
+        #@generated = true
+      #end
+    end
+    
+    example_group.after(:all) do
+      Bookie::Database::Migration.down
+    end
+  end
   
+  def create_summaries(obj, base_time)
+    start_time_1 = base_time
+    end_time_1   = base_time + 3600 * 40
+    start_time_2 = base_time + 1800
+    end_time_2 = base_time + (36000 * 2 + 18000)
+    summaries = {
+      :all => obj.summary,
+      :all_constrained => obj.summary(start_time_1 ... end_time_1),
+      :clipped => obj.summary(start_time_2 ... end_time_2),
+      :empty => obj.summary(Time.at(0) ... Time.at(0)),
+    }
+    if obj.respond_to?(:by_command_name)
+      summaries[:all_filtered] = obj.by_command_name('vi').summary(start_time_1 ... end_time_1)
+    end
+    
+    summaries
+  end
+  
+  def test_job_relations(job, relations)
+    #Make sure all relations with the same value have the same object_id:
+    rels = [job.user, job.user.group, job.system, job.system.system_type]
+    unbound_object_id = Object.instance_method(:object_id)
+    rels.each do |r|
+      if relations.include?(r)
+        relations[r].should eql unbound_object_id.bind(r).call
+      else
+        relations[r] = unbound_object_id.bind(r).call
+      end
+    end
+  end
+
+  def test_system_relations(system, relations)
+    t = system.system_type
+    unbound_object_id = Object.instance_method(:object_id)
+    if relations.include?(t)
+      relations[t].should eql unbound_object_id.bind(t).call
+    else
+      relations[t] = unbound_object_id.bind(t).call
+    end
+  end
+
+  
+  def check_job_sums(js_sum, j_sum)
+    [:cpu_time, :memory_time].each do |field|
+      js_sum[field].should eql j_sum[field]
+    end
+    true
+  end
 end
 
 RSpec.configure do |config|
@@ -54,7 +114,7 @@ module Helpers
 
   BASE_TIME = Time.utc(2012)
 
-  #To get around the 'formal argument cannot be a constant' error
+  #To get around the "formal argument cannot be a constant" error
   def base_time
     BASE_TIME
   end
@@ -133,3 +193,4 @@ module Helpers
     ENV['TZ'] = prev
   end
 end
+
