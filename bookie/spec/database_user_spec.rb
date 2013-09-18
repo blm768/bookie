@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Bookie::Database do
-  helpers.init_database(self)  
+  Helpers.init_database(self)  
 
   describe Bookie::Database::User do
     it "correctly filters by name" do

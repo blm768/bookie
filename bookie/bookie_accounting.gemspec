@@ -25,6 +25,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('pacct')
   #Introduces the old ActiveRecord mass assignment security methods
   #(until I update the database code for the new methods)
+  #TODO: get rid of this.
   gem.add_dependency('protected_attributes')
   gem.add_dependency('spreadsheet')
 end
