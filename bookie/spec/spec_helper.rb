@@ -1,5 +1,3 @@
-require 'database_cleaner'
-
 if ENV['COVERAGE']
   require 'simplecov'
   SimpleCov.start
@@ -37,13 +35,24 @@ class IOMock
 end
 
 module Helpers
-  def self.use_cleaner(example_group)
-    example_group.before(:all) do
-      DatabaseCleaner.start
+  #Just shorthand for the connection's #begin_transaction method
+  def begin_transaction
+    ActiveRecord::Base.connection.begin_transaction
+  end
+
+  def rollback_transaction
+    ActiveRecord::Base.connection.rollback_transaction
+  end
+
+  #Uses a slightly hacky transaction trick to keep examples from
+  #modifying the database
+  def self.preserve_db(example_group)
+    example_group.before(:each) do
+      begin_transaction
     end
     
-    example_group.after(:all) do
-      DatabaseCleaner.clean
+    example_group.after(:each) do
+      rollback_transaction
     end
   end
   

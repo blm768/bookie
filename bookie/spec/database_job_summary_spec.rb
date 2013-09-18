@@ -4,8 +4,10 @@ include Bookie::Database
 
 describe Bookie::Database do
   describe Bookie::Database::JobSummary do
+    Helpers.preserve_db(self)
+
     before(:all) do
-      DatabaseCleaner.start
+      begin_transaction
       d = Date.new(2012)
       User.find_each do |user|
         Bookie::Database::System.find_each do |system|
@@ -27,7 +29,7 @@ describe Bookie::Database do
     end
 
     after(:all) do
-      DatabaseCleaner.clean
+      rollback_transaction
     end
     
     it "correctly filters by date" do
@@ -117,229 +119,229 @@ describe Bookie::Database do
         sum.command_name.should eql 'vi'
       end
     end
-  end
   
-  describe "#find_or_new" do
-    it "creates a summary if needed" do
-      Bookie::Database::JobSummary.delete_all
-      s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
-      s.persisted?.should eql false
-      s.cpu_time = 0
-      s.memory_time = 0
-      s.save!
-    end
-    
-    it "uses the old summary if present" do
-      #Uses the JobSummary created in the previous test
-      s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
-      s.persisted?.should eql true
-    end
-  end
-  
-  describe "#summarize" do
-    before(:each) do
-      Bookie::Database::JobSummary.delete_all
-    end
-    
-    it "produces correct summaries" do
-      d = Date.new(2012)
-      range = base_time ... base_time + 1.days
-      Bookie::Database::JobSummary.summarize(d)
-      sums = Bookie::Database::JobSummary.all.to_a
-      found_sums = Set.new
-      sums.each do |sum|
-        sum.date.should eql Date.new(2012)
-        jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
-        sum_2 = jobs.summary(range)
-        check_job_sums(sum, sum_2)
-        found_sums.add([sum.user.id, sum.system.id, sum.command_name])
+    describe "#find_or_new" do
+      it "creates a summary if needed" do
+        Bookie::Database::JobSummary.delete_all
+        s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
+        s.persisted?.should eql false
+        s.cpu_time = 0
+        s.memory_time = 0
+        s.save!
       end
-      #Is it catching all of the combinations of categories?
-      Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.find_each do |values|
-        values = [values.user_id, values.system_id, values.command_name]
-        found_sums.include?(values).should eql true
+      
+      it "uses the old summary if present" do
+        #Uses the JobSummary created in the previous test
+        s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
+        s.persisted?.should eql true
       end
     end
-    
-    it "creates dummy summaries when there are no jobs" do
-      d = Date.new(2012) + 5
-      Bookie::Database::JobSummary.summarize(d)
-      sums = Bookie::Database::JobSummary.by_date(d).to_a
-      sums.length.should eql 1
-      sum = sums[0]
-      sum.cpu_time.should eql 0
-      sum.memory_time.should eql 0
 
-      #Check the case where there are no users or no systems:
-      Bookie::Database::JobSummary.delete_all
-      [Bookie::Database::User, Bookie::Database::System].each do |klass|
-        #This will cause nested transactions, but we *should* be OK.
-        #TODO: use database_cleaner here?
-        Bookie::Database::JobSummary.transaction do
-          klass.delete_all
-          Bookie::Database::JobSummary.summarize(d)
-          Bookie::Database::JobSummary.by_date(d).count.should eql 0
-          raise ActiveRecord::Rollback
+    describe "#summarize" do
+      before(:each) do
+        Bookie::Database::JobSummary.delete_all
+      end
+      
+      it "produces correct summaries" do
+        d = Date.new(2012)
+        range = base_time ... base_time + 1.days
+        Bookie::Database::JobSummary.summarize(d)
+        sums = Bookie::Database::JobSummary.all.to_a
+        found_sums = Set.new
+        sums.each do |sum|
+          sum.date.should eql Date.new(2012)
+          jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
+          sum_2 = jobs.summary(range)
+          check_job_sums(sum, sum_2)
+          found_sums.add([sum.user.id, sum.system.id, sum.command_name])
+        end
+        #Is it catching all of the combinations of categories?
+        Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.find_each do |values|
+          values = [values.user_id, values.system_id, values.command_name]
+          found_sums.include?(values).should eql true
         end
       end
-    end
-  end
+      
+      it "creates dummy summaries when there are no jobs" do
+        d = Date.new(2012) + 5
+        Bookie::Database::JobSummary.summarize(d)
+        sums = Bookie::Database::JobSummary.by_date(d).to_a
+        sums.length.should eql 1
+        sum = sums[0]
+        sum.cpu_time.should eql 0
+        sum.memory_time.should eql 0
 
-  describe "#summary" do
-    before(:each) do
-      Bookie::Database::JobSummary.delete_all
-      t = base_time + 2.days
-      Time.expects(:now).at_least(0).returns(t)
-    end
-    
-    it "produces correct summaries" do
-      #To consider: flesh out some more?
-      time_start = base_time
-      time_end = time_start
-      time_bound = time_start + 3.days
-      while time_start < time_bound
-        while time_end < time_bound
-          [true, false].each do |exclude_end|
-            time_range = Range.new(time_start, time_end, exclude_end)
-            sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
-            sum2 = Bookie::Database::Job.summary(time_range)
-            check_job_sums(sum1, sum2)
-          end
-          time_end += 1.days
-        end
-        time_start += 1.days
-      end
-      time_start = base_time
-      time_end = time_start + 1.days
-      [0, -7200, 7200].each do |offset_begin|
-        [0, -7200, 7200].each do |offset_end|
-          [true, false].each do |exclude_end|
-            range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
-            sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
-            sum2 = Bookie::Database::Job.summary(range_offset)
-            check_job_sums(sum1, sum2)
+        #Check the case where there are no users or no systems:
+        Bookie::Database::JobSummary.delete_all
+        [Bookie::Database::User, Bookie::Database::System].each do |klass|
+          #This will cause nested transactions, but we *should* be OK.
+          #TODO: use database_cleaner here?
+          Bookie::Database::JobSummary.transaction(:requires_new => true) do
+            klass.delete_all
+            Bookie::Database::JobSummary.summarize(d)
+            Bookie::Database::JobSummary.by_date(d).count.should eql 0
+            raise ActiveRecord::Rollback
           end
         end
       end
     end
 
-    it "distinguishes between inclusive and exclusive ranges" do
-      Summary = Bookie::Database::JobSummary
-      sum = Summary.summary(:range => (base_time ... base_time + 3600 * 2))
-      sum[:num_jobs].should eql 2
-      sum = Summary.summary(:range => (base_time .. base_time + 3600 * 2))
-      sum[:num_jobs].should eql 3
-    end
-
-    def check_time_bounds(time_max = base_time + 1.days)
-      time_min = base_time
-      check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
-      Bookie::Database::JobSummary.order(:date).first.date.should eql time_min.to_date
-      Bookie::Database::JobSummary.order('date DESC').first.date.should eql time_max.utc.to_date
-    end
-    
-    it "correctly finds the default time bounds" do
-      #The last daily summary in this range isn't cached because Time.now could be partway through a day.
-      check_time_bounds
-      systems = Bookie::Database::System.active_systems
-      Bookie::Database::JobSummary.delete_all
-      #Check the case where all systems are decommissioned.
-      end_times = {}
-      begin
-        systems.each do |sys|
-          end_times[sys.id] = sys.end_time
-          sys.end_time = base_time + 2.days
-          sys.save!
+    describe "#summary" do
+      before(:each) do
+        Bookie::Database::JobSummary.delete_all
+        t = base_time + 2.days
+        Time.expects(:now).at_least(0).returns(t)
+      end
+      
+      it "produces correct summaries" do
+        #To consider: flesh out some more?
+        time_start = base_time
+        time_end = time_start
+        time_bound = time_start + 3.days
+        while time_start < time_bound
+          while time_end < time_bound
+            [true, false].each do |exclude_end|
+              time_range = Range.new(time_start, time_end, exclude_end)
+              sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
+              sum2 = Bookie::Database::Job.summary(time_range)
+              check_job_sums(sum1, sum2)
+            end
+            time_end += 1.days
+          end
+          time_start += 1.days
         end
+        time_start = base_time
+        time_end = time_start + 1.days
+        [0, -7200, 7200].each do |offset_begin|
+          [0, -7200, 7200].each do |offset_end|
+            [true, false].each do |exclude_end|
+              range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
+              sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
+              sum2 = Bookie::Database::Job.summary(range_offset)
+              check_job_sums(sum1, sum2)
+            end
+          end
+        end
+      end
+
+      it "distinguishes between inclusive and exclusive ranges" do
+        Summary = Bookie::Database::JobSummary
+        sum = Summary.summary(:range => (base_time ... base_time + 3600 * 2))
+        sum[:num_jobs].should eql 2
+        sum = Summary.summary(:range => (base_time .. base_time + 3600 * 2))
+        sum[:num_jobs].should eql 3
+      end
+
+      def check_time_bounds(time_max = base_time + 1.days)
+        time_min = base_time
+        check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
+        Bookie::Database::JobSummary.order(:date).first.date.should eql time_min.to_date
+        Bookie::Database::JobSummary.order('date DESC').first.date.should eql time_max.utc.to_date
+      end
+      
+      it "correctly finds the default time bounds" do
+        #The last daily summary in this range isn't cached because Time.now could be partway through a day.
         check_time_bounds
-      ensure
-        systems.each do |sys|
-          sys.end_time = end_times[sys.id]
-          sys.save!
+        systems = Bookie::Database::System.active_systems
+        Bookie::Database::JobSummary.delete_all
+        #Check the case where all systems are decommissioned.
+        end_times = {}
+        begin
+          systems.each do |sys|
+            end_times[sys.id] = sys.end_time
+            sys.end_time = base_time + 2.days
+            sys.save!
+          end
+          check_time_bounds
+        ensure
+          systems.each do |sys|
+            sys.end_time = end_times[sys.id]
+            sys.save!
+          end
+        end
+        Bookie::Database::JobSummary.delete_all
+        empty = Bookie::Database::System.limit(0)
+        #Check the case where there are no systems.
+        #Stub out methods of System's "Relation" class:
+        Bookie::Database::System.where('1=1').class.any_instance.expects(:'any?').at_least_once.returns(false)
+        Bookie::Database::System.where('1=1').class.any_instance.expects(:first).at_least_once.returns(nil)
+        sum = Bookie::Database::JobSummary.summary
+        sum.should eql({
+          :num_jobs => 0,
+          :cpu_time => 0,
+          :memory_time => 0,
+          :successful => 0,
+        })
+        Bookie::Database::JobSummary.any?.should eql false
+      end
+      
+      it "correctly handles filtered summaries" do
+        filters = {
+          :user_name => 'test',
+          :group_name => 'admin',
+          :command_name => 'vi',
+        }
+        filters.each do |filter, value|
+          filter_sym = "by_#{filter}".intern
+          jobs = Bookie::Database::Job.send(filter_sym, value)
+          sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
+          sum2 = jobs.summary
+          check_job_sums(sum1, sum2)
         end
       end
-      Bookie::Database::JobSummary.delete_all
-      empty = Bookie::Database::System.limit(0)
-      #Check the case where there are no systems.
-      #Stub out methods of System's "Relation" class:
-      Bookie::Database::System.where('1=1').class.any_instance.expects(:'any?').at_least_once.returns(false)
-      Bookie::Database::System.where('1=1').class.any_instance.expects(:first).at_least_once.returns(nil)
-      sum = Bookie::Database::JobSummary.summary
-      sum.should eql({
-        :num_jobs => 0,
-        :cpu_time => 0,
-        :memory_time => 0,
-        :successful => 0,
-      })
-      Bookie::Database::JobSummary.any?.should eql false
-    end
-    
-    it "correctly handles filtered summaries" do
-      filters = {
-        :user_name => 'test',
-        :group_name => 'admin',
-        :command_name => 'vi',
-      }
-      filters.each do |filter, value|
-        filter_sym = "by_#{filter}".intern
-        jobs = Bookie::Database::Job.send(filter_sym, value)
-        sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
-        sum2 = jobs.summary
-        check_job_sums(sum1, sum2)
+      
+      it "correctly handles inverted ranges" do
+        t = base_time
+        Bookie::Database::JobSummary.summary(:range => t .. t - 1).should eql({
+          :num_jobs => 0,
+          :cpu_time => 0,
+          :memory_time => 0,
+          :successful => 0,
+        })
+      end
+      
+      it "caches summaries" do
+        Bookie::Database::JobSummary.summary
+        Bookie::Database::JobSummary.expects(:summarize).never
+        range = base_time ... base_time + 1.days
+        Bookie::Database::JobSummary.summary(:range => range)
+      end
+
+      it "uses the cached summaries" do
+        Bookie::Database::JobSummary.summary
+        Bookie::Database::Job.expects(:summary).never
+        range = base_time ... base_time + 1.days
+        Bookie::Database::JobSummary.summary(:range => range)
       end
     end
-    
-    it "correctly handles inverted ranges" do
-      t = base_time
-      Bookie::Database::JobSummary.summary(:range => t .. t - 1).should eql({
-        :num_jobs => 0,
-        :cpu_time => 0,
-        :memory_time => 0,
-        :successful => 0,
-      })
-    end
-    
-    it "caches summaries" do
-      Bookie::Database::JobSummary.summary
-      Bookie::Database::JobSummary.expects(:summarize).never
-      range = base_time ... base_time + 1.days
-      Bookie::Database::JobSummary.summary(:range => range)
-    end
 
-    it "uses the cached summaries" do
-      Bookie::Database::JobSummary.summary
-      Bookie::Database::Job.expects(:summary).never
-      range = base_time ... base_time + 1.days
-      Bookie::Database::JobSummary.summary(:range => range)
-    end
-  end
-  
-  it "validates fields" do
-    fields = {
-      :user => Bookie::Database::User.first,
-      :system => Bookie::Database::System.first,
-      :command_name => '',
-      :date => Date.new(2012),
-      :cpu_time => 100,
-      :memory_time => 1000000,
-    }
+    it "validates fields" do
+      fields = {
+        :user => Bookie::Database::User.first,
+        :system => Bookie::Database::System.first,
+        :command_name => '',
+        :date => Date.new(2012),
+        :cpu_time => 100,
+        :memory_time => 1000000,
+      }
 
-    sum = Bookie::Database::JobSummary.new(fields)
-    sum.valid?.should eql true
-    
-    fields.each_key do |field|
-      job = Bookie::Database::JobSummary.new(fields)
-      job.method("#{field}=".intern).call(nil)
-      job.valid?.should eql false
-    end
-    
-    [:cpu_time, :memory_time].each do |field|
-      job = Bookie::Database::JobSummary.new(fields)
-      m = job.method("#{field}=".intern)
-      m.call(-1)
-      job.valid?.should eql false
-      m.call(0)
-      job.valid?.should eql true
+      sum = Bookie::Database::JobSummary.new(fields)
+      sum.valid?.should eql true
+      
+      fields.each_key do |field|
+        job = Bookie::Database::JobSummary.new(fields)
+        job.method("#{field}=".intern).call(nil)
+        job.valid?.should eql false
+      end
+      
+      [:cpu_time, :memory_time].each do |field|
+        job = Bookie::Database::JobSummary.new(fields)
+        m = job.method("#{field}=".intern)
+        m.call(-1)
+        job.valid?.should eql false
+        m.call(0)
+        job.valid?.should eql true
+      end
     end
   end
 end

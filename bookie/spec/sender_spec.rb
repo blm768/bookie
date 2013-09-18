@@ -27,9 +27,10 @@ class JobStub
 end
 
 describe Bookie::Sender do
-  Helpers.use_cleaner(self)
+  Helpers.preserve_db(self)
 
   before(:all) do
+    begin_transaction
     fields = {
       :name => test_config.hostname,
       :system_type => Bookie::Sender.new(test_config).system_type,
@@ -49,6 +50,10 @@ describe Bookie::Sender do
     @sys_dummy = Bookie::Database::System.new(fields)
     @sys_dummy.start_time = base_time
     @sys_dummy.save!
+  end
+
+  after(:all) do
+    rollback_transaction
   end
   
   before(:each) do
@@ -156,6 +161,7 @@ describe Bookie::Sender do
       user = Bookie::Database::User.first
       date_start = Date.new(2012) - 2
       date_end = date_start + 4
+      raise Bookie::Database::JobSummary.count.to_s
       (date_start .. date_end).each do |date|
         [@sys_1, @sys_2, @sys_dummy].each do |system|
           Bookie::Database::JobSummary.create!(

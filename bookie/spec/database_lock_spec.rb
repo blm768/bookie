@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Bookie::Database do
-  Helpers.use_cleaner(self)
+  Helpers.preserve_db(self)
 
   describe Bookie::Database::Lock do
     it "finds locks" do

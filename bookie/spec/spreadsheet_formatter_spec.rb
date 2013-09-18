@@ -57,8 +57,6 @@ class MockColumn
 end
 
 describe Bookie::Formatters::Spreadsheet do
-  Helpers.use_cleaner(self)
-
   before(:all) do
     @jobs = Bookie::Database::Job
     @summaries = Bookie::Database::JobSummary

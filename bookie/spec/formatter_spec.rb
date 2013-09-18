@@ -16,7 +16,7 @@ module Bookie
 end
 
 describe Bookie::Formatter do
-  Helpers.use_cleaner(self)
+  Helpers.preserve_db(self)
 
   before(:all) do
     Bookie::Formatter.any_instance.stubs(:require)
