@@ -161,7 +161,7 @@ describe Bookie::Database do
       before(:all) do
         @jobs = Bookie::Database::Job
         @length = @jobs.count
-        @summary = Helpers::create_summaries(@jobs, base_time)
+        @summary = create_summaries(@jobs, base_time)
       end
       
       it "produces correct summary totals" do

@@ -63,7 +63,7 @@ describe Bookie::Database do
       before(:all) do
         Time.expects(:now).returns(base_time + 3600 * 40).at_least_once
         @systems = Bookie::Database::System
-        @summary = Helpers::create_summaries(@systems, base_time)
+        @summary = create_summaries(@systems, base_time)
         @summary_wide = @systems.summary(base_time - 3600 ... base_time + 3600 * 40 + 3600)
       end
       
