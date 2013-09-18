@@ -31,7 +31,7 @@ describe Bookie::Sender do
 
   before(:all) do
     fields = {
-      :name => 'localhost',
+      :name => test_config.hostname,
       :system_type => Bookie::Sender.new(test_config).system_type,
       :cores => test_config.cores,
       :memory => test_config.memory,
@@ -45,6 +45,7 @@ describe Bookie::Sender do
     @sys_2.end_time = nil
     @sys_2.save!
     fields[:name] = 'dummy'
+    #TODO: move to relevant test.
     @sys_dummy = Bookie::Database::System.new(fields)
     @sys_dummy.start_time = base_time
     @sys_dummy.save!
@@ -237,3 +238,4 @@ describe Bookie::ModelHelpers do
     @job.end_time.should eql @job.start_time + @job.wall_time
   end
 end
+
