@@ -111,19 +111,23 @@ describe Bookie::Database::JobSummary do
   end
 
   describe "#find_or_new" do
+    before(:each) do
+      @params = [Date.new(2000), 1, 1, 'vi']
+    end
+
     it "creates a summary if needed" do
-      Bookie::Database::JobSummary.delete_all
-      s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
+      s = Bookie::Database::JobSummary.find_or_new(*@params)
       s.persisted?.should eql false
-      s.cpu_time = 0
-      s.memory_time = 0
-      s.save!
     end
     
     it "uses the old summary if present" do
-      #Uses the JobSummary created in the previous test
-      s = Bookie::Database::JobSummary.find_or_new(Date.new(2012), 1, 1, 'vi')
-      s.persisted?.should eql true
+      s1 = Bookie::Database::JobSummary.find_or_new(*@params)
+      s1.cpu_time = 0
+      s1.memory_time = 0
+      s1.save!
+      s2 = Bookie::Database::JobSummary.find_or_new(*@params)
+      s2.persisted?.should eql true
+      s2.should eql s1 
     end
   end
 
@@ -164,8 +168,6 @@ describe Bookie::Database::JobSummary do
       #Check the case where there are no users or no systems:
       Bookie::Database::JobSummary.delete_all
       [Bookie::Database::User, Bookie::Database::System].each do |klass|
-        #This will cause nested transactions, but we *should* be OK.
-        #TODO: use database_cleaner here?
         Bookie::Database::JobSummary.transaction(:requires_new => true) do
           klass.delete_all
           Bookie::Database::JobSummary.summarize(d)
