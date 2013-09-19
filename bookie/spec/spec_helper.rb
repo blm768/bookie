@@ -204,6 +204,8 @@ RSpec.configure do |config|
     Helpers.generate_database
   end
 
+  #Each group/example is wrapped in a transaction to make sure that tests
+  #get clean databases.
   config.before(:all) do
     begin_transaction
   end
