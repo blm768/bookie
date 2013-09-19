@@ -53,6 +53,7 @@ module Bookie
     #Both <tt>jobs</tt>, <tt>summaries</tt>, and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
+    #TODO: stop returning the summaries?
     def print_summary(jobs, summaries, systems, time_range = nil)
       jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
       num_jobs = jobs_summary[:num_jobs]

@@ -60,7 +60,10 @@ config = Bookie::Config.new(config_file)
 config.connect
 
 filename = ARGV[0]
-fail("No operation specified") unless filename || will_create || will_decommission
+unless filename || will_create || will_decommission
+  STDERR.puts "No operation specified"
+  exit 1
+end
 
 if filename
   sender = Bookie::Sender.new(config)
