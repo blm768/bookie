@@ -139,15 +139,14 @@ describe Bookie::Database::Job do
   
   describe "#all_with_relations" do
     it "loads all relations" do
-      jobs = Bookie::Database::Job.limit(5)
-      relations = {}
-      jobs = jobs.all_with_relations
+      jobs = Bookie::Database::Job.limit(5).all_with_relations
+      relation_ids = {}
       Bookie::Database::User.expects(:new).never
       Bookie::Database::Group.expects(:new).never
       Bookie::Database::System.expects(:new).never
       Bookie::Database::SystemType.expects(:new).never
       jobs.each do |job|
-        test_job_relation_identity(job, relations)
+        test_job_relation_identity(job, relation_ids)
       end
     end
   end

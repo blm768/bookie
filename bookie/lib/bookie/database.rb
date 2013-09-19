@@ -193,7 +193,7 @@ module Bookie
             job.system = system
           else
             system = job.system
-
+            systems[system.id] = system
           end
           system_type = system_types[system.system_type_id]
           if system_type

@@ -14,9 +14,9 @@ module Bookie
     #<tt>config</tt> should be an instance of Bookie::Config.
     def initialize(config)
       @config = config
-      t = config.system_type
-      require "bookie/senders/#{t}"
-      extend Bookie::Senders.const_get(t.camelize)
+      sys_type = config.system_type
+      require "bookie/senders/#{sys_type}"
+      extend Bookie::Senders.const_get(sys_type.camelize)
     end
     
     ##
