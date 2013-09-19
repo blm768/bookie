@@ -24,12 +24,11 @@ describe Bookie::Database::System do
 
   describe "#all_with_relations" do
     it "loads all relations" do
-      systems = Bookie::Database::System.limit(5)
-      relations = {}
-      systems = systems.all_with_relations
+      systems = Bookie::Database::System.limit(5).all_with_relations
+      relation_ids = {}
       Bookie::Database::SystemType.expects(:new).never
       systems.each do |system|
-        test_system_relation_identity(system, relations)
+        test_system_relation_identity(system, relation_ids)
       end
     end
   end

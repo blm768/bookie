@@ -78,13 +78,13 @@ module Helpers
     end
   end
 
-  def test_system_relation_identity(system, relations)
+  def test_system_relation_identity(system, relation_ids)
     t = system.system_type
-    unbound_object_id = Object.instance_method(:object_id)
-    if relations.include?(t)
-      relations[t].should eql unbound_object_id.bind(t).call
+    method_object_id = Object.instance_method(:object_id)
+    if relation_ids.include?(t)
+      relation_ids[t].should eql method_object_id.bind(t).call
     else
-      relations[t] = unbound_object_id.bind(t).call
+      relation_ids[t] = method_object_id.bind(t).call
     end
   end
 
