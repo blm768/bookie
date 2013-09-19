@@ -27,8 +27,6 @@ class JobStub
 end
 
 describe Bookie::Sender do
-  Helpers.preserve_db(self)
-
   before(:all) do
     begin_transaction
     fields = {
@@ -161,7 +159,6 @@ describe Bookie::Sender do
       user = Bookie::Database::User.first
       date_start = Date.new(2012) - 2
       date_end = date_start + 4
-      raise Bookie::Database::JobSummary.count.to_s
       (date_start .. date_end).each do |date|
         [@sys_1, @sys_2, @sys_dummy].each do |system|
           Bookie::Database::JobSummary.create!(

@@ -44,18 +44,6 @@ module Helpers
     ActiveRecord::Base.connection.rollback_transaction
   end
 
-  #Uses a slightly hacky transaction trick to keep examples from
-  #modifying the database
-  def self.preserve_db(example_group)
-    example_group.before(:each) do
-      begin_transaction
-    end
-    
-    example_group.after(:each) do
-      rollback_transaction
-    end
-  end
-  
   def create_summaries(obj, base_time)
     start_time_1 = base_time
     end_time_1   = base_time + 3600 * 40
@@ -201,6 +189,8 @@ end
 RSpec.configure do |config|
   config.include Helpers
 
+  #config.fail_fast = true
+
   config.mock_with(:mocha)
 
   config.before(:suite) do
@@ -209,6 +199,22 @@ RSpec.configure do |config|
 
     Bookie::Database::Migration.up
     Helpers.generate_database
+  end
+
+  config.before(:all) do
+    begin_transaction
+  end
+  
+  config.after(:all) do |t|
+    rollback_transaction
+  end
+
+  config.before(:each) do
+    begin_transaction
+  end
+  
+  config.after(:each) do
+    rollback_transaction
   end
 end
 
