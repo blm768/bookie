@@ -5,11 +5,7 @@
       <% if @prev_filters %>
         <% @prev_filters.each do |name, values| %>
           <% value_type = filter_types[name] %>
-          <div class="filter">
-            <%= name.to_s.humanize %>
-            <div class="filter_remover"></div>
-            <%= filter_for(name, value_type, *values) %>
-          </div>
+          <%= filter_for(name, value_type, values) %>
         <% end %>
       <% end %>
     </span>
@@ -18,7 +14,9 @@
       <% filter_types.each do |name, value_type| %>
         <% #The value attribute is hijacked to hold the internal name of the filter. %>
         <% #TODO: disable filters that are in @prev_filters. %>
-        <option value="<%= name %>"><%= name.to_s.humanize %></option> 
+        <option value="<%= name %>" <% if @prev_filters.include?(name) %>disabled="disabled"<% end %>>
+          <%= name.to_s.humanize %>
+        </option>
       <% end %>
     </select>
     <% if defined? show_details %>
@@ -29,7 +27,7 @@
   <% #For each type of filter, a prototype is added to the page in a hidden div. %>
   <div id="filter_prototypes">
     <% filter_types.each do |name, value_type| %>
-      <%= filter_for(name, value_type) %>
+      <%= filter_prototype_for(name, value_type) %>
     <% end %>
   </div>
 </div>

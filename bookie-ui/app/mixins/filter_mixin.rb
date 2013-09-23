@@ -10,10 +10,8 @@ module FilterMixin
     filter_types.each do |name, filter_type|
       values = params[name]
       next unless values
-      raise values.class.to_s
-      unless values.is_a?Array
-        values = [values]
-      end
+      values = [values] unless values.is_a?Array
+      #TODO: handle hash parameters?
 #      if values.length < num_values
 #        errors << error_field_blank(type)
 #        yield type, values, false
