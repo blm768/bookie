@@ -3,12 +3,12 @@
   <%= form_tag("", :method => "get", :id => "filter_form") do %>
     <span id="filters">
       <% if @prev_filters %>
-        <% @prev_filters.each do |filter, values| %>
-          <% value_type = filter_types[filter] %>
+        <% @prev_filters.each do |name, values| %>
+          <% value_type = filter_types[name] %>
           <div class="filter">
-            <%= filter.to_s.humanize %>
+            <%= name.to_s.humanize %>
             <div class="filter_remover"></div>
-            <%= filter_for(name, filter_type, *values) %>
+            <%= filter_for(name, value_type, *values) %>
           </div>
         <% end %>
       <% end %>
@@ -28,8 +28,8 @@
   <% end %>
   <% #For each type of filter, a prototype is added to the page in a hidden div. %>
   <div id="filter_prototypes">
-    <% filter_types.each do |name, filter_type| %>
-      <%= filter_for(name, filter_type) %>
+    <% filter_types.each do |name, value_type| %>
+      <%= filter_for(name, value_type) %>
     <% end %>
   </div>
 </div>
