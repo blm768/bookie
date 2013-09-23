@@ -41,24 +41,24 @@ function addFilter() {
   remover.addClass('filter_remover')
   remover.click(function() { removeFilter(filter) })
   filter.append(remover)
-  //The value attribute is hijacked to store the types of filter parameters.
-  //TODO: find a cleaner way of implementing this?
-  var types = opt.val().split(' ')
-  for(var i = 0; i < types.length; ++i) {
-    var type = types[i]
-    //Copy one of the prototype inputs from its hidden div.
-    var input = $('#filter_prototype_' + type).clone()
-    input.removeAttr('id')
-    input.change(function() {
+
+  //The value attribute is hijacked to store the type of filter.
+  var filter_type = opt.val()
+  //Copy one of the prototype inputs from its hidden div.
+  var input = $('#filter_prototype_' + filter_type).clone()
+  //TODO: handle prototypes with multiple inputs.
+  input.removeAttr('id')
+  input.change(function() {
       this.blur()
-    })
-    filter.append(input)
-  }
+  })
+  filter.append(input)
+
   filters.append(filter)
 }
 
 function removeFilter(filter) {
   //Re-enable the correct entry in the "Add filter" select box:
+  //TODO: change.
   var type = filter.children('.filter_type').text()
   $('#add_filter').children().each(function() {
     var $this = $(this)

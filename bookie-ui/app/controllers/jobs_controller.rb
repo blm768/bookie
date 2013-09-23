@@ -7,7 +7,7 @@ class JobsController < ApplicationController
     :system => :text,
     :user => :text,
     :group => :text,
-    :system_type => :sys_type,
+    :system_type => :text,
     :command_name => :text,
     :time => :datetime_range,
   }
