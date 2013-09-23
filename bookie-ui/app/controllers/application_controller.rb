@@ -5,7 +5,7 @@ class ApplicationController < ActionController::Base
 
   def redirect_back_or_to_root
     redirect_to :back
-  rescue
+  rescue ActionController::RedirectBackError
     redirect_to root_path
   end
 end
