@@ -4,12 +4,12 @@ class JobsController < ApplicationController
   JOBS_PER_PAGE = 20
   
   FILTERS = {
-    'System' => [:text],
-    'User' => [:text],
-    'Group' => [:text],
-    'System type' => [:sys_type],
-    'Command name' => [:text],
-    'Time' => [:text, :text],
+    :system => :text,
+    :user => :text,
+    :group => :text,
+    :system_type => :sys_type,
+    :command_name => :text,
+    :time => :datetime_range,
   }
 
   include FilterMixin
@@ -27,39 +27,40 @@ class JobsController < ApplicationController
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
     
-    @filter_errors = each_filter(FILTERS) do |type, values, valid|
-      @prev_filters << [type, values]
-      next unless valid
-      case type
-      when 'System'
-        jobs = jobs.by_system_name(values[0])
-        summaries = summaries.by_system_name(values[0])
-        systems = systems.by_name(values[0])
-      when 'User'
-        jobs = jobs.by_user_name(values[0])
-        summaries = summaries.by_user_name(values[0])
-      when 'Group'
-        jobs = jobs.by_group_name(values[0])
-        summaries = summaries.by_group_name(values[0])
-      when 'System type'
-        sys_type = Bookie::Database::SystemType.find_by_name(values[0])
-        if sys_type
-          jobs = jobs.by_system_type(sys_type)
-          summaries = summaries.by_system_type(sys_type)
-          systems = systems.by_system_type(sys_type)
-        else
-          jobs = jobs.where('1=0')
-          summaries = summaries.where('1=0')
-          systems = systems.where('1=0')
-          flash_msg_now :error, %{Unknown system type "#{values[0]}"}
-        end
-      when 'Command name'
-        jobs = jobs.by_command_name(values[0])
-        summaries = summaries.by_command_name(values[0])
-      when 'Time'
-        summary_time_range = parse_time_range(*values)
-      end
-    end
+    @filter_errors = []
+#    @filter_errors = each_filter(FILTERS) do |type, values, valid|
+#      @prev_filters << [type, values]
+#      next unless valid
+#      case type
+#      when 'System'
+#        jobs = jobs.by_system_name(values[0])
+#        summaries = summaries.by_system_name(values[0])
+#        systems = systems.by_name(values[0])
+#      when 'User'
+#        jobs = jobs.by_user_name(values[0])
+#        summaries = summaries.by_user_name(values[0])
+#      when 'Group'
+#        jobs = jobs.by_group_name(values[0])
+#        summaries = summaries.by_group_name(values[0])
+#      when 'System type'
+#        sys_type = Bookie::Database::SystemType.find_by_name(values[0])
+#        if sys_type
+#          jobs = jobs.by_system_type(sys_type)
+#          summaries = summaries.by_system_type(sys_type)
+#          systems = systems.by_system_type(sys_type)
+#        else
+#          jobs = jobs.where('1=0')
+#          summaries = summaries.where('1=0')
+#          systems = systems.where('1=0')
+#          flash_msg_now :error, %{Unknown system type "#{values[0]}"}
+#        end
+#      when 'Command name'
+#        jobs = jobs.by_command_name(values[0])
+#        summaries = summaries.by_command_name(values[0])
+#      when 'Time'
+#        summary_time_range = parse_time_range(*values)
+#      end
+#    end
 
     @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
 
@@ -99,3 +100,4 @@ class JobsController < ApplicationController
     }
   end
 end
+

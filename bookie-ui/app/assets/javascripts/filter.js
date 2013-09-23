@@ -46,19 +46,9 @@ function addFilter() {
   var types = opt.val().split(' ')
   for(var i = 0; i < types.length; ++i) {
     var type = types[i]
-    var input
-    switch(type) {
-      case 'text':
-        //Create a text box:
-        input = $('<input/>')
-        input.attr('type', 'text')
-        break
-      default:
-        //Copy one of the prototype select boxes from its hidden div.
-        input = $('#select_prototype_' + type).clone()
-        input.removeAttr('id')
-        break
-    }
+    //Copy one of the prototype inputs from its hidden div.
+    var input = $('#filter_prototype_' + type).clone()
+    input.removeAttr('id')
     input.change(function() {
       this.blur()
     })

@@ -4,32 +4,20 @@
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |filter, values| %>
-          <% value_types = filter_types[filter] %>
-          <div class="filter"><%= filter %><div class="filter_remover"></div>
-            <% value_types.each_index do |i| %>
-              <% value = values[i] %>
-              <% value_type = value_types[i] %>
-              <% case value_type %>
-              <% when :text %>
-                <input type="<%= value_type %>" value="<%= value %>"></input>
-              <% else %>
-                <% #Any inputs that don't hold text are selection boxes. %>
-                <select value="<%= value %>">
-                  <% filter_options[value_type].each do |option| %>
-                    <option value="<%= option %>"><%= option %></option>
-                  <% end %>
-                </select>
-              <% end %>
-            <% end %>
+          <% value_type = filter_types[filter] %>
+          <div class="filter">
+            <%= filter %>
+            <div class="filter_remover"></div>
+            <%= filter_for(filter_type, *values) %>
           </div>
         <% end %>
       <% end %>
     </span>
     <select id="add_filter">
       <option value="">Add filter</option>
-      <% filter_types.each do |name, value_types| %>
+      <% filter_types.each do |name, value_type| %>
         <% #The value attribute is hijacked to hold the type of value associated with the filter. %>
-        <option value="<%= value_types.join(' ') %>"><%= name %></option> 
+        <option value="<%= value_type %>"><%= name.to_s.humanize %></option> 
       <% end %>
     </select>
     <% if defined? show_details %>
@@ -37,14 +25,10 @@
     <% end %>
     <%= submit_tag("Filter") %>
   <% end %>
-  <% #For each type of selection box, a prototype is added to the page in a hidden div. %>
-  <div id="select_prototypes">
-    <% filter_options.each do |name, options| %>
-      <select id="select_prototype_<%= name %>">
-        <% options.each do |option| %>
-          <option value="<%= option %>"><%= option %></option>
-        <% end %>
-      </select>
+  <% #For each type of filter, a prototype is added to the page in a hidden div. %>
+  <div id="filter_prototypes">
+    <% filter_types.each do |name, filter_type| %>
+      <%= filter_for(filter_type) %>
     <% end %>
   </div>
 </div>
