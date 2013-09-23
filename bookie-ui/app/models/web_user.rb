@@ -19,7 +19,7 @@ class WebUser < ActiveRecord::Base
 
   after_create :send_admin_email
   def send_admin_email
-    #TODO: implement!
-    #AdminMailer.new_user_waiting_for_approval(self).deliver
+    AdminMailer.new_web_user_notification(self).deliver
   end
 end
+
