@@ -44,14 +44,13 @@ function addFilter() {
 
   //The value attribute is hijacked to store the type of filter.
   var filter_type = opt.val()
-  //Copy one of the prototype inputs from its hidden div.
-  var input = $('#filter_prototype_' + filter_type).clone()
+  //Copy the prototype inputs from the hidden div.
+  var inputs = $('#filter_prototype_' + filter_type).clone().children()
   //TODO: handle prototypes with multiple inputs.
-  input.removeAttr('id')
-  input.change(function() {
+  inputs.change(function() {
       this.blur()
   })
-  filter.append(input)
+  filter.append(inputs)
 
   filters.append(filter)
 }
