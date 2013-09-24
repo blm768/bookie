@@ -159,17 +159,17 @@ describe Bookie::Database::Job do
     end
     
     it "produces correct summary totals" do
-      @summary[:all][:jobs].length.should eql @length
+      @summary[:all][:num_jobs].should eql @length
       @summary[:all][:cpu_time].should eql @length * 100
       @summary[:all][:memory_time].should eql @length * 200 * 3600
       @summary[:all][:successful].should eql 20
-      @summary[:all_constrained][:jobs].length.should eql @length
+      @summary[:all_constrained][:num_jobs].should eql @length
       @summary[:all_constrained][:cpu_time].should eql @length * 100
       @summary[:all_constrained][:successful].should eql 20
-      @summary[:all_filtered][:jobs].length.should eql @length / 2
+      @summary[:all_filtered][:num_jobs].should eql @length / 2
       @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
       @summary[:all_filtered][:successful].should eql 20
-      clipped_jobs = @summary[:clipped][:jobs].length
+      clipped_jobs = @summary[:clipped][:num_jobs]
       clipped_jobs.should eql 25
       @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
       @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
@@ -178,7 +178,7 @@ describe Bookie::Database::Job do
     
     it "correctly handles summaries of empty sets" do
       @summary[:empty].should eql({
-          :jobs => [],
+          :num_jobs => 0,
           :cpu_time => 0,
           :memory_time => 0,
           :successful => 0,
@@ -205,9 +205,9 @@ describe Bookie::Database::Job do
 
     it "distinguishes between inclusive and exclusive ranges" do
       sum = @jobs.summary(base_time ... base_time + 3600)
-      sum[:jobs].length.should eql 1
+      sum[:num_jobs].should eql 1
       sum = @jobs.summary(base_time .. base_time + 3600)
-      sum[:jobs].length.should eql 2
+      sum[:num_jobs].should eql 2
     end
   end
   

@@ -1,0 +1,2 @@
+Replace deprecated find_by_* methods with find_by!(:attribute => value)
+

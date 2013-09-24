@@ -31,17 +31,17 @@ class JobsController < ApplicationController
       @prev_filters << [type, values]
       next unless valid
       case type
-      when 'System'
+      when :system
         jobs = jobs.by_system_name(values[0])
         summaries = summaries.by_system_name(values[0])
         systems = systems.by_name(values[0])
-      when 'User'
+      when :user
         jobs = jobs.by_user_name(values[0])
         summaries = summaries.by_user_name(values[0])
-      when 'Group'
+      when :group
         jobs = jobs.by_group_name(values[0])
         summaries = summaries.by_group_name(values[0])
-      when 'System type'
+      when :system_type
         sys_type = Bookie::Database::SystemType.find_by_name(values[0])
         if sys_type
           jobs = jobs.by_system_type(sys_type)
@@ -53,10 +53,10 @@ class JobsController < ApplicationController
           systems = systems.where('1=0')
           flash_msg_now :error, %{Unknown system type "#{values[0]}"}
         end
-      when 'Command name'
+      when :command_name
         jobs = jobs.by_command_name(values[0])
         summaries = summaries.by_command_name(values[0])
-      when 'Time'
+      when :time
         summary_time_range = parse_time_range(*values)
       end
     end

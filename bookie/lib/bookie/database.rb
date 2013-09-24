@@ -143,7 +143,7 @@ module Bookie
         time_range = time_range.normalized if time_range
         jobs = self
         jobs = jobs.by_time_range_inclusive(time_range) if time_range
-        jobs = jobs.all_with_relations
+        jobs = jobs.where(nil).to_a
         cpu_time = 0
         successful_jobs = 0
         memory_time = 0
@@ -168,7 +168,7 @@ module Bookie
         end
       
         return {
-          :jobs => jobs,
+          :num_jobs => jobs.length,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
           :successful => successful_jobs,
@@ -182,7 +182,7 @@ module Bookie
       #
       #To do: use ActiveRecord's #includes instead of this scheme?
       def self.all_with_relations
-        jobs = self.all.to_a
+        jobs = self.where(nil).to_a
         users = {}
         groups = {}
         systems = {}
@@ -351,7 +351,7 @@ module Bookie
         time_range = time_min ... time_min + 1.days
         day_jobs = jobs.by_time_range_inclusive(time_range)
 
-        #Find the sets of unique values.
+        #Find the unique combinations of values for some of the jobs' attributes.
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
           user = User.select(:id).first
@@ -367,7 +367,11 @@ module Bookie
           end
         else
           value_sets.each do |set|
-            summary_jobs = jobs.where(:user_id => set.user_id).where(:system_id => set.system_id).by_command_name(set.command_name)
+            summary_jobs = jobs.where(
+              :user_id => set.user_id,
+              :system_id => set.system_id,
+              :command_name => set.command_name
+            )
             summary = summary_jobs.summary(time_range)
             Lock[:job_summaries].synchronize do
               sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
@@ -641,7 +645,7 @@ Please make sure that all previous systems with this hostname have been marked a
       #
       #Relations are not cached between calls.
       def self.all_with_relations
-        systems = self.all.to_a
+        systems = self.where(nil).to_a
         system_types = {}
         systems.each do |system|
           system_type = system_types[system.system_type_id]

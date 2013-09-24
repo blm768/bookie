@@ -1,11 +1,13 @@
 <div id="controls">
   <h2>Filters</h2>
+  <% displayed_filters = Set.new %>
   <%= form_tag("", :method => "get", :id => "filter_form") do %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |name, values| %>
           <% value_type = filter_types[name] %>
           <%= filter_for(name, value_type, values) %>
+          <% displayed_filters.add(name) %>
         <% end %>
       <% end %>
     </span>
@@ -14,7 +16,7 @@
       <% filter_types.each do |name, value_type| %>
         <% #The value attribute is hijacked to hold the internal name of the filter. %>
         <% #TODO: disable filters that are in @prev_filters. %>
-        <option value="<%= name %>" <% if @prev_filters.include?(name) %>disabled="disabled"<% end %>>
+        <option value="<%= name %>" <% if displayed_filters.include?(name) %>disabled="disabled"<% end %>>
           <%= name.to_s.humanize %>
         </option>
       <% end %>
