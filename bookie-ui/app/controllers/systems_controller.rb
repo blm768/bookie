@@ -2,9 +2,9 @@ require 'bookie_database_all'
 
 class SystemsController < ApplicationController
   FILTERS = {
-    'Hostname' => [:text],
-    'System type' => [:sys_type],
-    'Time' => [:text, :text],
+    :hostname => :text,
+    :system_type => :text,
+    :time => :datetime_range,
   }
   
   include FilterMixin
@@ -19,9 +19,9 @@ class SystemsController < ApplicationController
       @prev_filters << [type, values]
       next unless valid
       case type
-      when 'Hostname'
+      when :hostname
         systems = systems.by_name(values[0])
-      when 'System type'
+      when :system_type
         sys_type = Bookie::Database::SystemType.find_by_name(values[0])
         if sys_type
           systems = systems.by_system_type(sys_type)
@@ -29,12 +29,13 @@ class SystemsController < ApplicationController
           systems = systems.where('1=0')
           flash_msg_now :error, %{Unknown system type "#{values[0]}"}
         end
-      when 'Time'
+      when :time
         summary_time_range = parse_time_range(*values)
       end
     end
     
     @systems_summary = systems.summary(summary_time_range)
+    #TODO: pull systems from the summary's fields?
     if summary_time_range
       @systems = systems.by_time_range_inclusive(summary_time_range)
     else

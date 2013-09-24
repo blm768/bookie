@@ -2,7 +2,7 @@ require 'bookie_database_all'
 
 class UsersController < ApplicationController
   FILTERS = {
-    'Group' => [:text]
+    :group => :text
   }
   
   include FilterMixin
@@ -16,7 +16,7 @@ class UsersController < ApplicationController
       @prev_filters << [type, values]
       next unless valid
       case type
-      when 'Group'
+      when :group
         users = users.by_group_name(values[0])
       end
     end
