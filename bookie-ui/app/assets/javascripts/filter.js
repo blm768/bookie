@@ -69,24 +69,6 @@ function removeFilter(filter) {
   filter.remove()
 }
 
-/*
- * Aggregates the types and values of the filter fields into a pair of arrays
- */
-function getFilterData() {
-  var filters = $('#filters')
-  var filterTypes = []
-  var filterValues = []
-  filters.children('.filter').each(function() {
-    var $this = $(this)
-    var text = $.trim($($this.contents()[0]).text())
-    filterTypes.push(text)
-    $this.children(':input').each(function() {
-      filterValues.push(this.value)
-    })
-  })
-  return [filterTypes, filterValues]
-}
-
 function submitFilters() {
   var filterForm = $('#filter_form')
 

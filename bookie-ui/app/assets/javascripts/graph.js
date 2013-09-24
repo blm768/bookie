@@ -60,10 +60,10 @@ function initControls() {
     if($('.graph_container').length == 0) {
       return
     }
-    var inputs = dateBoxes.children()
+    var inputs = dateBoxes.children().filter('input')
     //Check to see if the form is filled out.
     var complete = true
-    inputs.filter('input').each(function() {
+    inputs.each(function() {
       if(this.value.length == 0) {
         complete = false
         return false
@@ -144,7 +144,7 @@ function addGraph(type) {
 }
 
 //The object passed as start_time should not be modified after calling this function.
-function getSummary(start_time, interval, params, request_index) {
+function getSummary(start_time, interval, queryParams, request_index) {
   var start = start_time.toISOString()
   var end_time = new Date(start_time)
   end_time.setTime(end_time.getTime() + interval)
@@ -153,21 +153,19 @@ function getSummary(start_time, interval, params, request_index) {
   }
   var end = end_time.toISOString()
   
-  var queryParams = ['filter_types=' + params[0].join(','), 'filter_values=' + params[1].join(',')]
-  if(params[0].length > 0) {
-    queryParams[0] += ','
+  var paramsWithTime
+  if(queryParams.length > 0) {
+    paramsWithTime = queryParams + '&'
+  } else {
+    paramsWithTime = ""
   }
-  if(params[1].length > 0) {
-    queryParams[1] += ','
-  }
-  queryParams[0] += 'Time'
-  queryParams[1] += start + ',' + end
-  var request = $.getJSON('jobs.json?' + queryParams.join('&'), function(data) {
+  paramsWithTime += 'time[]=' + start + '&time[]=' + end
+  var request = $.getJSON('/jobs.json?' + paramsWithTime, function(data) {
     addPoint(start_time, data)
     var next_start = new Date(start_time)
     next_start.setTime(next_start.getTime() + interval * MAX_CONCURRENT_REQUESTS)
     if(next_start < time_end) {
-      getSummary(next_start, interval, params, request_index)
+      getSummary(next_start, interval, queryParams, request_index)
     } else {
       active_requests[request_index] = null
     }
@@ -283,8 +281,6 @@ function onFilterChange(evt) {
   if(!time_start || !time_end || time_start >= time_end) {
     return
   }
-  
-  var params = getFilterData()
 
   var time_step = timeStep()
   
@@ -298,7 +294,7 @@ function onFilterChange(evt) {
     if(d >= time_max) {
       break
     }
-    getSummary(new Date(d), time_step, params, i)
+    getSummary(new Date(d), time_step, $('#filter_form').serialize(), i)
   	d.setTime(d.getTime() + time_step)
   }
 }

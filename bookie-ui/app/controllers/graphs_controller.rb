@@ -4,11 +4,12 @@ require 'date'
 
 class GraphsController < ApplicationController
   FILTERS = {
-    'System' => [:text],
-    'User' => [:text],
-    'Group' => [:text],
-    'System type' => [:sys_type],
-    'Command name' => [:text],
+    :system => :text,
+    :user => :text,
+    :group => :text,
+    #TODO: turn this into a selection box.
+    :system_type => :text,
+    :command_name => :text,
   }
   
   include FilterMixin
