@@ -15,7 +15,6 @@
       <option value="">Add filter</option>
       <% filter_types.each do |name, value_type| %>
         <% #The value attribute is hijacked to hold the internal name of the filter. %>
-        <% #TODO: disable filters that are in @prev_filters. %>
         <option value="<%= name %>" <% if displayed_filters.include?(name) %>disabled="disabled"<% end %>>
           <%= name.to_s.humanize %>
         </option>

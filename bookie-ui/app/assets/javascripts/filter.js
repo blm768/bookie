@@ -46,7 +46,6 @@ function addFilter() {
   var filter_type = opt.val()
   //Copy the prototype inputs from the hidden div.
   var inputs = $('#filter_prototype_' + filter_type).clone().children()
-  //TODO: handle prototypes with multiple inputs.
   inputs.change(function() {
       this.blur()
   })
@@ -57,7 +56,6 @@ function addFilter() {
 
 function removeFilter(filter) {
   //Re-enable the correct entry in the "Add filter" select box:
-  //TODO: change.
   var type = filter.children('.filter_type').text()
   $('#add_filter').children().each(function() {
     var $this = $(this)
