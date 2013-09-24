@@ -460,7 +460,8 @@ module Bookie
             sum = summaries[new_index]
           end
           #Did we actually process any summaries?
-          if new_index == index
+          #If not, have _any_ summaries been created for this day?
+          if new_index == index && !(unscoped.by_date(date).any?)
             #Nope. Create the summaries.
             #To consider: optimize out the query?
             unscoped.summarize(date)
