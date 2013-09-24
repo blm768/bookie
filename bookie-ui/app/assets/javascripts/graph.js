@@ -20,6 +20,7 @@ var MSECS_PER_DAY = MSECS_PER_HOUR * 24
 var MSECS_PER_WEEK = MSECS_PER_DAY * 7
 
 //Base time steps for resolution purposes
+//Must be sorted in descending order
 //To consider: change/add bases?
 var TIME_STEP_BASES = [
   MSECS_PER_DAY,
@@ -28,7 +29,6 @@ var TIME_STEP_BASES = [
 
 //The minimum number of points to display on the graph
 //To consider: make configurable?
-//TODO: add a maximum number of points?
 var NUM_GRAPH_POINTS = 20
 
 //To consider: find the optimal value for this?
