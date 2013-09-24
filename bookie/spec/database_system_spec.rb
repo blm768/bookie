@@ -60,7 +60,7 @@ describe Bookie::Database::System do
       Time.expects(:now).returns(base_time + 3600 * 40).at_least_once
       @systems = Bookie::Database::System
       @summary = create_summaries(@systems, base_time)
-      @summary_wide = @systems.summary(base_time - 3600 ... base_time + 3600 * 40 + 3600)
+      @summary_wide = @systems.summary(base_time - 3600 ... base_time + 3600 * 41)
     end
     
     it "produces correct summaries" do
@@ -93,27 +93,20 @@ describe Bookie::Database::System do
       @summary[:empty][:avail_cpu_time].should eql 0
       @summary[:empty][:avail_memory_time].should eql 0
       @summary[:empty][:avail_memory_avg].should eql 0.0
-      begin
-        @systems.find_each do |system|
-          unless system.id == 1
-            system.end_time = Time.now
-            system.save!
-          end
-        end
-        summary_all_systems_ended = @systems.summary()
-        summary_all_systems_ended.should eql @summary[:all]
-        summary_all_systems_ended = @systems.summary(base_time ... Time.now + 3600)
-        s2 = @summary[:all].dup
-        s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
-        summary_all_systems_ended.should eql s2
-      ensure
-        @systems.find_each do |system|
-          unless system.id == 1
-            system.end_time = nil
-            system.save!
-          end
+
+      @systems.find_each do |system|
+        unless system.end_time
+          #Only works because of the mock in the before(:all) block
+          system.end_time = Time.now
+          system.save!
         end
       end
+      summary_all_systems_ended = @systems.summary()
+      summary_all_systems_ended.should eql @summary[:all]
+      summary_all_systems_ended = @systems.summary(base_time ... Time.now + 3600)
+      s2 = @summary[:all].dup
+      s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
+      summary_all_systems_ended.should eql s2
     end
     
     it "correctly handles inverted ranges" do

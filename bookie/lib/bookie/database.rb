@@ -400,6 +400,7 @@ module Bookie
         jobs = opts[:jobs] || Job
         range = opts[:range]
         unless range
+          #TODO: put this in its own method.
           end_time = nil
           if System.active_systems.any?
             end_time = Time.now
@@ -421,68 +422,71 @@ module Bookie
         memory_time = 0
         successful = 0
         
-        #Is the beginning somewhere between days?
-        date_begin = range.begin.utc.to_date
-        unless date_begin.to_utc_time == range.begin
-          date_begin += 1
-          time_before_max = [date_begin.to_utc_time, range.end].min
-          time_before_min = range.begin
-          summary = jobs.summary(time_before_min ... time_before_max)
-          cpu_time += summary[:cpu_time]
-          memory_time += summary[:memory_time]
-        end
-
-        #Is the end somewhere between days?
-        date_end = range.end.utc.to_date
-        time_after_min = date_end.to_utc_time
-        unless time_after_min <= range.begin
-          time_after_max = range.end
-          time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
-          unless time_after_range.empty?
-            summary = jobs.summary(time_after_range)
-            cpu_time += summary[:cpu_time]
-            memory_time += summary[:memory_time]
-          end
-        end
-        
-        date_range = date_begin ... date_end
-        
-        unscoped = self.unscoped
-        summaries = by_date_range(date_range).order(:date).to_a
-        index = 0
-        date_range.each do |date|
-          new_index = index
-          sum = summaries[new_index]
-          while sum && sum.date == date do
-            cpu_time += sum.cpu_time
-            memory_time += sum.memory_time
-            new_index += 1
-            sum = summaries[new_index]
-          end
-          #Did we actually process any summaries?
-          #If not, have _any_ summaries been created for this day?
-          if new_index == index && !(unscoped.by_date(date).any?)
-            #Nope. Create the summaries.
-            #To consider: optimize out the query?
-            unscoped.summarize(date)
-            sums = by_date(date)
-            sums.each do |sum|
-              cpu_time += sum.cpu_time
-              memory_time += sum.memory_time
-            end
-          end
-          index = new_index
-        end
-        
         if range && range.empty?
           num_jobs = 0
           successful = 0
         else
-          jobs = jobs.by_time_range_inclusive(range)
-          num_jobs = jobs.count
-          successful = jobs.where('jobs.exit_code = 0').count
+          jobs_in_range = jobs.by_time_range_inclusive(range)
+          num_jobs = jobs_in_range.count
+          successful = jobs_in_range.where('jobs.exit_code = 0').count
         end
 
+        unless num_jobs == 0
+          #Is the beginning somewhere between days?
+          date_begin = range.begin.utc.to_date
+          unless date_begin.to_utc_time == range.begin
+            date_begin += 1
+            time_before_max = [date_begin.to_utc_time, range.end].min
+            time_before_min = range.begin
+            summary = jobs.summary(time_before_min ... time_before_max)
+            cpu_time += summary[:cpu_time]
+            memory_time += summary[:memory_time]
+          end
+
+          #Is the end somewhere between days?
+          date_end = range.end.utc.to_date
+          time_after_min = date_end.to_utc_time
+          unless time_after_min <= range.begin
+            time_after_max = range.end
+            time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
+            unless time_after_range.empty?
+              summary = jobs.summary(time_after_range)
+              cpu_time += summary[:cpu_time]
+              memory_time += summary[:memory_time]
+            end
+          end
+          
+          date_range = date_begin ... date_end
+          
+          unscoped = self.unscoped
+          summaries = by_date_range(date_range).order(:date).to_a
+          index = 0
+          date_range.each do |date|
+            new_index = index
+            sum = summaries[new_index]
+            while sum && sum.date == date do
+              cpu_time += sum.cpu_time
+              memory_time += sum.memory_time
+              new_index += 1
+              sum = summaries[new_index]
+            end
+            #Did we actually process any summaries?
+            #If not, have _any_ summaries been created for this day?
+            if new_index == index && !(unscoped.by_date(date).any?)
+              #Nope. Create the summaries.
+              #To consider: optimize out the query?
+              unscoped.summarize(date)
+              sums = by_date(date)
+              sums.each do |sum|
+                cpu_time += sum.cpu_time
+                memory_time += sum.memory_time
+              end
+            end
+            index = new_index
+          end
+        end
+        
+        
         {
           :num_jobs => num_jobs,
           :cpu_time => cpu_time,
