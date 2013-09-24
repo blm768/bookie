@@ -210,7 +210,7 @@ RSpec.configure do |config|
     begin_transaction
   end
   
-  config.after(:all) do |t|
+  config.after(:all) do
     rollback_transaction
   end
 

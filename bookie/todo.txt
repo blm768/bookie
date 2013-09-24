@@ -1,2 +1,3 @@
-Replace deprecated find_by_* methods with find_by!(:attribute => value)
+Replace deprecated find_by_* methods with find_by!(:attribute => value).
+Find the cause of order-dependent unit-test failures.
 

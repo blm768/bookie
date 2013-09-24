@@ -43,8 +43,8 @@ describe Bookie::Sender do
     @sys_2.start_time = base_time + 1001
     @sys_2.end_time = nil
     @sys_2.save!
+
     fields[:name] = 'dummy'
-    #TODO: move to relevant test.
     @sys_dummy = Bookie::Database::System.new(fields)
     @sys_dummy.start_time = base_time
     @sys_dummy.save!
