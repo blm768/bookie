@@ -1,4 +1,6 @@
 class WebUsersController < ApplicationController
+  before_filter :require_login
+
   def new
     @web_user = WebUser.new
   end

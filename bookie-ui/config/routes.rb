@@ -15,4 +15,8 @@ BookieUi::Application.routes.draw do
   resources :password_resets do
     get 'password_resets/edit', :to => 'password_resets#edit'
   end
+
+  get 'log_in' => 'sessions#new', :as => 'log_in'
+  get 'log_out' => 'sessions#destroy', :as => 'log_out'
+  resources :sessions
 end

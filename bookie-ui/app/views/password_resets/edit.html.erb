@@ -7,6 +7,6 @@
   <%= f.password_field :password %><br/>
   <%= f.label :password_confirmation %><br/> 
   <%= f.password_field :password_confirmation %><br/>
-  <%= f.hidden_field :key, :value => @reset_key %>
+  <%= hidden_field_tag :key, :value => @reset_key %>
   <%= f.submit password_message %>
 <% end %>

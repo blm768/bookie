@@ -12,14 +12,14 @@
   </ul>
   <ul id="account_tools">
     <li>
-      <% if false %>
+      <% if current_web_user %>
         <%= current_web_user.email %>
         <ul>
-          <li><%= link_to 'Log out', '', :method => :delete %></li>
-          <li><%= link_to 'Change password', '' %></li>
+          <li><%= link_to 'Log out', '/log_out' %></li>
+          <li><%= link_to 'Change password', edit_web_user_path(current_web_user) %></li>
         </ul>
       <% else %>
-        <%= link_to 'Log in', '' %>
+        <%= link_to 'Log in', '/log_in' %>
       <% end%>
     </li>
   </div>

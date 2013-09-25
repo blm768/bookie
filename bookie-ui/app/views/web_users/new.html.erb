@@ -1,15 +1,7 @@
 <% content_for :heading, 'New user' %>
 
 <%= form_for @web_user do |f| %>
-  <% if @web_user.errors.any? %>
-    <div class="form_errors">
-      <ul>
-        <% @web_user.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= form_errors(@web_user.errors) %>
   <%= f.label :email %></br>
   <%= f.email_field :email %><br/>
   <%= f.submit %>

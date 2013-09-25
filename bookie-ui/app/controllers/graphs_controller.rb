@@ -3,6 +3,8 @@ require 'bookie_database_all'
 require 'date'
 
 class GraphsController < ApplicationController
+  before_filter :require_login
+
   FILTERS = {
     :system => :text,
     :user => :text,

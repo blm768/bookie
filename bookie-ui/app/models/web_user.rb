@@ -1,6 +1,6 @@
 class WebUser < ActiveRecord::Base
   attr_accessor :password
-  before_save :hash_password
+  before_save :set_hashed_password
 
   validates :email, :presence => true, :format => { :with => /@/ }
   #TODO: make case-insensitive?
@@ -8,10 +8,14 @@ class WebUser < ActiveRecord::Base
   validates :email, :uniqueness => { :message => 'is already in use.' }
   validates :password, :confirmation => true
 
-  def hash_password
+  def set_hashed_password
     return if password.blank?
     self.password_salt = SecureRandom.urlsafe_base64
-    self.password_hash = Digest::SHA512.hexdigest(self.password + self.password_salt)
+    self.password_hash = self.hash_password(self.password)
+  end
+
+  def hash_password(password)
+    Digest::SHA512.hexdigest(password + self.password_salt)
   end
   
   #TODO: validation on reset_key_hash?
@@ -24,7 +28,6 @@ class WebUser < ActiveRecord::Base
   def generate_reset_key
     reset_key = SecureRandom.urlsafe_base64
     #TODO: include salt?
-    #Generate a reset key hash.
     self.reset_key_hash = Digest::SHA512.hexdigest(reset_key)
     self.reset_sent_at = Time.zone.now
     reset_key
@@ -42,5 +45,13 @@ class WebUser < ActiveRecord::Base
 
   #TODO: handle reset key expiration.
 
+  def self.authenticate(email, password)
+    web_user = where(:email => email).first
+    if web_user && web_user.password_hash == web_user.hash_password(password)
+      web_user
+    else
+      nil
+    end
+  end
 end
 
