@@ -12,4 +12,5 @@ BookieUi::Application.routes.draw do
   resources :graphs
 
   resources :web_users
+  resources :passwords
 end

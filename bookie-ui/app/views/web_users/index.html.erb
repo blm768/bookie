@@ -15,15 +15,18 @@
       <caption>Users</caption>
       <tr>
         <th>E-mail address</th>
+        <th>Confirmed?</th>
         <th>Actions</th>
       </tr>
       <% @web_users.each do |web_user| %>
         <tr>
           <td><%= web_user.email %></td>
+          <td><%= if web_user.confirmed? then 'Yes' else 'No' end %></td>
           <td><%= link_to 'Delete', web_user_path(web_user.id), :method => :delete %></td>
         </tr>
       <% end %>
     </table>
+    <%= link_to 'New user', '/web_users/new' %>
   </div>
 </div>
 
