@@ -1,9 +1,18 @@
 class WebUser < ActiveRecord::Base
+  attr_accessor :password
+  before_save :hash_password
+
   validates :email, :presence => true, :format => { :with => /@/ }
   #TODO: make case-insensitive?
   #TODO: internationalize?
   validates :email, :uniqueness => { :message => 'is already in use.' }
-  #validates :password, :confirmation => true
+  validates :password, :confirmation => true
+
+  def hash_password
+    return if password.blank?
+    self.password_salt = SecureRandom.urlsafe_base64
+    self.password_hash = Digest::SHA512.hexdigest(self.password + self.password_salt)
+  end
   
   #TODO: validation on reset_key_hash?
   
