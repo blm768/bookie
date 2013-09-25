@@ -10,4 +10,6 @@ BookieUi::Application.routes.draw do
   resources :users
 
   resources :graphs
+
+  resources :web_users
 end

@@ -1,0 +1,7 @@
+<% content_for :heading, 'New user' %>
+
+<% form_for @web_user do |f| %>
+  <%= f.label :email, 'E-mail address' %>
+  <%= f.text_field :email %><br/>
+  <%= f.submit %>
+<% end %>
