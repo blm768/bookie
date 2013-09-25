@@ -20,5 +20,18 @@ class WebUser < ActiveRecord::Base
     self.reset_sent_at = Time.zone.now
     reset_key
   end
+
+  def clear_reset_key
+    self.reset_key_hash = nil
+    self.reset_sent_at = nil
+  end
+
+  def correct_reset_key?(reset_key)
+    key_hash = Digest::SHA512.hexdigest(reset_key)
+    self.reset_key_hash != nil && self.reset_key_hash == key_hash
+  end
+
+  #TODO: handle reset key expiration.
+
 end
 

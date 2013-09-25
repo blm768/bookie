@@ -4,5 +4,5 @@
   We have created your Bookie Web interface account. Before you can use your account,
   you must set your password using the following link:
 
-  <%= link_to @url, @url %>
+  <a href="<%= raw(@url) %>"><%= @url %></a>
 </p>

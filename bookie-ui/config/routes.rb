@@ -12,5 +12,7 @@ BookieUi::Application.routes.draw do
   resources :graphs
 
   resources :web_users
-  resources :passwords
+  resources :password_resets do
+    get 'password_resets/edit', :to => 'password_resets#edit'
+  end
 end

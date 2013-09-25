@@ -1,0 +1,12 @@
+<% password_message = (@web_user.confirmed?) ? 'Reset password' : 'Set password' %>
+<%= content_for :heading, password_message %>
+
+<%= form_for @web_user, :url => "/password_resets/#{@web_user.id}", :method => :put do |f| %>
+  <% #TODO: show error messages. %>
+  <%= f.label :password %><br/>
+  <%= f.password_field :password %><br/>
+  <%= f.label :password_confirmation %><br/> 
+  <%= f.password_field :password_confirmation %><br/>
+  <%= f.hidden_field :key, :value => @reset_key %>
+  <%= f.submit password_message %>
+<% end %>
