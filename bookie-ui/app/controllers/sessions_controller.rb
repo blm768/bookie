@@ -2,7 +2,7 @@ class SessionsController < ApplicationController
   def new
     if current_web_user
       flash[:alert] = 'You are already logged in.'
-      redirect_back_or_to_root
+      redirect_to root_path
       return
     end
   end

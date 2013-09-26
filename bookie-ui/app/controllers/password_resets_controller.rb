@@ -3,7 +3,8 @@
 #
 #A confirmation is treated as a special case of a password reset.
 class PasswordResetsController < ApplicationController
-  #TODO: create #new and #create actions
+  before_filter :require_guest
+
   def new
     @action_name = 'Reset password'
   end
@@ -39,23 +40,29 @@ class PasswordResetsController < ApplicationController
   end
 
   def update
-    web_user = WebUser.find(params[:id])
-    reset_key = params[:key]
+    #The #find method would raise an exception for invalid user IDs, which
+    #provides more information to an attacker than we'd like, even if
+    #the exception details aren't displayed.
+    @web_user = WebUser.where(:id => params[:id]).first
+    @reset_key = params[:key]
 
-    unless web_user.correct_reset_key?(reset_key)
-      flash[:error] = 'Invalid user or reset key.'
+    unless @web_user && @web_user.correct_reset_key?(@reset_key)
+      flash[:error] = 'Invalid user or reset key.' + " #{@web_user.reset_key_hash}"
       redirect_to root_path
       return
     end
 
-    web_user.update(params.permit(:password, :password_confirmation))
-    if web_user.valid?
-      web_user.clear_reset_key
-      web_user.save!
-      flash[:notice] = "Password #{action_name_for(web_user)}."
+    @action_name = action_name_for(@web_user)
+
+    @web_user.password = params[:password]
+    @web_user.password_confirmation = params[:password_confirmation]
+    if @web_user.valid?
+      @web_user.clear_reset_key
+      @web_user.save!
+      flash[:notice] = "Password #{@action_name}."
       redirect_to new_session_path
     else
-      redirect_to :action => 'edit'
+      render :action => 'edit'
     end
   end
 

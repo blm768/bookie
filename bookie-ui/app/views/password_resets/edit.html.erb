@@ -1,6 +1,8 @@
 <% action_name = "#{@action_name.capitalize} password" %>
 <% content_for :heading, action_name %>
 
+<h2><%= action_name %> for <%= @web_user.email %></h2>
+
 <%= form_tag password_reset_path(@web_user.id), :method => :put do %>
   <%= form_errors @web_user.errors %>
   <p>

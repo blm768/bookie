@@ -24,7 +24,7 @@ class WebUsersController < ApplicationController
   end
 
   def destroy
-    redirect_back_or_to_root
+    redirect_to web_users_path
     web_user = WebUser.where(:id => params[:id]).first
     unless web_user
       flash[:error] = 'Unable to find user.'
