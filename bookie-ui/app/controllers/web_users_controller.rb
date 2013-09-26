@@ -33,6 +33,7 @@ class WebUsersController < ApplicationController
 
     confirmed_web_users = WebUser.where('web_users.password_hash IS NOT NULL')
     if confirmed_web_users.count == 1 && web_user.confirmed?
+      #Don't delete the last confirmed user.
       flash[:error] = 'Unable to delete user: there must always be at least one confirmed user.'
     else
       flash[:notice] = 'User deleted.'

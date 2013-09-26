@@ -37,7 +37,6 @@ class SystemsController < ApplicationController
     end
     
     @systems_summary = systems.summary(summary_time_range)
-    #TODO: pull systems from the summary's fields?
     @systems = @systems_summary[:systems]
   end
 
