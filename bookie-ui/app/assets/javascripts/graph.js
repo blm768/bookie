@@ -1,5 +1,7 @@
 // vim: ts=2:sw=2:et
 
+//TODO: figure out how time zones are working here.
+
 "use strict";
 
 function formatPercent(value) {
@@ -34,9 +36,6 @@ var NUM_GRAPH_POINTS = 20
 //To consider: find the optimal value for this?
 var MAX_CONCURRENT_REQUESTS = 5
 
-//Contains the start/end time from the input boxes
-var time_start, time_end
-
 //Contains all pending AJAX requests
 var active_requests = []
 
@@ -58,55 +57,8 @@ function initControls() {
   })
   
   //Prepare callbacks:
-  $('#do_graph').click(function() {
-    //If no graphs are being displayed, just return.
-    if($('.graph_container').length == 0) {
-      return
-    }
-    var inputs = date_boxes.children().filter('input')
-    //Check to see if the form is filled out.
-    var complete = true
-    inputs.each(function() {
-      if(this.value.length == 0) {
-        complete = false
-        //Should work like a break statement:
-        return false
-      }
-    })
-    if(complete) {
-      //TODO: validate correctness of the day of month?
-      //(The Date class doesn't care, but the user might be confused.)
-      time_start = new Date(
-        parseInt($('#year_start').val()), 
-        parseInt($('#month_start').val()),
-        parseInt($('#day_start').val())
-      )
-      time_end = new Date(
-        parseInt($('#year_end').val()), 
-        parseInt($('#month_end').val()),
-        parseInt($('#day_end').val())
-      )
-      onFilterChange()
-    }
-  })
-  
-  //Set up the 'Add graph' selection box:
-  var add_graph = $('#add_graph')
-  for(var name in PLOT_TYPES) {
-    var opt = $('<option/>')
-    opt.text(name)
-    opt.val(name)
-    add_graph.append(opt)
-  }
-  
-  add_graph.change(function() {
-    var $this = $(this)
-    if($this.val() == 0) {
-      return
-    }
-    addGraph($this.val())
-    $this.val(0)
-  })
+  $('#do_graph').click(onFilterChange)
+  $('#filter_form').submit(onFilterChange)
 }
 
 function addGraph(type) {
@@ -118,17 +70,9 @@ function addGraph(type) {
   graph.addClass('graph')
   container.append(graph)
   
-  var remover = $('<div/>')
-  remover.addClass('graph_remover')
-  remover.text('X')
-  remover.click(function() {
-    $(this).parent().remove()
-  })
-  container.append(remover)
-  
   graph.data('type', type)
   //Put the graph container into the page:
-  $('#add_graph').before(container)
+  $('#content').append(container)
   
   var type_info = PLOT_TYPES[type]
   
@@ -155,21 +99,27 @@ function addGraph(type) {
 /*
  * Sends an AJAX request to get the summary data for a single graph point
  *
- * The request_index identifies this request's position in the active_requests
- * array. It must be in the range [0, MAX_CONCURRENT_REQUESTS).
- *
- * Once the request is received, its callback will automatically spawn a
+ * Once the request is received, its callback will automatically spawn a new
  * request to get one of the remaining data points. This new request will
  * replace the received request in the active_requests array.
  *
- * The object passed as start_time should not be modified after calling this function.
+ * Unless otherwise noted, the objects passed as parameters must not be modified after this
+ * function is called.
+ *
+ * Parameters:
+ * time_range: the entire time range of points being graphed
+ * point_time: the time value for this data point
+ * interval: the amount of time that this point covers
+ * queryParams: the query parameters for the JSON request (excluding time-related parameters)
+ * request_index: identifies this request's position in the active_requests array.
+ *  * It must be in the range [0, MAX_CONCURRENT_REQUESTS).
  */
-function getSummary(start_time, interval, queryParams, request_index) {
-  var start = start_time.toISOString()
-  var end_time = new Date(start_time)
+function getSummary(time_range, point_time, interval, queryParams, request_index) {
+  var start = point_time.toISOString()
+  var end_time = new Date(point_time)
   end_time.setTime(end_time.getTime() + interval)
-  if(end_time < time_end) {
-    end_time = time_end
+  if(end_time < time_range.end) {
+    end_time = time_range.end
   }
   var end = end_time.toISOString()
   
@@ -181,14 +131,14 @@ function getSummary(start_time, interval, queryParams, request_index) {
   }
   paramsWithTime += 'time[]=' + start + '&time[]=' + end
   var request = $.getJSON('/jobs.json?' + paramsWithTime, function(data) {
-    addPoint(start_time, data)
+    addPoint(point_time, data)
     //Prepare to get the next data point.
-    var next_start = new Date(start_time)
+    var next_start = new Date(point_time)
     next_start.setTime(next_start.getTime() + interval * MAX_CONCURRENT_REQUESTS)
     //Is there another data point?
-    if(next_start < time_end) {
+    if(next_start < time_range.end) {
       //Get the data point.
-      getSummary(next_start, interval, queryParams, request_index)
+      getSummary(time_range, next_start, interval, queryParams, request_index)
     } else {
       active_requests[request_index] = null
     }
@@ -203,6 +153,11 @@ var plots = {}
 
 var plot_data = {}
 
+/*
+ * Adds a point to the graph
+ *
+ * Typically called from an AJAX callback
+ */
 function addPoint(date, summary) {
   var time = date.getTime()
   var count = summary['Count']
@@ -219,6 +174,9 @@ function addPoint(date, summary) {
   drawPoints()
 }
 
+/*
+ * Resets data points on all graphs
+ */
 function resetPoints() {
   //Cancel all active requests.
   for(var i = 0; i < active_requests.length; ++i) {
@@ -237,26 +195,12 @@ function resetPoints() {
     plot_data[type] = []
   }
   
-  var end = new Date(time_end)
-  end.setDate(end.getDate() - 1)
-
-  //Currently broken
-  //To consider: Fix? Move?
-  /*
-  $('.graph').each(function() {
-    var graph = $(this)
-    var plot = graph.data('plot')
-    var xaxis = plot.getAxes().xaxis
-    xaxis.min = time_start.valueOf()
-    xaxis.max = end.valueOf()
-  })*/
-
   drawPoints()
 }
 
 //Calculates the time step value that should be used for the selected time interval
-function timeStep() {
-  var difference = time_end.getTime() - time_start.getTime()
+function timeStep(time_range) {
+  var difference = time_range.end.getTime() - time_range.start.getTime()
   var time_step = difference / NUM_GRAPH_POINTS
 
   //Fit the time interval to one of the base timesteps.
@@ -277,6 +221,7 @@ function timeStep() {
 
 
 function drawPoints() {
+  //To consider: optimize?
   for(var type in plot_data) {
     plot_data[type].sort(function(a, b) {
       return a[0] - b[0]
@@ -299,38 +244,76 @@ function drawPoints() {
   })
 }
 
+function getTimeRange() {
+  var date_boxes = $('#date_range').children('.date_box')
+  var inputs = date_boxes.children().filter('input')
+  //Check to see if the form is filled out.
+  //TODO: validation (remove negative values.)
+  var complete = true
+  inputs.each(function() {
+    if(this.value.length == 0) {
+      complete = false
+      //Should work like a break statement:
+      return false
+    }
+  })
+  if(complete) {
+    var start = new Date(
+      parseInt($('#year_start').val()), 
+      parseInt($('#month_start').val()),
+      parseInt($('#day_start').val())
+    )
+    var end = new Date(
+      parseInt($('#year_end').val()), 
+      parseInt($('#month_end').val()),
+      parseInt($('#day_end').val())
+    )
+    //If the day of the month is too high, Date will just advance
+    //to the next month. Make the boxes reflect that.
+    $('#year_start').val(start.getFullYear())
+    $('#month_start').val(start.getMonth())
+    $('#day_start').val(start.getDate())
+    $('#year_end').val(end.getFullYear())
+    $('#month_end').val(end.getMonth())
+    $('#day_end').val(end.getDate())
+
+    return {start: start, end: end};
+  } else {
+    return null;
+  }
+}
+
 //Called when the time range or filters have changed
 function onFilterChange(evt) {
-  //If this is being called as a DOM event handler, it should be
-  //from the filter form's onSubmit event. That event should
-  //be cancelled.
-  if(evt) {
+  if(evt.type == 'submit') {
     evt.preventDefault()
   }
   resetPoints()
+
+  var time_range = getTimeRange()
   //TODO: error messages?
-  if(!time_start || !time_end || time_start >= time_end) {
+  if(!time_range) {
     return
   }
 
-  var time_step = timeStep()
+  var time_step = timeStep(time_range)
   
   //Find the upper bound on the start_time of the first
   //batch of concurrent requests (handles the case when
   //the interval is too short to allow the full set of
   //requests to be submitted)
-  var time_max = new Date(time_start)
+  var time_max = new Date(time_range.start)
   time_max.setTime(time_max.getTime() + time_step * MAX_CONCURRENT_REQUESTS)
-  time_max = Math.min(time_end, time_max)
+  time_max = Math.min(time_range.end, time_max)
   
   //Start the first batch of requests.
   var requestParams = $('#filter_form').serialize()
-  var d = new Date(time_start)
+  var d = new Date(time_range.start)
   for(var i = 0; i < MAX_CONCURRENT_REQUESTS; ++i) {
     if(d >= time_max) {
       break
     }
-    getSummary(new Date(d), time_step, requestParams, i)
+    getSummary(time_range, new Date(d), time_step, requestParams, i)
   	d.setTime(d.getTime() + time_step)
   }
 }
@@ -340,10 +323,11 @@ $(document).ready(function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
       $.getScript('assets/flot/jquery.flot.resize.js', function() {
         initFilters()
-        $('#filter_form').submit(onFilterChange)
         initControls()
         resetPoints()
-        addGraph('Number of jobs')
+        for(var type in plot_data) {
+          addGraph(type)
+        }
       })
     })
   })
