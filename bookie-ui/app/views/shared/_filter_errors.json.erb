@@ -1,8 +1,4 @@
-<% if errors.length > 0 %>
-  filter_errors: [
-    <% errors.each do |error| %>
-      "<%= ActiveSupport::JSON::Encoding.escape(error) %>",
-    <% end %>
-  ],
-<% end %>
+"filter_errors": [
+  <% errors.map{ |e| "\"#{ActiveSupport::JSON::Encoding.escape(e)}\""}.join(",\n") %>
+]
 

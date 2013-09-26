@@ -8,17 +8,26 @@ function formatPercent(value) {
   return Math.floor(value * 100) + '%'
 }
 
-var PLOT_TYPES = {
+var plots = {
   num_jobs: {
-    series: {
-      total: 'Total jobs',
-      successful: 'Successful jobs',
-    },
+    series: [
+      {
+        json_field: 'total',
+        label: 'Total jobs',
+      },
+      {
+        json_field: 'successful',
+        label: 'Successful jobs',
+      },
+    ],
   },
   cpu_time_used: {
-    series: {
-      data: 'CPU time used',
-    },
+    series: [
+      {
+        json_field: 'data',
+        label: 'CPU time used',
+      },
+    ],
   },
 }
 
@@ -40,7 +49,8 @@ var TIME_STEP_BASES = [
 var NUM_GRAPH_POINTS = 20
 
 //To consider: find the optimal value for this?
-var MAX_CONCURRENT_REQUESTS = 5
+//TODO: restore.
+var MAX_CONCURRENT_REQUESTS = 1
 
 //Contains all pending AJAX requests
 var active_requests = []
@@ -50,15 +60,15 @@ function initControls() {
   
   //Set the boxes' initial values:
   var date = new Date(Date.now())
+  //Set the date to the beginning of the month.
   date.setDate(1)
-  
   date_boxes.children().filter('.day').val(1)
-  
   date_boxes.each(function() {
     var $this = $(this)
     var inputs = $this.children()
     inputs.filter('.month').val(date.getMonth())
     inputs.filter('.year').val(date.getFullYear())
+    //Move to the next month:
     date.setMonth(date.getMonth() + 1)
   })
   
@@ -68,23 +78,19 @@ function initControls() {
 }
 
 function addPlot(type) {
-  //Create the graph box:
-  var container = $('<div>')
-  container.addClass('plot_container')
-  
   var plot = $('<div/>')
   plot.addClass('plot')
-  container.append(plot)
+  plot.data('plot_type', type)
+  $('#content').append(plot)
   
-  plot.data('type', type)
-  //Put the graph container into the page:
-  $('#content').append(container)
-  
-  var type_info = PLOT_TYPES[type]
-  var series = type_info['series']
+  var type_info = plots[type]
+  var series = type_info.series
+  for(var i = 0; i < series.length; ++i) {
+    series[i].data = []
+  }
   
   plot.plot(
-    [],
+    type_info.series,
     {
       xaxis: {
         mode: "time",
@@ -94,12 +100,10 @@ function addPlot(type) {
       yaxis: {
         min: 0,
         tickDecimals: 2,
-        tickFormatter: type_info['formatter'],
+        tickFormatter: type_info.formatter,
       },
     }
   )
-  
-  drawPoints()
 }
 
 /*
@@ -137,7 +141,7 @@ function getSummary(time_range, point_time, interval, queryParams, request_index
   }
   paramsWithTime += 'time[]=' + start + '&time[]=' + end
   var request = $.getJSON('/jobs.json?' + paramsWithTime, function(data) {
-    addPoint(point_time, data)
+    addPoints(point_time, data)
     //Prepare to get the next data point.
     var next_start = new Date(point_time)
     next_start.setTime(next_start.getTime() + interval * MAX_CONCURRENT_REQUESTS)
@@ -155,10 +159,6 @@ function getSummary(time_range, point_time, interval, queryParams, request_index
   active_requests[request_index] = request
 }
 
-var plots = {}
-
-var plot_data = {}
-
 /*
  * Adds a point to the graph
  *
@@ -166,19 +166,17 @@ var plot_data = {}
  *
  * TODO: handle filter errors.
  */
-function addPoint(date, summary) {
+function addPoints(date, summary) {
   var time = date.getTime()
-  var count = summary['Count']
-  plot_data['Number of jobs'].push([time, count])
-  var successful
-  //The number of successful jobs is converted to a percentage.
-  if(count == 0) {
-    successful = 0
-  } else {
-    successful = summary['Successful'] / count
+  for(var plot_name in plots) {
+    var series = plots[plot_name].series
+    var points = summary[plot_name]
+    for(var i = 0; i < series.length; ++i) {
+      var series = series[i]
+      var point = points[series.json_field]
+      series.data.push([time, point])
+    }
   }
-  plot_data['% Successful'].push([time, successful])
-  plot_data['CPU time used'].push([time, summary['CPU time used']])
   drawPoints()
 }
 
@@ -199,8 +197,11 @@ function resetPoints() {
      active_requests[i] = null
   }
 
-  for(var type in PLOT_TYPES) {
-    plot_data[type] = []
+  for(var plot_name in plots) {
+    var series = plots[plot_name].series
+    for(var i = 0; i < series.length; ++i) {
+      series[i].data = []
+    }
   }
   
   drawPoints()
@@ -211,7 +212,7 @@ function timeStep(time_range) {
   var difference = time_range.end.getTime() - time_range.start.getTime()
   var time_step = difference / NUM_GRAPH_POINTS
 
-  //Fit the time interval to one of the base timesteps.
+  //Fit the time interval to one of the base timesteps if possible.
   for(var i = 0; i < TIME_STEP_BASES.length; ++i) {
     var base = TIME_STEP_BASES[i];
     var num_bases = Math.floor(difference / base)
@@ -230,23 +231,16 @@ function timeStep(time_range) {
 
 function drawPoints() {
   //To consider: optimize?
-  for(var type in plot_data) {
+  /*for(var type in plot_data) {
     plot_data[type].sort(function(a, b) {
       return a[0] - b[0]
     })
-  }
-  var graphs = $('.graph')
-  graphs.each(function() {
-    var graph = $(this)
-    var type = graph.data('type')
-    var type_data = PLOT_TYPES[type]
-    var plot = graph.data('plot')
-    plot.setData([
-      {
-        label: type,
-        data: plot_data[type],
-      }
-    ])
+  }*/
+  var plot_divs = $('.plot')
+  plot_divs.each(function() {
+    var plot_div = $(this)
+    var plot = plot_div.data('plot')
+    plot.setData(plots[plot_div.data('plot_type')].series)
     plot.setupGrid()
     plot.draw()
   })
@@ -333,7 +327,7 @@ $(document).ready(function() {
         initFilters()
         initControls()
         resetPoints()
-        for(var type in plot_data) {
+        for(var type in plots) {
           addPlot(type)
         }
       })

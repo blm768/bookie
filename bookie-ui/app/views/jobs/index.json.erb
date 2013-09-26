@@ -1,15 +1,18 @@
 {
-  <%= render :partial => 'shared/filter_errors', :locals => {
-    :errors => @filter_errors
-  } %>
-  <% if @filter_errors.length == 0 %>
-    num_jobs {
-      total: <%= @jobs_summary[:num_jobs] %>,
-      successful: <%= @jobs_summary[:successful] %>,
+  <% if @filter_errors.length > 0 %>
+    <%= render :partial => 'shared/filter_errors', :locals => {
+      :errors => @filter_errors
+    } %>
+  <% else %>
+    "num_jobs": {
+      "total": <%= @jobs_summary[:num_jobs] %>,
+      "successful": <%= @jobs_summary[:successful] %>
     },
-    cpu_time_used: {
-      data: <%= jobs_summary[:cpu_time] %>,
+    "cpu_time_used": {
+      "data": <%= @jobs_summary[:cpu_time] %>
     },
-    cpu_time_percentage: <%= @combined_summary[:cpu_time] %>,
+    "cpu_time_percentage": {
+      "data": <%= @combined_summary[:cpu_time] %>
+    }
   <% end %>
 }
