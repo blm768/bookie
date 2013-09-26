@@ -34,7 +34,6 @@ var plots = {
 var MSECS_PER_MINUTE = 60 * 1000
 var MSECS_PER_HOUR = 60 * MSECS_PER_MINUTE
 var MSECS_PER_DAY = MSECS_PER_HOUR * 24
-var MSECS_PER_WEEK = MSECS_PER_DAY * 7
 
 //Base time steps for resolution purposes
 //Must be sorted in descending order
@@ -48,12 +47,8 @@ var TIME_STEP_BASES = [
 //To consider: make configurable?
 var NUM_GRAPH_POINTS = 20
 
-//To consider: find the optimal value for this?
-//TODO: restore.
-var MAX_CONCURRENT_REQUESTS = 1
-
-//Contains all pending AJAX requests
-var active_requests = []
+//The current pending AJAX request
+var active_request
 
 function initControls() {
   var date_boxes = $('#date_range').children('.date_box')
@@ -110,21 +105,18 @@ function addPlot(type) {
  * Sends an AJAX request to get the summary data for a single graph point
  *
  * Once the request is received, its callback will automatically spawn a new
- * request to get one of the remaining data points. This new request will
- * replace the received request in the active_requests array.
+ * request to get the next data point.
  *
- * Unless otherwise noted, the objects passed as parameters must not be modified after this
- * function is called.
+ * Unless otherwise noted, the objects passed as parameters must not be
+ * modified after this function is called.
  *
  * Parameters:
  * time_range: the entire time range of points being graphed
  * point_time: the time value for this data point
  * interval: the amount of time that this point covers
  * queryParams: the query parameters for the JSON request (excluding time-related parameters)
- * request_index: identifies this request's position in the active_requests array.
- *  * It must be in the range [0, MAX_CONCURRENT_REQUESTS).
  */
-function getSummary(time_range, point_time, interval, queryParams, request_index) {
+function getSummary(time_range, point_time, interval, queryParams) {
   var start = point_time.toISOString()
   var end_time = new Date(point_time)
   end_time.setTime(end_time.getTime() + interval)
@@ -144,19 +136,17 @@ function getSummary(time_range, point_time, interval, queryParams, request_index
     addPoints(point_time, data)
     //Prepare to get the next data point.
     var next_start = new Date(point_time)
-    next_start.setTime(next_start.getTime() + interval * MAX_CONCURRENT_REQUESTS)
+    next_start.setTime(next_start.getTime() + interval)
     //Is there another data point?
     if(next_start < time_range.end) {
       //Get the data point.
-      getSummary(time_range, next_start, interval, queryParams, request_index)
+      getSummary(time_range, next_start, interval, queryParams)
     } else {
-      active_requests[request_index] = null
+      active_request = null
     }
   })
 
-  //Register this request in the active_requests array so it can be
-  //cancelled if needed.
-  active_requests[request_index] = request
+  active_request = request
 }
 
 /*
@@ -184,17 +174,14 @@ function addPoints(date, summary) {
  * Resets data points on all graphs
  */
 function resetPoints() {
-  //Cancel all active requests.
-  for(var i = 0; i < active_requests.length; ++i) {
-    var request = active_requests[i]
-    if(request) {
-      request.abort()
-      //Cut out the callback so it can't spawn the next request in line.
-      //(If the request has already come in, but its callback has not been called, I'm not sure if abort() will prevent the call.)
-      //To consider: verify and possibly remove
-      request.done(function() {})
-     }
-     active_requests[i] = null
+  //Cancel the active request.
+  if(active_request) {
+  active_request.abort()
+    //Cut out the callback so it can't spawn the next request in line.
+    //(If the request has already come in, but its callback has not been called, I'm not sure if abort() will prevent the call.)
+    //To consider: verify and possibly remove
+    active_request.done(function() {})
+    active_request = null
   }
 
   for(var plot_name in plots) {
@@ -230,12 +217,6 @@ function timeStep(time_range) {
 
 
 function drawPoints() {
-  //To consider: optimize?
-  /*for(var type in plot_data) {
-    plot_data[type].sort(function(a, b) {
-      return a[0] - b[0]
-    })
-  }*/
   var plot_divs = $('.plot')
   plot_divs.each(function() {
     var plot_div = $(this)
@@ -300,24 +281,9 @@ function onFilterChange(evt) {
 
   var time_step = timeStep(time_range)
   
-  //Find the upper bound on the start_time of the first
-  //batch of concurrent requests (handles the case when
-  //the interval is too short to allow the full set of
-  //requests to be submitted)
-  var time_max = new Date(time_range.start)
-  time_max.setTime(time_max.getTime() + time_step * MAX_CONCURRENT_REQUESTS)
-  time_max = Math.min(time_range.end, time_max)
-  
-  //Start the first batch of requests.
+  //Start the first request.
   var requestParams = $('#filter_form').serialize()
-  var d = new Date(time_range.start)
-  for(var i = 0; i < MAX_CONCURRENT_REQUESTS; ++i) {
-    if(d >= time_max) {
-      break
-    }
-    getSummary(time_range, new Date(d), time_step, requestParams, i)
-  	d.setTime(d.getTime() + time_step)
-  }
+  getSummary(time_range, new Date(time_range.start), time_step, requestParams)
 }
 
 $(document).ready(function() {
