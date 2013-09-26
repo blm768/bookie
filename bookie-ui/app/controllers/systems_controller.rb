@@ -38,11 +38,7 @@ class SystemsController < ApplicationController
     
     @systems_summary = systems.summary(summary_time_range)
     #TODO: pull systems from the summary's fields?
-    if summary_time_range
-      @systems = systems.by_time_range_inclusive(summary_time_range)
-    else
-      @systems = systems
-    end
+    @systems = @systems_summary[:systems]
   end
 
   def show
