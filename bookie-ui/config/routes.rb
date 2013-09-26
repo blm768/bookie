@@ -12,9 +12,7 @@ BookieUi::Application.routes.draw do
   resources :graphs
 
   resources :web_users
-  resources :password_resets do
-    get 'password_resets/edit', :to => 'password_resets#edit'
-  end
+  resources :password_resets
 
   get 'log_in' => 'sessions#new', :as => 'log_in'
   get 'log_out' => 'sessions#destroy', :as => 'log_out'

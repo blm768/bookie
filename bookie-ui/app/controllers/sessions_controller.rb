@@ -27,6 +27,6 @@ class SessionsController < ApplicationController
     else
       flash[:alert] = 'You are not logged in.'
     end
-    redirect_back_or_to_root
+    redirect_to new_session_path
   end
 end

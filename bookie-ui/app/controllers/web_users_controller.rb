@@ -9,11 +9,11 @@ class WebUsersController < ApplicationController
     user_params = params[:web_user].permit(:email)
     @web_user = WebUser.new(user_params)
     if @web_user.valid?
-      confirmation_message = WebUserMailer.confirmation(@web_user, @web_user.generate_reset_key)
+      key = @web_user.generate_reset_key
       @web_user.save!
-      confirmation_message.deliver
+      WebUserMailer.confirmation(@web_user, key).deliver
       flash[:notice] = 'User created.'
-      redirect_to root_path
+      redirect_to web_users_path
     else
       render :action => 'new'
     end

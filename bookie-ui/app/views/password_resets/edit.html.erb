@@ -1,12 +1,18 @@
-<% password_message = (@web_user.confirmed?) ? 'Reset password' : 'Set password' %>
-<%= content_for :heading, password_message %>
+<% action_name = "#{@action_name.capitalize} password" %>
+<% content_for :heading, action_name %>
 
-<%= form_for @web_user, :url => "/password_resets/#{@web_user.id}", :method => :put do |f| %>
-  <% #TODO: show error messages. %>
-  <%= f.label :password %><br/>
-  <%= f.password_field :password %><br/>
-  <%= f.label :password_confirmation %><br/> 
-  <%= f.password_field :password_confirmation %><br/>
-  <%= hidden_field_tag :key, :value => @reset_key %>
-  <%= f.submit password_message %>
+<%= form_tag password_reset_path(@web_user.id), :method => :put do %>
+  <%= form_errors @web_user.errors %>
+  <p>
+    <%= label_tag :password, 'New password' %><br/>
+    <%= password_field_tag :password %>
+  </p>
+  <p>
+    <%= label_tag :password_confirmation %><br/> 
+    <%= password_field_tag :password_confirmation %>
+  </p>
+  <%= hidden_field_tag :key, @reset_key %>
+  <p>
+    <%= submit_tag action_name %>
+  </p>
 <% end %>
