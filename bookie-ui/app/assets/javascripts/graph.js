@@ -157,14 +157,19 @@ function getSummary(time_range, point_time, interval, queryParams) {
  * TODO: handle filter errors.
  */
 function addPoints(date, summary) {
+  //Check for server-side errors.
+  if(summary.filter_errors) {
+
+  }
+
   var time = date.getTime()
   for(var plot_name in plots) {
     var series = plots[plot_name].series
     var points = summary[plot_name]
     for(var i = 0; i < series.length; ++i) {
-      var series = series[i]
-      var point = points[series.json_field]
-      series.data.push([time, point])
+      var s = series[i]
+      var point = points[s.json_field]
+      s.data.push([time, point])
     }
   }
   drawPoints()
