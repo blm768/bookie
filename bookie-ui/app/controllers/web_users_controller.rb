@@ -30,8 +30,13 @@ class WebUsersController < ApplicationController
       flash[:error] = 'Unable to find user.'
       return
     end
-    web_user.destroy
-    #TODO: don't delete the last confirmed user.
-    flash[:notice] = 'User deleted.'
+
+    confirmed_web_users = WebUser.where('web_users.password_hash IS NOT NULL')
+    if confirmed_web_users.count == 1 && web_user.confirmed?
+      flash[:error] = 'Unable to delete user: there must always be at least one confirmed user.'
+    else
+      flash[:notice] = 'User deleted.'
+      web_user.destroy
+    end
   end
 end

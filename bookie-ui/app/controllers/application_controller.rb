@@ -11,9 +11,10 @@ class ApplicationController < ActionController::Base
   end
 
   def current_web_user
-    #TODO: how to handle users deleted mid-session?
     user_id = session[:user_id]
-    @current_web_user ||= WebUser.find(user_id) if user_id
+    #To consider: if #current_web_user is called many times with an invalid
+    #user_id in the session, it may cause a lot of superfluous queries.
+    @current_web_user ||= WebUser.where(:id => user_id).first if user_id
   end
 
   helper_method :current_web_user
