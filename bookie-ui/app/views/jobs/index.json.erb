@@ -1,8 +1,15 @@
 {
-  <% #To consider: more error handling? %>
-  "Count" : <%= @jobs_summary[:num_jobs] %>,
-  "Successful" : <%= @jobs_summary[:successful] %>,
-  "Available CPU time": <%= @systems_summary[:avail_cpu_time] %>,
-  "CPU time used" : <%= @combined_summary[:cpu_time] %>,
-  "Available memory (average)" : <%= @systems_summary[:avail_memory_avg].to_i %>
+  <%= render :partial => 'shared/filter_errors', :locals => {
+    :errors => @filter_errors
+  } %>
+  <% if @filter_errors.length == 0 %>
+    num_jobs {
+      total: <%= @jobs_summary[:num_jobs] %>,
+      successful: <%= @jobs_summary[:successful] %>,
+    },
+    cpu_time_used: {
+      data: <%= jobs_summary[:cpu_time] %>,
+    },
+    cpu_time_percentage: <%= @combined_summary[:cpu_time] %>,
+  <% end %>
 }

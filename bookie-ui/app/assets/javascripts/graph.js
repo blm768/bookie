@@ -9,11 +9,17 @@ function formatPercent(value) {
 }
 
 var PLOT_TYPES = {
-  'Number of jobs': {},
-  '% Successful': {
-    formatter: formatPercent
+  num_jobs: {
+    series: {
+      total: 'Total jobs',
+      successful: 'Successful jobs',
+    },
   },
-  'CPU time used': {},
+  cpu_time_used: {
+    series: {
+      data: 'CPU time used',
+    },
+  },
 }
 
 var MSECS_PER_MINUTE = 60 * 1000
@@ -61,37 +67,37 @@ function initControls() {
   $('#filter_form').submit(onFilterChange)
 }
 
-function addGraph(type) {
+function addPlot(type) {
   //Create the graph box:
   var container = $('<div>')
-  container.addClass('graph_container')
+  container.addClass('plot_container')
   
-  var graph = $('<div/>')
-  graph.addClass('graph')
-  container.append(graph)
+  var plot = $('<div/>')
+  plot.addClass('plot')
+  container.append(plot)
   
-  graph.data('type', type)
+  plot.data('type', type)
   //Put the graph container into the page:
   $('#content').append(container)
   
   var type_info = PLOT_TYPES[type]
+  var series = type_info['series']
   
-  graph.data('plot', $.plot(
-    graph,
+  plot.plot(
     [],
     {
       xaxis: {
-      mode: "time",
-      timezone: "browser",
-      minTickSize: [1, "day"],
-    },
+        mode: "time",
+        timezone: "browser",
+        minTickSize: [1, "day"],
+      },
       yaxis: {
-      min: 0,
-      tickDecimals: 2,
-      tickFormatter: type_info.formatter,
+        min: 0,
+        tickDecimals: 2,
+        tickFormatter: type_info['formatter'],
       },
     }
-  ))
+  )
   
   drawPoints()
 }
@@ -157,6 +163,8 @@ var plot_data = {}
  * Adds a point to the graph
  *
  * Typically called from an AJAX callback
+ *
+ * TODO: handle filter errors.
  */
 function addPoint(date, summary) {
   var time = date.getTime()
@@ -326,7 +334,7 @@ $(document).ready(function() {
         initControls()
         resetPoints()
         for(var type in plot_data) {
-          addGraph(type)
+          addPlot(type)
         }
       })
     })

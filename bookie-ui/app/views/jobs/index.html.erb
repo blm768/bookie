@@ -12,7 +12,9 @@
 
 <% content_for :heading do %>Jobs<% end %>
 
-<%= render 'shared/filter_errors' %>
+<%= render :partial => 'shared/filter_errors', :locals => {
+  :errors => @filter_errors
+} %>
 
 <div id="main">
   <div id="content">

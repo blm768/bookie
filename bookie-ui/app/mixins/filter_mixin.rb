@@ -2,16 +2,15 @@ module FilterMixin
   #Yields type of filter, filter values, and whether the filter appears to be valid
   #
   #Returns an array containing any error messages
-  #This array should be stashed in the @filter_errors instance variable of the controller
-  #in order to make it available to the view.
   def each_filter(filter_types)
     errors = []
 
     filter_types.each do |name, filter_type|
       values = params[name]
       next unless values
-      values = [values] unless values.is_a?Array
-      #TODO: handle hash parameters?
+      values = [values] if values.is_a?String
+      #To consider: handle hash parameters?
+      #TODO: validate length of the values array?
 #      if values.length < num_values
 #        errors << error_field_blank(type)
 #        yield type, values, false
@@ -51,7 +50,7 @@ module FilterMixin
     end
     begin
       end_time = Time.parse(end_time_text)
-    rescue => e
+    rescue
       flash_msg_now :error, %{Invalid end time "#{end_time_text}"}
       return nil
     end
