@@ -17,7 +17,8 @@ class PasswordResetsController < ApplicationController
       web_user.save!
       WebUserMailer.send(message_type, web_user, key).deliver
     end
-    flash[:notice] = 'A password-reset message has been sent to your e-mail address.'
+    message_display_type = if web_user.confirmed? then 'password-reset' else 'confirmation' end
+    flash[:notice] = "A #{message_display_type} message has been sent to your e-mail address."
     redirect_to new_session_path
   end
 
@@ -30,11 +31,8 @@ class PasswordResetsController < ApplicationController
       return
     end
     @web_user = WebUser.where(:id => id).first
-    unless @web_user && @web_user.correct_reset_key?(@reset_key)
-      flash[:error] = 'Invalid user or reset key'
-      redirect_to root_path
-      return
-    end
+
+    return unless validate_reset_key(@web_user, @reset_key)
 
     @action_name = action_name_for(@web_user)
   end
@@ -46,11 +44,7 @@ class PasswordResetsController < ApplicationController
     @web_user = WebUser.where(:id => params[:id]).first
     @reset_key = params[:key]
 
-    unless @web_user && @web_user.correct_reset_key?(@reset_key)
-      flash[:error] = 'Invalid user or reset key.' + " #{@web_user.reset_key_hash}"
-      redirect_to root_path
-      return
-    end
+    return unless validate_reset_key(@web_user, @reset_key)
 
     @action_name = action_name_for(@web_user)
 
@@ -66,11 +60,29 @@ class PasswordResetsController < ApplicationController
     end
   end
 
+  private
+
   def action_name_for(web_user)
     if web_user.confirmed?
       'reset'
     else
       'set'
     end
+  end
+
+  def validate_reset_key(web_user, reset_key)
+    unless web_user && web_user.correct_reset_key?(reset_key)
+      flash[:error] = 'Invalid user or reset key.'
+      redirect_to root_path
+      return false
+    end
+
+    if web_user.reset_key_expired?
+      flash[:error] = 'This reset key has expired. Please request a new confirmation/reset key.'
+      redirect_to new_password_reset_path
+      return false
+    end
+
+    true
   end
 end
