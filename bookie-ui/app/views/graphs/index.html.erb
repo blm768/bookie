@@ -8,10 +8,11 @@
   <%= javascript_include_tag "graph" %>
 <% end %>
 
-<% content_for :heading do %>Graphs<% end %>
+<% content_for :heading do %>Systems<% end %>
 
 <div id="main">
   <div id="content">
+    <h2>Graphs</h2>
     <div id="date_range">
       <% ['start', 'end'].each do |bound| %>
         <input type="text" id="date_<%= bound %>"></input>

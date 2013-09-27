@@ -17,8 +17,5 @@ class GraphsController < ApplicationController
   include FilterMixin
 
   def index
-    respond_to do |format|
-      format.html
-    end
   end
 end

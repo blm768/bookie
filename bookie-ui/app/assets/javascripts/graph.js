@@ -267,6 +267,7 @@ function onFilterChange(evt) {
 }
 
 $(document).ready(function() {
+  //To consider: use JQuery Deferred objects instead of plain callbacks?
   $.getScript('assets/flot/jquery.flot.js', function() {
     $.getScript('assets/flot/jquery.flot.time.js', function() {
       $.getScript('assets/flot/jquery.flot.resize.js', function() {
