@@ -321,22 +321,6 @@ module Bookie
       end
       
       ##
-      #Attempts to find a JobSummary with the given date, user_id, system_id, and command_name
-      #
-      #If one does not exist, a new JobSummary will be instantiated (but not saved to the database).
-      def self.find_or_new(date, user_id, system_id, command_name)
-        str = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).to_sql
-        summary = by_date(date).where(:user_id => user_id, :system_id => system_id).by_command_name(command_name).first
-        summary ||= new(
-          :date => date,
-          :user_id => user_id,
-          :system_id => system_id,
-          :command_name => command_name
-        )
-        summary
-      end
-      
-      ##
       #Create cached summaries for the given date
       #
       #The date is interpreted as being in UTC.
@@ -360,7 +344,12 @@ module Bookie
           return unless user && system
           #Create a dummy summary so summary() doesn't keep trying to create one.
           Lock[:job_summaries].synchronize do
-            sum = unscoped.find_or_new(date, user.id, system.id, '')
+            sum = unscoped.find_or_initialize_by(
+              :date => date,
+              :user_id => user.id,
+              :system_id => system.id,
+              :command_name => ''
+            )
             sum.cpu_time = 0
             sum.memory_time = 0
             sum.save!
@@ -374,7 +363,12 @@ module Bookie
             )
             summary = summary_jobs.summary(time_range)
             Lock[:job_summaries].synchronize do
-              sum = unscoped.find_or_new(date, set.user_id, set.system_id, set.command_name)
+              sum = unscoped.find_or_initialize_by(
+                :date => date,
+                :user_id => set.user_id,
+                :system_id => set.system_id,
+                :command_name => set.command_name
+              )
               sum.cpu_time = summary[:cpu_time]
               sum.memory_time = summary[:memory_time]
               sum.save!

@@ -190,6 +190,8 @@ describe Bookie::Sender do
   end
   
   describe "#undo_send" do
+    it "chooses the correct systems"
+
     it "removes the correct entries" do
       @sender.send_data('snapshot/torque_large')
       @sender.send_data('snapshot/torque')
