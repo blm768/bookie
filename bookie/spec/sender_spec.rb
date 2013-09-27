@@ -1,5 +1,25 @@
 require 'spec_helper'
 
+module Helpers
+  #Used for the "chooses the correct systems" examples
+  def redefine_each_job(sender)
+    def sender.each_job(filename)
+      [0, 1001].each do |offset|
+        job = JobStub.new
+        job.user_name = 'blm'
+        job.group_name = 'blm'
+        job.command_name = 'vi'
+        job.start_time = Helpers::BASE_TIME + offset
+        job.wall_time = 1000
+        job.cpu_time = 2
+        job.memory = 300
+        job.exit_code = 0
+        yield job
+      end
+    end
+  end
+end
+
 class JobStub
   attr_accessor :user_name
   attr_accessor :group_name
@@ -98,21 +118,8 @@ describe Bookie::Sender do
   it "chooses the correct systems" do
     sender = Bookie::Sender.new(test_config)
 
-    def sender.each_job(filename)
-      [0, 1001].each do |offset|
-        job = JobStub.new
-        job.user_name = 'blm'
-        job.group_name = 'blm'
-        job.command_name = 'vi'
-        job.start_time = Helpers::BASE_TIME + offset
-        job.wall_time = 1000
-        job.cpu_time = 2
-        job.memory = 300
-        job.exit_code = 0
-        yield job
-      end
-    end
-    
+    redefine_each_job(sender)
+   
     #The filename is just a dummy argument.
     sender.send_data('snapshot/pacct')
     
@@ -179,6 +186,7 @@ describe Bookie::Sender do
       sums = Bookie::Database::JobSummary.all.to_a
       sums.length.should eql 9
       sums.each do |sum|
+        #Since there are no jobs for @sys_dummy, its summaries should be left intact.
         unless sum.system == @sys_dummy
           (date_start + 1 .. date_end - 1).cover?(sum.date).should eql false
         end
@@ -190,8 +198,6 @@ describe Bookie::Sender do
   end
   
   describe "#undo_send" do
-    it "chooses the correct systems"
-
     it "removes the correct entries" do
       @sender.send_data('snapshot/torque_large')
       @sender.send_data('snapshot/torque')
@@ -205,7 +211,26 @@ describe Bookie::Sender do
       job2.id = job.id
       job2.should eql job
     end
-    
+
+    it "switches systems if needed" do
+      sender = Bookie::Sender.new(test_config)
+
+      redefine_each_job(sender)
+     
+      #The filename is just a dummy argument.
+      sender.send_data('snapshot/pacct')
+
+      def sender.duplicate(job, system)
+        #The returned object needs a #delete method.
+        job.expects(:delete)
+        job
+      end
+
+      Bookie::Database::System.expects(:find_current).returns(Bookie::Database::System.first)
+
+      sender.undo_send('snapshot/pacct')
+    end
+
     it "deletes cached summaries in the affected range" do
       @sender.send_data('snapshot/torque_large')
       time_min = Bookie::Database::Job.order(:start_time).first.start_time

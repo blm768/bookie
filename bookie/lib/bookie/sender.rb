@@ -101,8 +101,8 @@ module Bookie
         #This assumes that the files all have jobs sorted by end time.
         model = duplicate(job, system)
         break unless model
-        time_min = (model.start_time < time_min) ? model.start_time : time_min
-        time_max = (model.end_time > time_max) ? model.end_time : time_max
+        time_min = [model.start_time, time_min].min
+        time_max = [model.end_time, time_max].max
         model.delete
       end
       
@@ -138,7 +138,7 @@ module Bookie
     #Used internally by #send_data and #undo_send
     def clear_summaries(date_min, date_max)      
       #Since joins don't mix with DELETE statements, we have to do this the hard way.
-      systems = Database::System.by_name(@config.hostname).to_a
+      systems = Database::System.by_name(@config.hostname).select(:id).to_a
       systems.map!{ |sys| sys.id }
       Database::JobSummary.where('job_summaries.system_id in (?)', systems).where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end

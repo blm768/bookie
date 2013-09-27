@@ -13,8 +13,8 @@ MIGRATION_CLASSES = [
 ]
   
 describe Bookie::Database::Migration do
-  #The other database-related tests implicitly test the "up" methods of the individual migrations.
-
+  #The other database-related tests implicitly test the "up" methods of the individual migrations,
+  #so we'll ignore them here.
  
   describe "#up" do
     it "brings up all migrations" do
