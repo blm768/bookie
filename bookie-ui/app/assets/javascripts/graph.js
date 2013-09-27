@@ -238,8 +238,6 @@ function drawPoints() {
 function getTimeRange() {
   var date_inputs = $('#date_range').children('input')
 
-  //Check to see if the form is filled out.
-  //TODO: validation (remove negative values.)
   var start = $("#date_start").datepicker("getDate")
   var end = $("#date_end").datepicker("getDate")
   if(start && end) {
@@ -257,7 +255,6 @@ function onFilterChange(evt) {
   resetPoints()
 
   var time_range = getTimeRange()
-  //TODO: error messages?
   if(!time_range) {
     return
   }

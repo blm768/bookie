@@ -2,7 +2,6 @@ Set time limits on confirmation, password reset, etc?
 Unit testing
 Change (and don't release!) the session secret key before deployment.
 Improve visuals of graphs
-Add placeholder text to filter fields?
 Mark blank/invalid fields with a special style?
 Add graphs for systems?
 
