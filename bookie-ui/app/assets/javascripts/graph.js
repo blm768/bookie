@@ -1,6 +1,6 @@
 // vim: ts=2:sw=2:et
 
-//TODO: figure out how time zones are working here.
+//TODO: try to align data points on UTC date boundaries to make the queries faster?
 
 "use strict";
 
@@ -20,14 +20,20 @@ var plots = {
         label: 'Successful jobs',
       },
     ],
+    tickDecimals: 0,
   },
-  cpu_time_used: {
+  percentages: {
     series: [
       {
-        json_field: 'data',
+        json_field: 'cpu_time',
         label: 'CPU time used',
       },
+      {
+        json_field: 'memory',
+        label: 'Memory used',
+      },
     ],
+    formatter: formatPercent,
   },
 }
 
@@ -92,7 +98,7 @@ function addPlot(type) {
       },
       yaxis: {
         min: 0,
-        tickDecimals: 2,
+        tickDecimals: type_info.tickDecimals || 2,
         tickFormatter: type_info.formatter,
       },
     }
@@ -118,7 +124,7 @@ function getSummary(time_range, point_time, interval, queryParams) {
   var start = point_time.toISOString()
   var end_time = new Date(point_time)
   end_time.setTime(end_time.getTime() + interval)
-  if(end_time < time_range.end) {
+  if(end_time > time_range.end) {
     end_time = time_range.end
   }
   var end = end_time.toISOString()

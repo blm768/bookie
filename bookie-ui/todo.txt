@@ -1,4 +1,4 @@
 Unit testing
 Change (and don't release!) the session secret key before deployment.
-Add graphs for systems?
+Fix issue: filters that exist at page load cannot be re-added.
 

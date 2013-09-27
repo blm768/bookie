@@ -8,11 +8,9 @@
       "total": <%= @jobs_summary[:num_jobs] %>,
       "successful": <%= @jobs_summary[:successful] %>
     },
-    "cpu_time_used": {
-      "data": <%= @jobs_summary[:cpu_time] %>
-    },
-    "cpu_time_percentage": {
-      "data": <%= @combined_summary[:cpu_time] %>
+    "percentages": {
+      "cpu_time": <%= @combined_summary[:cpu_time] %>,
+      "memory": <%= @combined_summary[:memory] %>
     }
   <% end %>
 }
