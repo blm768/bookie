@@ -95,7 +95,7 @@ module Bookie
         if system.end_time && job.end_time > system.end_time
           system = Database::System.find_current(self, job.end_time)
         end
-        #TODO: optimize this query?
+        #TODO: optimize this operation?
         #(It should be possible to delete all of the jobs with end times between those of the first and last jobs of the file (exclusive),
         #but jobs with end times matching those of the first/last jobs in the file might be from an earlier or later file, not this one.
         #This assumes that the files all have jobs sorted by end time.

@@ -33,6 +33,7 @@ var plots = {
         label: 'Memory used',
       },
     ],
+    tickDecimals: 2,
     formatter: formatPercent,
   },
 }
@@ -57,20 +58,43 @@ var NUM_GRAPH_POINTS = 20
 var active_request
 
 function initControls() {
-  var date_boxes = $('#date_range').children('input')
+  var date_inputs = $('#date_range').children('input')
   
   var date = new Date(Date.now())
   //Set the date to the beginning of the month.
   date.setDate(1)
-  date_boxes.each(function() {
+  date_inputs.each(function() {
     var $this = $(this)
-    $this.datepicker()
+    $this.datepicker({
+      changeMonth: true,
+      changeYear: true,
+    })
     $this.datepicker("setDate", date)
 
     //Move to the next month:
     date.setMonth(date.getMonth() + 1)
   })
-  
+
+  $('#date_start').change(function() {
+    var this_date = $(this).datepicker('getDate')
+    var other_input = $('#date_end')
+    if(other_input.datepicker('getDate') <= this_date) {
+      var new_date = new Date(this_date)
+      new_date.setDate(new_date.getDate() + 1)
+      other_input.datepicker('setDate', new_date)
+    }
+  })
+
+  $('#date_end').change(function() {
+    var this_date = $(this).datepicker('getDate')
+    var other_input = $('#date_start')
+    if(other_input.datepicker('getDate') >= this_date) {
+      var new_date = new Date(this_date)
+      new_date.setDate(new_date.getDate() - 1)
+      other_input.datepicker('setDate', new_date)
+    }
+  })
+
   //Prepare callbacks:
   $('#do_graph').click(onFilterChange)
   $('#filter_form').submit(onFilterChange)
@@ -92,15 +116,20 @@ function addPlot(type) {
     type_info.series,
     {
       xaxis: {
-        mode: "time",
-        timezone: "browser",
-        minTickSize: [1, "day"],
+        mode: 'time',
+        timezone: 'browser',
+        minTickSize: [1, 'day'],
       },
       yaxis: {
         min: 0,
-        tickDecimals: type_info.tickDecimals || 2,
+        tickDecimals: type_info.tickDecimals,
         tickFormatter: type_info.formatter,
+        position: 'right',
+        labelWidth: 80,
       },
+      legend: {
+        position: 'nw',
+      }
     }
   )
 }

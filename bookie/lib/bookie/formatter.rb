@@ -118,6 +118,7 @@ module Bookie
           job.user.name,
           job.user.group.name,
           job.system.name,
+          #TODO: remove this field?
           job.system.system_type.name,
           job.start_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
           job.end_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),

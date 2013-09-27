@@ -1,23 +1,5 @@
-#date_range {
-  margin-bottom: .5em;
-}
-
-.date_box {
-  display: inline;
-  margin-left: .5em;
-  margin-right: .5em;
-}
-
-input {
-  &.day {
-    width: 2em;
-  }
-  &.year {
-    width: 8em;
-  }
-}
-
 .plot {
   width: 100%;
   height: 200px;
+  margin-top: 10px;
 }
