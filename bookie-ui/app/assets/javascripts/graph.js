@@ -51,18 +51,16 @@ var NUM_GRAPH_POINTS = 20
 var active_request
 
 function initControls() {
-  var date_boxes = $('#date_range').children('.date_box')
+  var date_boxes = $('#date_range').children('input')
   
-  //Set the boxes' initial values:
   var date = new Date(Date.now())
   //Set the date to the beginning of the month.
   date.setDate(1)
-  date_boxes.children().filter('.day').val(1)
   date_boxes.each(function() {
     var $this = $(this)
-    var inputs = $this.children()
-    inputs.filter('.month').val(date.getMonth())
-    inputs.filter('.year').val(date.getFullYear())
+    $this.datepicker()
+    $this.datepicker("setDate", date)
+
     //Move to the next month:
     date.setMonth(date.getMonth() + 1)
   })
@@ -133,7 +131,9 @@ function getSummary(time_range, point_time, interval, queryParams) {
   }
   paramsWithTime += 'time[]=' + start + '&time[]=' + end
   var request = $.getJSON('/jobs.json?' + paramsWithTime, function(data) {
-    addPoints(point_time, data)
+    if(!addPoints(point_time, data)) {
+      return;
+    }
     //Prepare to get the next data point.
     var next_start = new Date(point_time)
     next_start.setTime(next_start.getTime() + interval)
@@ -154,12 +154,13 @@ function getSummary(time_range, point_time, interval, queryParams) {
  *
  * Typically called from an AJAX callback
  *
- * TODO: handle filter errors.
+ * Returns true on success, false on failure
  */
 function addPoints(date, summary) {
   //Check for server-side errors.
   if(summary.filter_errors) {
-
+    alert("Filter errors:\n" + summary.filter_errors.join("\n"))
+    return false;
   }
 
   var time = date.getTime()
@@ -172,7 +173,9 @@ function addPoints(date, summary) {
       s.data.push([time, point])
     }
   }
+
   drawPoints()
+  return true;
 }
 
 /*
@@ -233,38 +236,13 @@ function drawPoints() {
 }
 
 function getTimeRange() {
-  var date_boxes = $('#date_range').children('.date_box')
-  var inputs = date_boxes.children().filter('input')
+  var date_inputs = $('#date_range').children('input')
+
   //Check to see if the form is filled out.
   //TODO: validation (remove negative values.)
-  var complete = true
-  inputs.each(function() {
-    if(this.value.length == 0) {
-      complete = false
-      //Should work like a break statement:
-      return false
-    }
-  })
-  if(complete) {
-    var start = new Date(
-      parseInt($('#year_start').val()), 
-      parseInt($('#month_start').val()),
-      parseInt($('#day_start').val())
-    )
-    var end = new Date(
-      parseInt($('#year_end').val()), 
-      parseInt($('#month_end').val()),
-      parseInt($('#day_end').val())
-    )
-    //If the day of the month is too high, Date will just advance
-    //to the next month. Make the boxes reflect that.
-    $('#year_start').val(start.getFullYear())
-    $('#month_start').val(start.getMonth())
-    $('#day_start').val(start.getDate())
-    $('#year_end').val(end.getFullYear())
-    $('#month_end').val(end.getMonth())
-    $('#day_end').val(end.getDate())
-
+  var start = $("#date_start").datepicker("getDate")
+  var end = $("#date_end").datepicker("getDate")
+  if(start && end) {
     return {start: start, end: end};
   } else {
     return null;

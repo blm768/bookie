@@ -1,4 +1,4 @@
 "filter_errors": [
-  <% errors.map{ |e| "\"#{ActiveSupport::JSON::Encoding.escape(e)}\""}.join(",\n") %>
+  <%= raw(errors.map{ |e| ActiveSupport::JSON::Encoding.escape(e) }.join(",\n")) %>
 ]
 

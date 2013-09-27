@@ -14,15 +14,7 @@
   <div id="content">
     <div id="date_range">
       <% ['start', 'end'].each do |bound| %>
-        <div class="date_box">
-          <input type="text" class="day" id="day_<%= bound %>"></input>
-          <select class="month" id = "month_<%= bound %>">
-            <% (0 .. 11).each do |i| %>
-             <option value="<%= i %>"><%= Date::ABBR_MONTHNAMES[i + 1] %></option>
-            <% end %>
-          </select>
-          <input type="text" class="year" id="year_<%= bound %>"></input>
-        </div>
+        <input type="text" id="date_<%= bound %>"></input>
         <%= "to" if bound == 'start' %>
       <% end %>
       <button id="do_graph" type="button">Graph</button>
