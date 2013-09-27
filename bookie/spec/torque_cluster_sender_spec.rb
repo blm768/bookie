@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 #Stubbed out for now so the 'describe' line works
+#TODO: figure out why this seems to occasionally cause unit test failures.
 module Bookie
   module Senders
     module TorqueCluster

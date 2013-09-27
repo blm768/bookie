@@ -226,7 +226,7 @@ describe Bookie::Sender do
         job
       end
 
-      Bookie::Database::System.expects(:find_current).returns(Bookie::Database::System.first)
+      Bookie::Database::System.expects(:find_current).returns(@sys_1).twice
 
       sender.undo_send('snapshot/pacct')
     end

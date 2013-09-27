@@ -2,5 +2,5 @@ Replace deprecated find_by_* methods with find_by!(:attribute => value).
 Find the cause of order-dependent unit-test failures.
 Verify unit tests for missing coverage lines
 Unit test bringing migrations down
-Replace #find_or_new with find_or_initialize_by?
+Rename #to_model to #to_record?
 
