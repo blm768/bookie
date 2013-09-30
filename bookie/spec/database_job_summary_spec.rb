@@ -165,6 +165,8 @@ describe Bookie::Database::JobSummary do
 
   describe "#summary" do
     before(:each) do
+      #TODO: why is this needed?
+      JobSummary.delete_all
       t = base_time + 2.days
       Time.expects(:now).at_least(0).returns(t)
     end
@@ -174,9 +176,9 @@ describe Bookie::Database::JobSummary do
         [0, -7200, 7200].each do |offset_begin|
           [0, -7200, 7200].each do |offset_end|
             [true, false].each do |exclude_end|
-              range_offset = Range.new(base_time + offset_begin, base_time + num_days.days + offset_end, exclude_end)
-              sum1 = JobSummary.summary(:range => range_offset)
-              sum2 = Job.summary(range_offset)
+              time_range = Range.new(base_time + offset_begin, base_time + num_days.days + offset_end, exclude_end)
+              sum1 = JobSummary.summary(:range => time_range)
+              sum2 = Job.summary(time_range)
               expect(sum1).to eql(sum2)
             end
           end

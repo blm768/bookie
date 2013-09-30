@@ -136,7 +136,8 @@ module Bookie
     end
     
     #Used internally by #send_data and #undo_send
-    def clear_summaries(date_min, date_max)      
+    #TODO: lock the job_summaries table?
+    def clear_summaries(date_min, date_max)
       #Since joins don't mix with DELETE statements, we have to do this the hard way.
       systems = Database::System.by_name(@config.hostname).select(:id).to_a
       systems.map!{ |sys| sys.id }

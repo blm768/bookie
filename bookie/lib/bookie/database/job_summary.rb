@@ -97,6 +97,8 @@ module Bookie
       #If there is nothing to summarize, a dummy summary will be created.
       #
       #Uses Lock::synchronize internally; should not be used in transaction blocks
+      #
+      #TODO: what if this is called while jobs are being sent?
       def self.summarize(date)
         jobs = Job
         unscoped = self.unscoped
@@ -165,17 +167,10 @@ module Bookie
 
         unless time_range
           #TODO: put this in its own method.
-          #TODO: replace with a check against jobs rather than systems?
-          end_time = nil
-          if System.active_systems.any?
-            end_time = Time.now
-          else
-            last_ended_system = System.order('end_time DESC').first
-            end_time = last_ended_system.end_time if last_ended_system
-          end
-          if end_time
-            first_started_system = System.order(:start_time).first
-            time_range = first_started_system.start_time ... end_time
+          start_time = jobs.minimum(:start_time)
+          end_time = jobs.maximum(:end_time)
+          if start_time && end_time
+            time_range = start_time .. end_time
           else
             time_range = Time.new ... Time.new
           end
@@ -184,9 +179,12 @@ module Bookie
         time_range = time_range.normalized
         
         date_begin = time_range.begin.utc.to_date
-        date_begin_time = date_begin.to_utc_time
+        rounded_date_begin = false
         #Round date_begin up.
-        date_begin += 1 if date_begin_time < time_range.begin
+        if date_begin.to_utc_time < time_range.begin
+          date_begin += 1
+          rounded_date_begin = true
+        end
         date_end = time_range.end.utc.to_date
 
         #Is the interval large enough to cover any cached summaries?
@@ -202,9 +200,9 @@ module Bookie
         memory_time = 0
         
         #TODO: check if num_jobs is zero so we can skip all this?
-        if date_begin_time < time_range.begin
+        if rounded_date_begin
           #We need to get a summary for the chunk up to the first whole day.
-          summary = jobs.summary(time_range.begin ... date_begin_time)
+          summary = jobs.summary(time_range.begin ... date_begin.to_utc_time)
           cpu_time += summary[:cpu_time]
           memory_time += summary[:memory_time]
         end
