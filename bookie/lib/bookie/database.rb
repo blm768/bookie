@@ -2,7 +2,7 @@ require 'bookie/config'
 require 'bookie/extensions'
 
 require 'active_record'
-#To do: remove when code is updated.
+#TODO: remove when code is updated.
 require 'protected_attributes'
 
 require 'bookie/database/job'
@@ -108,7 +108,7 @@ module Bookie
             t.integer :memory, :null => false
             t.integer :exit_code, :null => false
           end
-          #To do: more indices?
+          #TODO: more indices?
           change_table :jobs do |t|
             t.index :user_id
             t.index :system_id

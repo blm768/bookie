@@ -165,7 +165,7 @@ module Bookie
       #
       #Relations are not cached between calls.
       #
-      #To do: use ActiveRecord's #includes instead of this scheme?
+      #TODO: use ActiveRecord's #includes instead of this scheme?
       def self.all_with_relations
         jobs = self.where(nil).to_a
         users = {}

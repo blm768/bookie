@@ -36,7 +36,7 @@ module Bookie
       ##
       #Finds all systems whose running intervals overlap the given time range
       #
-      #To do: unit test.
+      #TODO: unit test.
       def self.by_time_range_inclusive(time_range)
         if time_range.empty?
           self.none
@@ -118,7 +118,7 @@ Please make sure that all previous systems with this hostname have been marked a
         systems = System
         if time_range
           time_range = time_range.normalized
-          #To do: unit test.
+          #TODO: unit test.
           systems = systems.by_time_range_inclusive(time_range)
         end
 

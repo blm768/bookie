@@ -1,4 +1,9 @@
 require 'active_record'
+require 'protected_attributes'
+
+require 'bookie/database/job'
+require 'bookie/database/system'
+require 'bookie/database/user'
 
 module Bookie
   module Database
