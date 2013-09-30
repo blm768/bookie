@@ -282,6 +282,10 @@ function getTimeRange() {
   }
 }
 
+function getTimeZone() {
+
+}
+
 //Called when the time range or filters have changed
 function onFilterChange(evt) {
   if(evt.type == 'submit') {

@@ -18,6 +18,10 @@
         <input type="text" id="date_<%= bound %>"></input>
         <%= "to" if bound == 'start' %>
       <% end %>
+      <select id="graph_time_zone">
+        <option value="utc">UTC</option>
+        <option value="local">Local</option>
+      </select>
       <button id="do_graph" type="button">Graph</button>
     </div>
   </div>
