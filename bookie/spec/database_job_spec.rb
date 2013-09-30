@@ -107,36 +107,32 @@ describe Bookie::Database::Job do
     jobs.length.should eql 0
   end
   
-  describe "#by_time_range_inclusive" do
-    it "correctly filters by inclusive time range" do
-      jobs = @jobs.by_time_range_inclusive(base_time ... base_time + 3600 * 2 + 1)
+  describe "#by_time_range" do
+    it "correctly filters by time range" do
+      jobs = @jobs.by_time_range(base_time ... base_time + 3600 * 2 + 1)
       jobs.count.should eql 3
-      jobs = @jobs.by_time_range_inclusive(base_time + 1 ... base_time + 3600 * 2)
+      jobs = @jobs.by_time_range(base_time + 1 ... base_time + 3600 * 2)
       jobs.count.should eql 2
-      jobs = @jobs.by_time_range_inclusive(base_time ... base_time)
+      jobs = @jobs.by_time_range(base_time ... base_time)
       jobs.length.should eql 0
-      jobs = @jobs.by_time_range_inclusive(base_time .. base_time + 3600 * 2)
+      jobs = @jobs.by_time_range(base_time .. base_time + 3600 * 2)
       jobs.count.should eql 3
-      jobs = @jobs.by_time_range_inclusive(base_time .. base_time)
+      jobs = @jobs.by_time_range(base_time .. base_time)
       jobs.count.should eql 1
     end
     
     it "correctly handles empty/inverted ranges" do
       t = base_time
       (-1 .. 0).each do |offset|
-        jobs = @jobs.by_time_range_inclusive(t ... t + offset)
+        jobs = @jobs.by_time_range(t ... t + offset)
         jobs.count.should eql 0
       end
     end
   end
-  
-  it "correctly chains filters" do
-    jobs = @jobs.by_user_name("test")
-    jobs = jobs.by_start_time_range(base_time + 3600 ... base_time + 3601)
-    jobs.length.should eql 1
-    jobs[0].user.group.name.should eql "default"
-  end
-  
+
+  #TODO: implement.
+  describe "#within_time_range"
+   
   describe "#all_with_relations" do
     it "loads all relations" do
       jobs = Bookie::Database::Job.limit(5).all_with_relations
@@ -160,15 +156,14 @@ describe Bookie::Database::Job do
     
     it "produces correct summary totals" do
       @summary[:all][:num_jobs].should eql @length
+      @summary[:all][:successful].should eql 20
       @summary[:all][:cpu_time].should eql @length * 100
       @summary[:all][:memory_time].should eql @length * 200 * 3600
-      @summary[:all][:successful].should eql 20
-      @summary[:all_constrained][:num_jobs].should eql @length
-      @summary[:all_constrained][:cpu_time].should eql @length * 100
-      @summary[:all_constrained][:successful].should eql 20
+      expect(@summary[:all_constrained]).to eql(@summary[:all])
       @summary[:all_filtered][:num_jobs].should eql @length / 2
       @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
       @summary[:all_filtered][:successful].should eql 20
+      @summary[:all_filtered]
       clipped_jobs = @summary[:clipped][:num_jobs]
       clipped_jobs.should eql 25
       @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50

@@ -109,10 +109,10 @@ module Bookie
       #Produces a summary of the jobs in the given time interval
       #
       #Returns a hash with the following fields:
-      #- <tt>:jobs</tt>: an array of all jobs in the interval
+      #- <tt>:num_jobs</tt>: the number of jobs in the interval
+      #- <tt>:successful</tt>: the number of jobs that have completed successfully
       #- <tt>:cpu_time</tt>: the total CPU time used
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
-      #- <tt>:successful</tt>: the number of jobs that have completed successfully
       #
       #This method should probably not be chained with other queries that filter by start/end time.
       #
@@ -121,6 +121,7 @@ module Bookie
         time_range = time_range.normalized if time_range
         jobs = self
         jobs = jobs.by_time_range(time_range) if time_range
+        #TODO: optimize?
         jobs = jobs.where(nil).to_a
         cpu_time = 0
         successful_jobs = 0
@@ -147,9 +148,9 @@ module Bookie
       
         return {
           :num_jobs => jobs.length,
+          :successful => successful_jobs,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful => successful_jobs,
         }
       end
       
