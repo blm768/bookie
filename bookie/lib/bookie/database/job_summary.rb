@@ -52,9 +52,12 @@ module Bookie
       ##
       #Filters by group name
       def self.by_group_name(name)
-        group = Group.find_by_name(name)
-        return by_group(group) if group
-        self.none
+        group = Group.where(:name => name).first
+        if group
+          by_group(group)
+        else
+          self.none
+        end
       end
       
       ##
@@ -94,7 +97,7 @@ module Bookie
         unscoped = self.unscoped
         time_min = date.to_utc_time 
         time_range = time_min ... time_min + 1.days
-        day_jobs = jobs.by_time_range_inclusive(time_range)
+        day_jobs = jobs.by_time_range(time_range)
 
         #Find the unique combinations of values for some of the jobs' attributes.
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
@@ -153,9 +156,11 @@ module Bookie
       # puts summaries.summary(:jobs => jobs)
       def self.summary(opts = {})
         jobs = opts[:jobs] || Job
-        range = opts[:range]
-        unless range
+        time_range = opts[:range]
+
+        unless time_range
           #TODO: put this in its own method.
+          #TODO: replace with a check against jobs rather than systems?
           end_time = nil
           if System.active_systems.any?
             end_time = Time.now
@@ -165,87 +170,83 @@ module Bookie
           end
           if end_time
             first_started_system = System.order(:start_time).first
-            range = first_started_system.start_time ... end_time
+            time_range = first_started_system.start_time ... end_time
           else
-            range = Time.new ... Time.new
+            time_range = Time.new ... Time.new
           end
         end
-        range = range.normalized
+
+        time_range = time_range.normalized
         
-        num_jobs = 0
+        date_begin = time_range.begin.utc.to_date
+        date_begin_time = date_begin.to_utc_time
+        #Round date_begin up.
+        date_begin += 1 if time_range.begin < date_begin_time
+        date_end = time_range.end.utc.to_date
+
+        #Is the interval large enough to cover any cached summaries?
+        if date_begin >= date_end
+          #Nope; just return a regular summary.
+          return jobs.summary(time_range)
+        end
+
+        jobs_in_range = jobs.by_time_range(time_range)
+        num_jobs = jobs_in_range.count
+        successful = jobs_in_range.where('jobs.exit_code = 0').count
         cpu_time = 0
         memory_time = 0
-        successful = 0
         
-        if range && range.empty?
-          num_jobs = 0
-          successful = 0
-        else
-          jobs_in_range = jobs.by_time_range_inclusive(range)
-          num_jobs = jobs_in_range.count
-          successful = jobs_in_range.where('jobs.exit_code = 0').count
+        #TODO: check if num_jobs is zero so we can skip all this?
+        if time_range.begin < date_begin_time
+          #We need to get a summary for the chunk up to the first whole day.
+          summary = jobs.summary(range.begin ... date_begin_time)
+          cpu_time += summary[:cpu_time]
+          memory_time += summary[:memory_time]
         end
 
-        unless num_jobs == 0
-          #Is the beginning somewhere between days?
-          date_begin = range.begin.utc.to_date
-          unless date_begin.to_utc_time == range.begin
-            date_begin += 1
-            time_before_max = [date_begin.to_utc_time, range.end].min
-            time_before_min = range.begin
-            summary = jobs.summary(time_before_min ... time_before_max)
-            cpu_time += summary[:cpu_time]
-            memory_time += summary[:memory_time]
-          end
+        date_end_time = date_end.to_utc_time
+        if date_end_time < time_range.end
+          #We need to get a summary for the chunk after the last whole day.
+          range = Range.new(date_end_time, time_range.end, time_range.exclude_end?)
+          summary = jobs.summary(range)
+          cpu_time += summary[:cpu_time]
+          memory_time += summary[:memory_time]
+        end
 
-          #Is the end somewhere between days?
-          date_end = range.end.utc.to_date
-          time_after_min = date_end.to_utc_time
-          unless time_after_min <= range.begin
-            time_after_max = range.end
-            time_after_range = Range.new(time_after_min, time_after_max, range.exclude_end?)
-            unless time_after_range.empty?
-              summary = jobs.summary(time_after_range)
-              cpu_time += summary[:cpu_time]
-              memory_time += summary[:memory_time]
-            end
-          end
-          
-          date_range = date_begin ... date_end
-          
-          unscoped = self.unscoped
-          summaries = by_date_range(date_range).order(:date).to_a
-          index = 0
-          date_range.each do |date|
-            new_index = index
+        date_range = date_begin ... date_end
+        
+        #Now we can process the cached summaries.
+        unscoped = self.unscoped
+        summaries = by_date_range(date_range).order(:date).to_a
+        index = 0
+        date_range.each do |date|
+          new_index = index
+          summary = summaries[new_index]
+          while summary && summary.date == date do
+            cpu_time += summary.cpu_time
+            memory_time += summary.memory_time
+            new_index += 1
             summary = summaries[new_index]
-            while summary && summary.date == date do
-              cpu_time += summary.cpu_time
-              memory_time += summary.memory_time
-              new_index += 1
-              summary = summaries[new_index]
-            end
-            #Did we actually process any summaries?
-            #If not, have _any_ summaries been created for this day?
-            if new_index == index && !(unscoped.by_date(date).any?)
-              #Nope. Create the summaries.
-              unscoped.summarize(date)
-              #To consider: optimize out the query?
-              by_date(date).each do |sum|
-                cpu_time += sum.cpu_time
-                memory_time += sum.memory_time
-              end
-            end
-            index = new_index
           end
+          #Did we actually process any summaries?
+          #If not, have _any_ summaries been created for this day?
+          if new_index == index && !(unscoped.by_date(date).any?)
+            #Nope. Create the summaries.
+            unscoped.summarize(date)
+            #To consider: optimize out the query?
+            by_date(date).each do |sum|
+              cpu_time += sum.cpu_time
+              memory_time += sum.memory_time
+            end
+          end
+          index = new_index
         end
-        
         
         {
           :num_jobs => num_jobs,
+          :successful => successful,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
-          :successful => successful,
         }
       end
       

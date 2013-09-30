@@ -3,9 +3,9 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'bundler', :group => :development
+gem 'byebug', :group => :test
 gem 'mocha', :group => :development
 gem 'rspec', :group => :development
-gem 'database_cleaner', :group => :development
 gem 'simplecov', :group => :development
 gem 'sqlite3', :group => :development
 

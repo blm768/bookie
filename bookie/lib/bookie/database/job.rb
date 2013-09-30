@@ -81,14 +81,27 @@ module Bookie
       end
       
       ##
-      #Finds all jobs whose running intervals overlap the given time range
-      def self.by_time_range_inclusive(time_range)
+      #Finds all jobs that were running at some point in a given time range
+      def self.by_time_range(time_range)
         if time_range.empty?
           self.none
         elsif time_range.exclude_end?
           where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
         else
           where('? <= jobs.end_time AND jobs.start_time <= ?', time_range.first, time_range.last)
+        end
+      end
+
+      ##
+      #Similar to #by_time_range, but only includes jobs that are completely contained within the
+      #time range
+      def self.within_time_range(time_range)
+        if time_range.empty?
+          self.none
+        elsif time_range.exclude_end?
+          where('? <= jobs.start_time AND jobs.end_time < ?', time_range.first, time_range.last)
+        else
+          where('? <= jobs.start_time AND jobs.end_time <= ?', time_range.first, time_range.last)
         end
       end
       
@@ -103,11 +116,11 @@ module Bookie
       #
       #This method should probably not be chained with other queries that filter by start/end time.
       #
-      #To consider: filter out jobs with 0 CPU time?
+      #TODO: filter out jobs with 0 CPU time?
       def self.summary(time_range = nil)
         time_range = time_range.normalized if time_range
         jobs = self
-        jobs = jobs.by_time_range_inclusive(time_range) if time_range
+        jobs = jobs.by_time_range(time_range) if time_range
         jobs = jobs.where(nil).to_a
         cpu_time = 0
         successful_jobs = 0

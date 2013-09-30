@@ -88,14 +88,6 @@ module Helpers
     end
   end
 
-  
-  def check_job_sums(js_sum, j_sum)
-    [:cpu_time, :memory_time].each do |field|
-      js_sum[field].should eql j_sum[field]
-    end
-    true
-  end
-
   BASE_TIME = Time.utc(2012)
   #To get around the "formal argument cannot be a constant" error
   def base_time

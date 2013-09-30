@@ -125,11 +125,13 @@ describe Bookie::Database::JobSummary do
         sum.date.should eql Date.new(2012)
         jobs = Bookie::Database::Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
         sum_2 = jobs.summary(range)
-        check_job_sums(sum, sum_2)
+        [:cpu_time, :memory_time].each do |field|
+          expect(sum.send(field)).to eql(sum_2[field])
+        end
         found_sums.add([sum.user.id, sum.system.id, sum.command_name])
       end
       #Is it catching all of the combinations of categories?
-      Bookie::Database::Job.by_time_range_inclusive(range).select('user_id, system_id, command_name').uniq.find_each do |values|
+      Bookie::Database::Job.by_time_range(range).select('user_id, system_id, command_name').uniq.find_each do |values|
         values = [values.user_id, values.system_id, values.command_name]
         found_sums.include?(values).should eql true
       end
@@ -175,7 +177,7 @@ describe Bookie::Database::JobSummary do
             time_range = Range.new(time_start, time_end, exclude_end)
             sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
             sum2 = Bookie::Database::Job.summary(time_range)
-            check_job_sums(sum1, sum2)
+            expect(sum1).to eql(sum2)
           end
           time_end += 1.days
         end
@@ -189,7 +191,10 @@ describe Bookie::Database::JobSummary do
             range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
             sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
             sum2 = Bookie::Database::Job.summary(range_offset)
-            check_job_sums(sum1, sum2)
+            if sum1 != sum2
+              puts "#{time_start} #{time_end} #{exclude_end}"
+            end
+            expect(sum1).to eql(sum2)
           end
         end
       end
@@ -205,7 +210,7 @@ describe Bookie::Database::JobSummary do
 
     def check_time_bounds(time_max = base_time + 1.days)
       time_min = base_time
-      check_job_sums(Bookie::Database::JobSummary.summary, Bookie::Database::Job.summary)
+      expect(Bookie::Database::JobSummary.summary).to eql(Bookie::Database::Job.summary)
       Bookie::Database::JobSummary.order(:date).first.date.should eql time_min.to_date
       Bookie::Database::JobSummary.order('date DESC').first.date.should eql time_max.utc.to_date
     end
@@ -256,7 +261,7 @@ describe Bookie::Database::JobSummary do
         jobs = Bookie::Database::Job.send(filter_sym, value)
         sum1 = Bookie::Database::JobSummary.send(filter_sym, value).summary(:jobs => jobs)
         sum2 = jobs.summary
-        check_job_sums(sum1, sum2)
+        expect(sum1).to eql(sum2)
       end
     end
     
