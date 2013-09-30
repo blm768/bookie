@@ -26,6 +26,11 @@ module Bookie
         return start_time + wall_time
       end
 
+      #TODO: unit test.
+      def end_time=(time)
+        self.wall_time = (time - start_time)
+      end
+
       #To consider: disable #end_time= ?
       
       def self.by_user(user)

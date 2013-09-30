@@ -109,9 +109,11 @@ module Bookie
         #Find the unique combinations of values for some of the jobs' attributes.
         value_sets = day_jobs.select('user_id, system_id, command_name').uniq
         if value_sets.empty?
+          #There are no jobs, so create a dummy summary.
           user = User.select(:id).first
           system = System.select(:id).first
           #If there are no users or no systems, we can't create the dummy summary, so just return.
+          #To consider: figure out how to create the dummy summary anyway?
           return unless user && system
           #Create a dummy summary so summary() doesn't keep trying to create one.
           Lock[:job_summaries].synchronize do

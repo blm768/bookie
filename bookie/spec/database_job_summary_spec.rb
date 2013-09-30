@@ -5,6 +5,7 @@ require 'bookie/database/job_summary'
 include Bookie::Database
 
 describe Bookie::Database::JobSummary do
+  #TODO: only do this for the finder methods.
   before(:all) do
     d = Date.new(2012)
     User.find_each do |user|
@@ -167,8 +168,13 @@ describe Bookie::Database::JobSummary do
     before(:each) do
       #TODO: why is this needed?
       JobSummary.delete_all
-      t = base_time + 2.days
-      Time.expects(:now).at_least(0).returns(t)
+
+      @empty_summary = {
+        :num_jobs => 0,
+        :successful => 0,
+        :cpu_time => 0,
+        :memory_time => 0,
+      }
     end
     
     it "produces correct summaries" do
@@ -184,26 +190,32 @@ describe Bookie::Database::JobSummary do
           end
         end
       end
+      expect(JobSummary.summary(:range => Time.new ... Time.new)).to eql(@empty_summary)
     end
 
     it "distinguishes between inclusive and exclusive ranges" do
       Summary = JobSummary
-      sum = Summary.summary(:range => (base_time ... base_time + 3600 * 2))
-      sum[:num_jobs].should eql 2
-      sum = Summary.summary(:range => (base_time .. base_time + 3600 * 2))
-      sum[:num_jobs].should eql 3
+      sum = Summary.summary(:range => (base_time ... base_time + 1.days + 3600 * 2))
+      sum[:num_jobs].should eql 26
+      sum[:successful].should eql 13
+      sum = Summary.summary(:range => (base_time .. base_time + 1.days + 3600 * 2))
+      sum[:num_jobs].should eql 27
+      sum[:successful].should eql 14
     end
 
     def check_time_bounds
       expect(JobSummary.summary).to eql(Job.summary)
-      JobSummary.order(:date).first.date.should eql base_time.to_date
-      JobSummary.order('date DESC').first.date.should eql Time.now.utc.to_date
-      JobSummary.delete_all
+      expect(JobSummary.minimum(:date)).to eql(base_time.to_date)
+      expect(JobSummary.maximum(:date)).to eql(Time.now.utc.to_date - 1)
     end
     
     it "correctly finds the default time bounds" do
-      #The last daily summary in this range isn't cached because Time.now could be partway through a day.
+      Time.expects(:now).at_least(0).returns(base_time + 2.days)
+      job = Job.order('end_time DESC').first
+      job.end_time = Time.now
+      job.save!
       check_time_bounds
+      JobSummary.delete_all
       #Check the case where all systems are decommissioned.
       JobSummary.transaction(:requires_new => true) do
         System.active_systems.each do |sys|
@@ -213,18 +225,10 @@ describe Bookie::Database::JobSummary do
         check_time_bounds
         raise ActiveRecord::Rollback
       end
-      #Check the case where there are no systems.
-      #Stub out methods of System's "Relation" class:
-      System.where('1=1').class.any_instance.expects(:'any?').at_least_once.returns(false)
-      System.where('1=1').class.any_instance.expects(:first).at_least_once.returns(nil)
+      #Check the case where there are no jobs.
+      Job.delete_all
       sum = JobSummary.summary
-      #TODO: move/add to another example?
-      sum.should eql({
-        :num_jobs => 0,
-        :cpu_time => 0,
-        :memory_time => 0,
-        :successful => 0,
-      })
+      sum.should eql(@empty_summary)
       JobSummary.any?.should eql false
     end
     
@@ -245,12 +249,7 @@ describe Bookie::Database::JobSummary do
     
     it "correctly handles inverted ranges" do
       t = base_time
-      JobSummary.summary(:range => t .. t - 1).should eql({
-        :num_jobs => 0,
-        :cpu_time => 0,
-        :memory_time => 0,
-        :successful => 0,
-      })
+      JobSummary.summary(:range => t .. t - 1).should eql(@empty_summary)
     end
     
     it "caches summaries" do
