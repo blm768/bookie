@@ -161,14 +161,14 @@ describe Bookie::Database::Job do
       @summary[:all][:memory_time].should eql @length * 200 * 3600
       expect(@summary[:all_constrained]).to eql(@summary[:all])
       @summary[:all_filtered][:num_jobs].should eql @length / 2
-      @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
       @summary[:all_filtered][:successful].should eql 20
-      @summary[:all_filtered]
-      clipped_jobs = @summary[:clipped][:num_jobs]
-      clipped_jobs.should eql 25
-      @summary[:clipped][:cpu_time].should eql clipped_jobs * 100 - 50
-      @summary[:clipped][:memory_time].should eql clipped_jobs * 200 * 3600 - 100 * 3600
-      @summary[:clipped][:successful].should eql clipped_jobs / 2 + 1
+      @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
+      @summary[:all_filtered][:memory_time].should eql @length * 200 * 1800
+      num_clipped_jobs = @summary[:clipped][:num_jobs]
+      num_clipped_jobs.should eql 25
+      @summary[:clipped][:cpu_time].should eql num_clipped_jobs * 100 - 50
+      @summary[:clipped][:memory_time].should eql num_clipped_jobs * 200 * 3600 - 100 * 3600
+      @summary[:clipped][:successful].should eql num_clipped_jobs / 2 + 1
     end
     
     it "correctly handles summaries of empty sets" do
@@ -178,19 +178,6 @@ describe Bookie::Database::Job do
           :memory_time => 0,
           :successful => 0,
         })
-    end
-    
-    it "correctly handles summaries with zero wall time" do
-      job = @jobs.order(:start_time).first
-      wall_time = job.wall_time
-      begin
-        job.wall_time = 0
-        job.save!
-        @jobs.order(:start_time).limit(1).summary[:cpu_time].should eql 0
-      ensure
-        job.wall_time = wall_time
-        job.save!
-      end
     end
     
     it "correctly handles inverted ranges" do

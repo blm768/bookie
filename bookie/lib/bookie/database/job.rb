@@ -115,40 +115,46 @@ module Bookie
       #- <tt>:memory_time</tt>: the sum of memory * wall_time for all jobs in the interval
       #
       #This method should probably not be chained with other queries that filter by start/end time.
+      #It also doesn't work with the limit() method.
       #
       #TODO: filter out jobs with 0 CPU time?
       def self.summary(time_range = nil)
-        time_range = time_range.normalized if time_range
         jobs = self
-        jobs = jobs.by_time_range(time_range) if time_range
-        #TODO: optimize?
-        jobs = jobs.where(nil).to_a
+
+        num_jobs = 0
+        successful = 0
         cpu_time = 0
-        successful_jobs = 0
         memory_time = 0
-        #To consider: job.end_time should be <= Time.now, but it might be good to check for that.
-        #Maybe in a database consistency checker tool?
-        #What if the system clock is off?
-        #Also consider a check for system start times.
-        jobs.each do |job|
-          job_start_time = job.start_time
-          job_end_time = job.end_time
-          if time_range
+
+        if time_range
+          time_range = time_range.normalized
+          jobs = jobs.by_time_range(time_range)
+
+          jobs.each do |job|
+            job_start_time = job.start_time
+            job_end_time = job.end_time
             job_start_time = [job_start_time, time_range.first].max
             job_end_time = [job_end_time, time_range.last].min
+            clipped_wall_time = job_end_time.to_i - job_start_time.to_i
+            if job.wall_time != 0
+              cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
+              #To consider: what should I do about jobs that only report a max memory value?
+              memory_time += job.memory * clipped_wall_time
+            end
+            successful += 1 if job.exit_code == 0
           end
-          clipped_wall_time = job_end_time.to_i - job_start_time.to_i
-          if job.wall_time != 0
-            cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
-            #To consider: what should I do about jobs that only report a max memory value?
-            memory_time += job.memory * clipped_wall_time
-          end
-          successful_jobs += 1 if job.exit_code == 0
+          num_jobs = jobs.count
+          successful = jobs.where(:exit_code => 0).count
+        else
+          num_jobs = jobs.count
+          successful = jobs.where(:exit_code => 0).count
+          cpu_time = jobs.sum(:cpu_time)
+          memory_time = jobs.sum('jobs.memory * jobs.wall_time')
         end
-      
+
         return {
-          :num_jobs => jobs.length,
-          :successful => successful_jobs,
+          :num_jobs => num_jobs,
+          :successful => successful,
           :cpu_time => cpu_time,
           :memory_time => memory_time,
         }

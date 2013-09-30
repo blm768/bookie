@@ -197,9 +197,9 @@ module Bookie
         memory_time = 0
         
         #TODO: check if num_jobs is zero so we can skip all this?
-        if time_range.begin < date_begin_time
+        if date_begin_time < time_range.begin
           #We need to get a summary for the chunk up to the first whole day.
-          summary = jobs.summary(range.begin ... date_begin_time)
+          summary = jobs.summary(time_range.begin ... date_begin_time)
           cpu_time += summary[:cpu_time]
           memory_time += summary[:memory_time]
         end

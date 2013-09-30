@@ -63,6 +63,7 @@ describe Bookie::Database::System do
       @summary_wide = @systems.summary(base_time - 3600 ... base_time + 3600 * 41)
     end
     
+    #TODO: figure out why this randomly fails.
     it "produces correct summaries" do
       system_total_wall_time = 3600 * (10 + 30 + 20 + 10)
       system_clipped_wall_time = 3600 * (10 + 15 + 5) - 1800
@@ -77,10 +78,7 @@ describe Bookie::Database::System do
       @summary[:all][:avail_cpu_time].should eql system_total_cpu_time
       @summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
       @summary[:all][:avail_memory_avg].should eql avg_mem
-      @summary[:all_constrained][:systems].length.should eql 4
-      @summary[:all_constrained][:avail_cpu_time].should eql system_total_cpu_time
-      @summary[:all_constrained][:avail_memory_time].should eql 1000000 * system_total_wall_time
-      @summary[:all_constrained][:avail_memory_avg].should eql avg_mem
+      expect(@summary[:all_constrained]).to eql(@summary[:all])
       @summary[:clipped][:systems].length.should eql 3
       @summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
       @summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000

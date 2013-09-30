@@ -167,31 +167,15 @@ describe Bookie::Database::JobSummary do
     end
     
     it "produces correct summaries" do
-      #To consider: flesh out some more?
-      time_start = base_time
-      time_end = time_start
-      time_bound = time_start + 3.days
-      while time_start < time_bound
-        while time_end < time_bound
-          [true, false].each do |exclude_end|
-            time_range = Range.new(time_start, time_end, exclude_end)
-            sum1 = Bookie::Database::JobSummary.summary(:range => time_range)
-            sum2 = Bookie::Database::Job.summary(time_range)
-            expect(sum1).to eql(sum2)
-          end
-          time_end += 1.days
-        end
-        time_start += 1.days
-      end
-      time_start = base_time
-      time_end = time_start + 1.days
-      [0, -7200, 7200].each do |offset_begin|
-        [0, -7200, 7200].each do |offset_end|
-          [true, false].each do |exclude_end|
-            range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
-            sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
-            sum2 = Bookie::Database::Job.summary(range_offset)
-            expect(sum1).to eql(sum2)
+      1.upto(3) do |num_days|
+        [0, -7200, 7200].each do |offset_begin|
+          [0, -7200, 7200].each do |offset_end|
+            [true, false].each do |exclude_end|
+              range_offset = Range.new(base_time + offset_begin, base_time + num_days.days + offset_end, exclude_end)
+              sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
+              sum2 = Bookie::Database::Job.summary(range_offset)
+              expect(sum1).to eql(sum2)
+            end
           end
         end
       end
@@ -273,8 +257,7 @@ describe Bookie::Database::JobSummary do
     end
     
     it "caches summaries" do
-      Bookie::Database::JobSummary.summary
-      Bookie::Database::JobSummary.expects(:summarize).never
+      Bookie::Database::JobSummary.expects(:summarize)
       range = base_time ... base_time + 1.days
       Bookie::Database::JobSummary.summary(:range => range)
     end
