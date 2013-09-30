@@ -191,9 +191,6 @@ describe Bookie::Database::JobSummary do
             range_offset = Range.new(time_start + offset_end, time_end + offset_end, exclude_end)
             sum1 = Bookie::Database::JobSummary.summary(:range => range_offset)
             sum2 = Bookie::Database::Job.summary(range_offset)
-            if sum1 != sum2
-              puts "#{time_start} #{time_end} #{exclude_end}"
-            end
             expect(sum1).to eql(sum2)
           end
         end

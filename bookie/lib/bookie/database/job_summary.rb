@@ -181,7 +181,7 @@ module Bookie
         date_begin = time_range.begin.utc.to_date
         date_begin_time = date_begin.to_utc_time
         #Round date_begin up.
-        date_begin += 1 if time_range.begin < date_begin_time
+        date_begin += 1 if date_begin_time < time_range.begin
         date_end = time_range.end.utc.to_date
 
         #Is the interval large enough to cover any cached summaries?

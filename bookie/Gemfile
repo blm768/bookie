@@ -4,8 +4,8 @@ gemspec
 
 gem 'bundler', :group => :development
 gem 'byebug', :group => :test
-gem 'mocha', :group => :development
-gem 'rspec', :group => :development
-gem 'simplecov', :group => :development
+gem 'mocha', :group => :test
+gem 'rspec', :group => :test
+gem 'simplecov', :group => :test
 gem 'sqlite3', :group => :development
 
