@@ -3,12 +3,8 @@ require 'spec_helper'
 include Bookie::Database
 
 describe Bookie::Database::Job do
-  before(:each) do
-    @jobs = Job
-  end
-  
   it "correctly sets end times" do
-    @jobs.find_each do |job|
+    Job.find_each do |job|
       job.end_time.should eql job.start_time + job.wall_time
       job.end_time.should eql job.read_attribute(:end_time)
     end
@@ -21,7 +17,7 @@ describe Bookie::Database::Job do
   
   it "correctly filters by user" do
     user = User.by_name('test').order(:id).first
-    jobs = @jobs.by_user(user).to_a
+    jobs = Job.by_user(user).to_a
     jobs.each do |job|
       job.user.should eql user
     end
@@ -29,35 +25,35 @@ describe Bookie::Database::Job do
   end
   
   it "correctly filters by user name" do
-    jobs = @jobs.by_user_name('root').to_a
+    jobs = Job.by_user_name('root').to_a
     jobs.length.should eql 10
     jobs[0].user.name.should eql "root"
-    jobs = @jobs.by_user_name('test').order(:end_time).to_a
+    jobs = Job.by_user_name('test').order(:end_time).to_a
     jobs.length.should eql 20
     jobs.each do |job|
       job.user.name.should eql 'test'
     end
     jobs[0].user_id.should_not eql jobs[-1].user_id
-    jobs = @jobs.by_user_name('user').to_a
+    jobs = Job.by_user_name('user').to_a
     jobs.length.should eql 0
   end
 
   it "correctly filters by group name" do
-    jobs = @jobs.by_group_name("root").to_a
+    jobs = Job.by_group_name("root").to_a
     jobs.length.should eql 10
     jobs.each do |job|
       job.user.group.name.should eql "root"
     end
-    jobs = @jobs.by_group_name("admin").order(:start_time).to_a
+    jobs = Job.by_group_name("admin").order(:start_time).to_a
     jobs.length.should eql 20
     jobs[0].user.name.should_not eql jobs[1].user.name
-    jobs = @jobs.by_group_name("test").to_a
+    jobs = Job.by_group_name("test").to_a
     jobs.length.should eql 0
   end
   
   it "correctly filters by system" do
     sys = System.first
-    jobs = @jobs.by_system(sys)
+    jobs = Job.by_system(sys)
     jobs.length.should eql 10
     jobs.each do |job|
       job.system.should eql sys
@@ -65,55 +61,55 @@ describe Bookie::Database::Job do
   end
   
   it "correctly filters by system name" do
-    jobs = @jobs.by_system_name('test1')
+    jobs = Job.by_system_name('test1')
     jobs.length.should eql 20
-    jobs = @jobs.by_system_name('test2')
+    jobs = Job.by_system_name('test2')
     jobs.length.should eql 10
-    jobs = @jobs.by_system_name('test3')
+    jobs = Job.by_system_name('test3')
     jobs.length.should eql 10
-    jobs = @jobs.by_system_name('test4')
+    jobs = Job.by_system_name('test4')
     jobs.length.should eql 0
   end
   
   it "correctly filters by system type" do
     sys_type = SystemType.find_by_name('Standalone')
-    jobs = @jobs.by_system_type(sys_type)
+    jobs = Job.by_system_type(sys_type)
     jobs.length.should eql 20
     sys_type = SystemType.find_by_name('TORQUE cluster')
-    jobs = @jobs.by_system_type(sys_type)
+    jobs = Job.by_system_type(sys_type)
     jobs.length.should eql 20
   end
 
   it "correctly filters by command name" do
-    jobs = @jobs.by_command_name('vi')
+    jobs = Job.by_command_name('vi')
     jobs.length.should eql 20
-    jobs = @jobs.by_command_name('emacs')
+    jobs = Job.by_command_name('emacs')
     jobs.length.should eql 20
   end
   
   describe "#by_time_range" do
-    it "correctly filters by inclusive time range" do
-      jobs = @jobs.by_time_range(base_time ... base_time + 3600 * 2 + 1)
+    it "filters by inclusive time range" do
+      jobs = Job.by_time_range(base_time ... base_time + 3600 * 2 + 1)
       jobs.count.should eql 3
-      jobs = @jobs.by_time_range(base_time + 1 ... base_time + 3600 * 2)
+      jobs = Job.by_time_range(base_time + 1 ... base_time + 3600 * 2)
       jobs.count.should eql 2
-      jobs = @jobs.by_time_range(base_time ... base_time)
+      jobs = Job.by_time_range(base_time ... base_time)
       jobs.length.should eql 0
     end
 
-    it "correctly filters by exclusive time range" do
-      jobs = @jobs.by_time_range(base_time + 1 .. base_time + 3600 * 2)
+    it "filters by exclusive time range" do
+      jobs = Job.by_time_range(base_time + 1 .. base_time + 3600 * 2)
       jobs.count.should eql 3
-      jobs = @jobs.by_time_range(base_time .. base_time + 3600 * 2 - 1)
+      jobs = Job.by_time_range(base_time .. base_time + 3600 * 2 - 1)
       jobs.count.should eql 2
-      jobs = @jobs.by_time_range(base_time .. base_time)
+      jobs = Job.by_time_range(base_time .. base_time)
       jobs.count.should eql 1
     end
     
     it "correctly handles empty/inverted ranges" do
       t = base_time
       (-1 .. 0).each do |offset|
-        jobs = @jobs.by_time_range(t ... t + offset)
+        jobs = Job.by_time_range(t ... t + offset)
         jobs.count.should eql 0
       end
     end
@@ -126,37 +122,49 @@ describe Bookie::Database::Job do
 
   #TODO: implement.
   describe "overlapping_edges" do
-    it "finds jobs that overlap the edges" do
-      base_start = base_time
-      base_end = base_start + 3600
+    let(:base_start) { base_time }
+    let(:base_end) { base_time + 3600 }
 
-      #Overlapping beginning
-      jobs = Job.overlapping_edges(base_start + 1 ... base_end)
-      expect(jobs.length).to eql 1
-      expect(jobs.first.start_time).to eql base_time
-      
-      #Overlapping end
-      jobs = Job.overlapping_edges(base_start ... base_end - 1)
-      expect(jobs.length).to eql 1
-      expect(jobs.first.start_time).to eql base_time
+    context "with exclusive ranges" do
+      it "finds jobs that overlap the edges" do
+        #Overlapping beginning
+        jobs = Job.overlapping_edges(base_start + 1 ... base_end)
+        expect(jobs.length).to eql 1
+        expect(jobs.first.start_time).to eql base_time
+        
+        #Overlapping end
+        jobs = Job.overlapping_edges(base_start ... base_end - 1)
+        expect(jobs.length).to eql 1
+        expect(jobs.first.start_time).to eql base_time
 
-      #One job overlapping both
-      jobs = Job.overlapping_edges(base_start + 1 ... base_end - 1)
-      expect(jobs.length).to eql 1
-      expect(jobs.first.start_time).to eql base_time
+        #One job overlapping both
+        jobs = Job.overlapping_edges(base_start + 1 ... base_end - 1)
+        expect(jobs.length).to eql 1
+        expect(jobs.first.start_time).to eql base_time
 
-      #Two jobs overlapping the endpoints
-      jobs = Job.overlapping_edges(base_end - 1 ... base_end + 1) 
-      expect(jobs.length).to eql 2
-      
-      #Not overlapping any endpoints
-      jobs = Job.overlapping_edges(base_start ... base_end)
-      expect(jobs.length).to eql 0
-      jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
-      expect(jobs.length).to eql 0
+        #Two jobs overlapping the endpoints
+        jobs = Job.overlapping_edges(base_end - 1 ... base_end + 1) 
+        expect(jobs.length).to eql 2
+        
+        #Not overlapping any endpoints
+        jobs = Job.overlapping_edges(base_start ... base_end)
+        expect(jobs.length).to eql 0
+        jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
+        expect(jobs.length).to eql 0
+      end
     end
 
-    it "distinguishes between inclusive and exclusive ranges"
+    context "with inclusive ranges" do
+      it "finds jobs that overlap the edges" do
+        #This is more pared-down because inclusive and exclusive ranges mostly
+        #share the same codepath.
+        jobs = Job.overlapping_edges(base_start .. base_end)
+        expect(jobs.length).to eql 1
+
+        jobs = Job.overlapping_edges(base_start .. base_start)
+        expect(jobs.length).to eql 1
+      end
+    end
   end
    
   describe "#all_with_relations" do
@@ -174,31 +182,28 @@ describe Bookie::Database::Job do
   end
   
   describe "#summary" do
-    before(:all) do
-      @jobs = Job
-      @length = @jobs.count
-      @summary = create_summaries(@jobs, base_time)
-    end
+    let(:length) { Job.count }
+    let(:summary) { create_summaries(Job, base_time) }
     
     it "produces correct summary totals" do
-      @summary[:all][:num_jobs].should eql @length
-      @summary[:all][:successful].should eql 20
-      @summary[:all][:cpu_time].should eql @length * 100
-      @summary[:all][:memory_time].should eql @length * 200 * 3600
-      expect(@summary[:all_constrained]).to eql(@summary[:all])
-      @summary[:all_filtered][:num_jobs].should eql @length / 2
-      @summary[:all_filtered][:successful].should eql 20
-      @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
-      @summary[:all_filtered][:memory_time].should eql @length * 100 * 3600
-      num_clipped_jobs = @summary[:clipped][:num_jobs]
+      summary[:all][:num_jobs].should eql length
+      summary[:all][:successful].should eql 20
+      summary[:all][:cpu_time].should eql length * 100
+      summary[:all][:memory_time].should eql length * 200 * 3600
+      expect(summary[:all_constrained]).to eql(summary[:all])
+      summary[:all_filtered][:num_jobs].should eql length / 2
+      summary[:all_filtered][:successful].should eql 20
+      summary[:all_filtered][:cpu_time].should eql length * 100 / 2
+      summary[:all_filtered][:memory_time].should eql length * 100 * 3600
+      num_clipped_jobs = summary[:clipped][:num_jobs]
       num_clipped_jobs.should eql 25
-      @summary[:clipped][:cpu_time].should eql num_clipped_jobs * 100 - 50
-      @summary[:clipped][:memory_time].should eql num_clipped_jobs * 200 * 3600 - 100 * 3600
-      @summary[:clipped][:successful].should eql num_clipped_jobs / 2 + 1
+      summary[:clipped][:cpu_time].should eql num_clipped_jobs * 100 - 50
+      summary[:clipped][:memory_time].should eql num_clipped_jobs * 200 * 3600 - 100 * 3600
+      summary[:clipped][:successful].should eql num_clipped_jobs / 2 + 1
     end
     
     it "correctly handles summaries of empty sets" do
-      @summary[:empty].should eql({
+      summary[:empty].should eql({
           :num_jobs => 0,
           :cpu_time => 0,
           :memory_time => 0,
@@ -207,14 +212,14 @@ describe Bookie::Database::Job do
     end
     
     it "correctly handles inverted ranges" do
-      @jobs.summary(Time.now() ... Time.now() - 1).should eql @summary[:empty]
-      @jobs.summary(Time.now() .. Time.now() - 1).should eql @summary[:empty]
+      Job.summary(Time.now() ... Time.now() - 1).should eql summary[:empty]
+      Job.summary(Time.now() .. Time.now() - 1).should eql summary[:empty]
     end
 
     it "distinguishes between inclusive and exclusive ranges" do
-      sum = @jobs.summary(base_time ... base_time + 3600)
+      sum = Job.summary(base_time ... base_time + 3600)
       sum[:num_jobs].should eql 1
-      sum = @jobs.summary(base_time .. base_time + 3600)
+      sum = Job.summary(base_time .. base_time + 3600)
       sum[:num_jobs].should eql 2
     end
   end
