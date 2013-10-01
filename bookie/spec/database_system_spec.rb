@@ -2,31 +2,31 @@ require 'spec_helper'
 
 describe Bookie::Database::System do
   before(:each) do
-    @systems = Bookie::Database::System
+    @systems = System
   end
 
   it "correctly finds active systems" do
-    Bookie::Database::System.active_systems.length.should eql 3
+    System.active_systems.length.should eql 3
   end
   
   it "correctly filters by name" do
-    Bookie::Database::System.by_name('test1').length.should eql 2
-    Bookie::Database::System.by_name('test2').length.should eql 1
-    Bookie::Database::System.by_name('test3').length.should eql 1
+    System.by_name('test1').length.should eql 2
+    System.by_name('test2').length.should eql 1
+    System.by_name('test3').length.should eql 1
   end
   
   it "correctly filters by system type" do
     ['Standalone', 'TORQUE cluster'].each do |type|
-      t = Bookie::Database::SystemType.find_by_name(type)
-      Bookie::Database::System.by_system_type(t).length.should eql 2
+      t = SystemType.find_by_name(type)
+      System.by_system_type(t).length.should eql 2
     end
   end
 
   describe "#all_with_relations" do
     it "loads all relations" do
-      systems = Bookie::Database::System.limit(5).all_with_relations
+      systems = System.limit(5).all_with_relations
       relation_ids = {}
-      Bookie::Database::SystemType.expects(:new).never
+      SystemType.expects(:new).never
       systems.each do |system|
         test_system_relation_identity(system, relation_ids)
       end
@@ -58,7 +58,7 @@ describe Bookie::Database::System do
   describe "#summary" do
     before(:all) do
       Time.expects(:now).returns(base_time + 3600 * 40).at_least_once
-      @systems = Bookie::Database::System
+      @systems = System
       @summary = create_summaries(@systems, base_time)
       @summary_wide = @systems.summary(base_time - 3600 ... base_time + 3600 * 41)
     end
@@ -131,18 +131,18 @@ describe Bookie::Database::System do
     end
 
     it "finds the correct system" do
-      Bookie::Database::System.find_current(@sender_2).id.should eql 2
-      Bookie::Database::System.find_current(@sender_2, Time.now).id.should eql 2
-      Bookie::Database::System.find_current(@sender_1, base_time).id.should eql 1
+      System.find_current(@sender_2).id.should eql 2
+      System.find_current(@sender_2, Time.now).id.should eql 2
+      System.find_current(@sender_1, base_time).id.should eql 1
     end
     
     it "correctly detects the lack of a matching system" do
       expect {
-        Bookie::Database::System.find_current(@sender_1, base_time - 1.years)
+        System.find_current(@sender_1, base_time - 1.years)
       }.to raise_error(/^There is no system with hostname 'test1' that was recorded as active at /)
       @config_t1.expects(:hostname).at_least_once.returns('test1000')
       expect {
-        Bookie::Database::System.find_current(@sender_1, base_time)
+        System.find_current(@sender_1, base_time)
       }.to raise_error(/^There is no system with hostname 'test1000' that was recorded as active at /)
     end
     
@@ -156,19 +156,19 @@ describe Bookie::Database::System do
       [:cores, :memory].each do |field|
         config.expects(field).at_least_once.returns("value")
         expect {
-          Bookie::Database::System.find_current(sender)
-        }.to raise_error(Bookie::Database::System::SystemConflictError)
+          System.find_current(sender)
+        }.to raise_error(System::SystemConflictError)
         config.unstub(field)
       end
-      sender.expects(:system_type).returns(Bookie::Database::SystemType.find_by_name("Standalone"))
+      sender.expects(:system_type).returns(SystemType.find_by_name("Standalone"))
       expect {
-        Bookie::Database::System.find_current(sender)
-      }.to raise_error(Bookie::Database::System::SystemConflictError)
+        System.find_current(sender)
+      }.to raise_error(System::SystemConflictError)
     end
   end
 
   it "correctly decommissions" do
-    sys = Bookie::Database::System.active_systems.find_by_name('test1')
+    sys = System.active_systems.find_by_name('test1')
     begin
       sys.decommission(sys.start_time + 3)
       sys.end_time.should eql sys.start_time + 3
@@ -183,24 +183,24 @@ describe Bookie::Database::System do
       :name => 'test',
       :cores => 2,
       :memory => 1000000,
-      :system_type => Bookie::Database::SystemType.first,
+      :system_type => SystemType.first,
       :start_time => base_time
     }
     
-    Bookie::Database::System.new(fields).valid?.should eql true
+    System.new(fields).valid?.should eql true
     
     fields.each_key do |field|
-      system = Bookie::Database::System.new(fields)
+      system = System.new(fields)
       system.method("#{field}=".intern).call(nil)
       system.valid?.should eql false
     end
     
-    system = Bookie::Database::System.new(fields)
+    system = System.new(fields)
     system.name = ''
     system.valid?.should eql false
     
     [:cores, :memory].each do |field|
-      system = Bookie::Database::System.new(fields)
+      system = System.new(fields)
       m = system.method("#{field}=".intern)
       m.call(-1)
       system.valid?.should eql false
@@ -208,7 +208,7 @@ describe Bookie::Database::System do
       system.valid?.should eql true
     end
     
-    system = Bookie::Database::System.new(fields)
+    system = System.new(fields)
     system.end_time = base_time
     system.valid?.should eql true
     system.end_time += 5

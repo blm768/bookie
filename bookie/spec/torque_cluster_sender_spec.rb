@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'bookie/senders/torque_cluster.rb'
+
 #Stubbed out for now so the 'describe' line works
 #TODO: figure out why this seems to occasionally cause unit test failures.
 module Bookie
@@ -41,9 +43,7 @@ describe Bookie::Senders::TorqueCluster do
 end
 
 describe Torque::Job do
-  it "has a to_record method" do
-    Torque::Job.new.respond_to?(:to_record).should eql true
-  end
+  it { expect(Torque::Job.new).to respond_to(:to_record) }
 end
 
 describe Torque::JobLog do

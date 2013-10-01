@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'bookie/senders/standalone.rb'
+
 require 'pacct'
 
 #Stubbed out for now so the 'describe' line works
