@@ -1,3 +1,4 @@
+#TODO: revise unit tests.
 
 ##
 #Reopened to add some useful methods
@@ -6,58 +7,36 @@ class Range
   #If end < begin, returns an empty range (begin ... begin)
   #Otherwise, returns the original range
   def normalized
-    return self.begin ... self.begin if self.end < self.begin
+   if self.end < self.begin
+     self.begin ... self.begin
+   else
     self
+   end
+  end
+
+  ##
+  #Converts the range to an equivalent exclusive range (one where exclude_end? is true)
+  #
+  #Only works for ranges with discrete steps between values (i.e. integers)
+  def exclusive
+    if exclude_end?
+      self
+    else
+      Range.new(self.begin, self.end + 1, true)
+    end
   end
   
   ##
-  #Returns the empty status of the range
+  #Returns whether the range is empty
   #
   #A range is empty if end < begin or if begin == end and exclude_end? is true.
   def empty?
-    (self.end < self.begin) || (exclude_end? && (self.begin == self.end))
+    if exclude_end?
+      self.end <= self.begin
+    else
+      self.end < self.begin
+    end
   end
-
-#This code probably works, but we're not using it anywhere.  
-#   def intersection(other)
-#     self_n = self.normalized
-#     other = other.normalized
-#     
-#     new_begin, new_end, exclude_end = nil
-#     
-#     if self_n.cover?(other.begin)
-#       new_first = other.begin
-#     elsif other.cover?(self_n.begin)
-#       new_first = self_n.begin
-#     end
-#     
-#     return self_n.begin ... self_n.begin unless new_first
-#     
-#     if self_n.cover?(other.end)
-#       unless other.exclude_end? && other.end == self_n.begin
-#         new_end = other.end
-#         exclude_end = other.exclude_end?
-#       end
-#     elsif other.cover?(self_n.end)
-#       unless self_n.exclude_end? && self_n.end == other.begin
-#         new_end = self_n.end
-#         exclude_end = self_n.exclude_end?
-#       end
-#     end
-#     
-#     #If we still haven't found new_end, try one more case:
-#     unless new_end
-#       if self_n.end == other.end
-#         #We'll only get here if both ranges exclude their ends and have the same end.
-#         new_end = self_n.end
-#         exclude_end = true
-#       end
-#     end
-#     
-#     return self_n.begin ... self_n.begin unless new_end
-# 
-#     Range.new(new_begin, new_end, exclude_end)
-#   end
 end
 
 ##

@@ -74,26 +74,13 @@ module Bookie
       end
       
       ##
-      #Filters by a range of start times
-      def self.by_start_time_range(time_range)
-        where('? <= jobs.start_time AND jobs.start_time < ?', time_range.first, time_range.last)
-      end
-      
-      ##
-      #Filters by a range of end times
-      def self.by_end_time_range(time_range)
-        where('? <= jobs.end_time AND jobs.end_time < ?', time_range.first, time_range.last)
-      end
-      
-      ##
       #Finds all jobs that were running at some point in a given time range
       def self.by_time_range(time_range)
         if time_range.empty?
           self.none
-        elsif time_range.exclude_end?
-          where('? <= jobs.end_time AND jobs.start_time < ?', time_range.first, time_range.last)
         else
-          where('? <= jobs.end_time AND jobs.start_time <= ?', time_range.first, time_range.last)
+          time_range = time_range.exclusive
+          where('? <= jobs.end_time AND jobs.start_time < ?', time_range.begin, time_range.end)
         end
       end
 
@@ -103,13 +90,25 @@ module Bookie
       def self.within_time_range(time_range)
         if time_range.empty?
           self.none
-        elsif time_range.exclude_end?
-          where('? <= jobs.start_time AND jobs.end_time < ?', time_range.first, time_range.last)
         else
-          where('? <= jobs.start_time AND jobs.end_time <= ?', time_range.first, time_range.last)
+          time_range = time_range.exclusive
+          #The second "<=" operator _is_ intentional.
+          where('? <= jobs.start_time AND jobs.end_time <= ?', time_range.begin, time_range.end)
         end
       end
       
+      ##
+      #Finds all jobs that overlap the edges of the given time range
+      def self.overlapping_edges(time_range)
+        if time_range.empty?
+          self.none
+        else
+          time_range = time_range.exclusive
+          query_str = ['begin', 'end'].map{ |edge| "(jobs.start_time < :#{edge} AND jobs.end_time > :#{edge})" }.join(" OR ")
+          where(query_str, {:begin => time_range.begin, :end => time_range.end})
+        end
+      end
+     
       ##
       #Produces a summary of the jobs in the given time interval
       #
@@ -122,7 +121,7 @@ module Bookie
       #This method should probably not be chained with other queries that filter by start/end time.
       #It also doesn't work with the limit() method.
       #
-      #TODO: filter out jobs with 0 CPU time?
+      #The time_range parameter is always treated as if time_range.exclude_end? is true.
       def self.summary(time_range = nil)
         jobs = self
 
@@ -132,25 +131,35 @@ module Bookie
         memory_time = 0
 
         if time_range
-          time_range = time_range.normalized
-          jobs = jobs.by_time_range(time_range)
+          unless time_range.empty?
+            time_range = time_range.exclusive
 
-          jobs.each do |job|
-            job_start_time = job.start_time
-            job_end_time = job.end_time
-            job_start_time = [job_start_time, time_range.first].max
-            job_end_time = [job_end_time, time_range.last].min
-            clipped_wall_time = job_end_time.to_i - job_start_time.to_i
-            if job.wall_time != 0
-              cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
-              #To consider: what should I do about jobs that only report a max memory value?
-              memory_time += job.memory * clipped_wall_time
+            #Any jobs that are completely within the time range can
+            #be summarized as-is.
+            jobs_within = jobs.within_time_range(time_range)
+            #TODO: optimize into one query?
+            num_jobs += jobs_within.count
+            successful += jobs_within.where(:exit_code => 0).count
+            cpu_time += jobs_within.sum(:cpu_time)
+            memory_time += jobs_within.sum('jobs.memory * jobs.wall_time')
+
+            #Any jobs that overlap an edge of the time range
+            #must be clipped.
+            jobs_overlapped = jobs.overlapping_edges(time_range)
+            jobs_overlapped.each do |job|
+              start_time = [job.start_time, time_range.begin].max
+              end_time = [job.end_time, time_range.end].min
+              clipped_wall_time = end_time.to_i - start_time.to_i
+              if job.wall_time != 0
+                cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
+                memory_time += job.memory * clipped_wall_time
+              end
+              num_jobs += 1
+              successful += 1 if job.exit_code == 0
             end
-            successful += 1 if job.exit_code == 0
           end
-          num_jobs = jobs.count
-          successful = jobs.where(:exit_code => 0).count
         else
+          #There's no time_range constraint; just summarize everything.
           num_jobs = jobs.count
           successful = jobs.where(:exit_code => 0).count
           cpu_time = jobs.sum(:cpu_time)

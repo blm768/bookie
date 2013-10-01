@@ -48,10 +48,10 @@ module Helpers
     start_time_1 = base_time
     end_time_1   = base_time + 3600 * 40
     start_time_2 = base_time + 1800
-    end_time_2 = base_time + (36000 * 2 + 18000)
+    end_time_2 = base_time + (3600 * 25)
     summaries = {
       :all => obj.summary,
-      :all_constrained => obj.summary(start_time_1 ... end_time_1),
+      :all_constrained => obj.summary(start_time_1 .. end_time_1),
       :clipped => obj.summary(start_time_2 ... end_time_2),
       :empty => obj.summary(Time.at(0) ... Time.at(0)),
     }
@@ -133,7 +133,7 @@ module Helpers
       unless systems.include?name
         system = Bookie::Database::System.create!(
           :name => name,
-          :system_type => system_types[i & 1],
+          :system_type => system_types[i % 2],
           :start_time => BASE_TIME + (36000 * i),
           :cores => 2,
           :memory => 1000000)

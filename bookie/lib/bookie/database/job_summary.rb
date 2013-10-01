@@ -210,7 +210,7 @@ module Bookie
         end
 
         date_end_time = date_end.to_utc_time
-        if date_end_time < time_range.end
+        if time_range.cover?(date_end_time)
           #We need to get a summary for the chunk after the last whole day.
           range = Range.new(date_end_time, time_range.end, time_range.exclude_end?)
           summary = jobs.summary(range)

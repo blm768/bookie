@@ -1,8 +1,10 @@
 require 'spec_helper'
 
+include Bookie::Database
+
 describe Bookie::Database::Job do
   before(:each) do
-    @jobs = Bookie::Database::Job
+    @jobs = Job
   end
   
   it "correctly sets end times" do
@@ -11,14 +13,14 @@ describe Bookie::Database::Job do
       job.end_time.should eql job.read_attribute(:end_time)
     end
     #Test the update hook.
-    job = Bookie::Database::Job.first
+    job = Job.first
     job.start_time = job.start_time - 1
     job.save!
     job.end_time.should eql job.read_attribute(:end_time)
   end
   
   it "correctly filters by user" do
-    user = Bookie::Database::User.by_name('test').order(:id).first
+    user = User.by_name('test').order(:id).first
     jobs = @jobs.by_user(user).to_a
     jobs.each do |job|
       job.user.should eql user
@@ -54,7 +56,7 @@ describe Bookie::Database::Job do
   end
   
   it "correctly filters by system" do
-    sys = Bookie::Database::System.first
+    sys = System.first
     jobs = @jobs.by_system(sys)
     jobs.length.should eql 10
     jobs.each do |job|
@@ -74,10 +76,10 @@ describe Bookie::Database::Job do
   end
   
   it "correctly filters by system type" do
-    sys_type = Bookie::Database::SystemType.find_by_name('Standalone')
+    sys_type = SystemType.find_by_name('Standalone')
     jobs = @jobs.by_system_type(sys_type)
     jobs.length.should eql 20
-    sys_type = Bookie::Database::SystemType.find_by_name('TORQUE cluster')
+    sys_type = SystemType.find_by_name('TORQUE cluster')
     jobs = @jobs.by_system_type(sys_type)
     jobs.length.should eql 20
   end
@@ -89,34 +91,21 @@ describe Bookie::Database::Job do
     jobs.length.should eql 20
   end
   
-  it "correctly filters by start time" do
-    jobs = @jobs.by_start_time_range(base_time ... base_time + 3600 * 2 + 1)
-    jobs.length.should eql 3
-    jobs = @jobs.by_start_time_range(base_time + 1 ... base_time + 3600 * 2)
-    jobs.length.should eql 1
-    jobs = @jobs.by_start_time_range(Time.at(0) ... Time.at(3))
-    jobs.length.should eql 0
-  end
-  
-  it "correctly filters by end time" do
-    jobs = @jobs.by_end_time_range(base_time ... base_time + 3600 * 2 + 1)
-    jobs.length.should eql 2
-    jobs = @jobs.by_end_time_range(base_time + 1 ... base_time + 3600 * 2)
-    jobs.length.should eql 1
-    jobs = @jobs.by_end_time_range(Time.at(0) ... Time.at(3))
-    jobs.length.should eql 0
-  end
-  
   describe "#by_time_range" do
-    it "correctly filters by time range" do
+    it "correctly filters by inclusive time range" do
       jobs = @jobs.by_time_range(base_time ... base_time + 3600 * 2 + 1)
       jobs.count.should eql 3
       jobs = @jobs.by_time_range(base_time + 1 ... base_time + 3600 * 2)
       jobs.count.should eql 2
       jobs = @jobs.by_time_range(base_time ... base_time)
       jobs.length.should eql 0
-      jobs = @jobs.by_time_range(base_time .. base_time + 3600 * 2)
+    end
+
+    it "correctly filters by exclusive time range" do
+      jobs = @jobs.by_time_range(base_time + 1 .. base_time + 3600 * 2)
       jobs.count.should eql 3
+      jobs = @jobs.by_time_range(base_time .. base_time + 3600 * 2 - 1)
+      jobs.count.should eql 2
       jobs = @jobs.by_time_range(base_time .. base_time)
       jobs.count.should eql 1
     end
@@ -131,16 +120,53 @@ describe Bookie::Database::Job do
   end
 
   #TODO: implement.
-  describe "#within_time_range"
+  describe "#within_time_range" do
+    it "finds jobs within the range"
+  end
+
+  #TODO: implement.
+  describe "overlapping_edges" do
+    it "finds jobs that overlap the edges" do
+      base_start = base_time
+      base_end = base_start + 3600
+
+      #Overlapping beginning
+      jobs = Job.overlapping_edges(base_start + 1 ... base_end)
+      expect(jobs.length).to eql 1
+      expect(jobs.first.start_time).to eql base_time
+      
+      #Overlapping end
+      jobs = Job.overlapping_edges(base_start ... base_end - 1)
+      expect(jobs.length).to eql 1
+      expect(jobs.first.start_time).to eql base_time
+
+      #One job overlapping both
+      jobs = Job.overlapping_edges(base_start + 1 ... base_end - 1)
+      expect(jobs.length).to eql 1
+      expect(jobs.first.start_time).to eql base_time
+
+      #Two jobs overlapping the endpoints
+      jobs = Job.overlapping_edges(base_end - 1 ... base_end + 1) 
+      expect(jobs.length).to eql 2
+      
+      #Not overlapping any endpoints
+      jobs = Job.overlapping_edges(base_start ... base_end)
+      expect(jobs.length).to eql 0
+      jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
+      expect(jobs.length).to eql 0
+    end
+
+    it "distinguishes between inclusive and exclusive ranges"
+  end
    
   describe "#all_with_relations" do
     it "loads all relations" do
-      jobs = Bookie::Database::Job.limit(5).all_with_relations
+      jobs = Job.limit(5).all_with_relations
       relation_ids = {}
-      Bookie::Database::User.expects(:new).never
-      Bookie::Database::Group.expects(:new).never
-      Bookie::Database::System.expects(:new).never
-      Bookie::Database::SystemType.expects(:new).never
+      User.expects(:new).never
+      Group.expects(:new).never
+      System.expects(:new).never
+      SystemType.expects(:new).never
       jobs.each do |job|
         test_job_relation_identity(job, relation_ids)
       end
@@ -149,7 +175,7 @@ describe Bookie::Database::Job do
   
   describe "#summary" do
     before(:all) do
-      @jobs = Bookie::Database::Job
+      @jobs = Job
       @length = @jobs.count
       @summary = create_summaries(@jobs, base_time)
     end
@@ -163,7 +189,7 @@ describe Bookie::Database::Job do
       @summary[:all_filtered][:num_jobs].should eql @length / 2
       @summary[:all_filtered][:successful].should eql 20
       @summary[:all_filtered][:cpu_time].should eql @length * 100 / 2
-      @summary[:all_filtered][:memory_time].should eql @length * 200 * 1800
+      @summary[:all_filtered][:memory_time].should eql @length * 100 * 3600
       num_clipped_jobs = @summary[:clipped][:num_jobs]
       num_clipped_jobs.should eql 25
       @summary[:clipped][:cpu_time].should eql num_clipped_jobs * 100 - 50
@@ -195,8 +221,8 @@ describe Bookie::Database::Job do
   
   it "validates fields" do
     fields = {
-      :user => Bookie::Database::User.first,
-      :system => Bookie::Database::System.first,
+      :user => User.first,
+      :system => System.first,
       :command_name => '',
       :cpu_time => 100,
       :start_time => base_time,
@@ -205,17 +231,17 @@ describe Bookie::Database::Job do
       :exit_code => 0
     }
     
-    job = Bookie::Database::Job.new(fields)
+    job = Job.new(fields)
     job.valid?.should eql true
     
     fields.each_key do |field|
-      job = Bookie::Database::Job.new(fields)
+      job = Job.new(fields)
       job.method("#{field}=".intern).call(nil)
       job.valid?.should eql false
     end
     
     [:cpu_time, :wall_time, :memory].each do |field|
-      job = Bookie::Database::Job.new(fields)
+      job = Job.new(fields)
       m = job.method("#{field}=".intern)
       m.call(-1)
       job.valid?.should eql false
