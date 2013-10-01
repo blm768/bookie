@@ -21,30 +21,28 @@ module Torque
 end
 
 describe Bookie::Senders::TorqueCluster do
-  before(:all) do
-    config = Bookie::Config.new('snapshot/test_config.json')
-    @sender = Bookie::Sender.new(config)
-  end
+  let(:config) { Bookie::Config.new('snapshot/test_config.json') }
+  let(:sender) { Bookie::Sender.new(config) }
   
   it "correctly yields jobs" do
-    @sender.each_job('snapshot/torque') do |job|
+    sender.each_job('snapshot/torque') do |job|
       job.class.should eql Torque::Job
       job.user_name.should eql 'blm768'
     end
   end
   
   it "has the correct system type name" do
-    @sender.system_type_name.should eql 'TORQUE cluster'
+    sender.system_type_name.should eql 'TORQUE cluster'
   end
   
   it "has the correct memory stat type" do
-    @sender.memory_stat_type.should eql :max
+    sender.memory_stat_type.should eql :max
   end
 end
 
 describe Torque::Job do
-  it "has a to_model method" do
-    Torque::Job.new.respond_to?(:to_model).should eql true
+  it "has a to_record method" do
+    Torque::Job.new.respond_to?(:to_record).should eql true
   end
 end
 
@@ -107,6 +105,4 @@ describe Torque::JobLog do
   it "correctly calculates the filename for a date" do
     Torque::JobLog.filename_for_date(Date.new(2012, 1, 3)).should eql Torque::torque_root + '/server_priv/accounting/20120103'
   end
-  
-  #To consider: unit test torque_root's value?
 end

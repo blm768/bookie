@@ -175,12 +175,12 @@ module Bookie
       end
       
       ##
-      #Returns an array of all jobs, pre-loading relations to reduce the need for extra queries
+      #Returns an array of all jobs, pre-loading associations to reduce the need for extra queries
       #
       #Relations are not cached between calls.
       #
       #TODO: use ActiveRecord's #includes instead of this scheme?
-      def self.all_with_relations
+      def self.all_with_associations
         jobs = self.where(nil).to_a
         users = {}
         groups = {}

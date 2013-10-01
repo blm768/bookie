@@ -62,22 +62,6 @@ module Helpers
     summaries
   end
   
-  def test_job_relation_identity(job, relation_ids)
-    #The relation_ids hash maps previously tested relations to their object_ids.
-    #Make sure all relations with the same value have the same object_id:
-    method_object_id = Object.instance_method(:object_id)
-    rels = [job.user, job.user.group, job.system, job.system.system_type]
-    rels.each do |r|
-      if relation_ids.include?(r)
-        unless relation_ids[r] == method_object_id.bind(r).call
-          raise r.inspect
-        end
-      else
-        relation_ids[r] = method_object_id.bind(r).call
-      end
-    end
-  end
-
   def test_system_relation_identity(system, relation_ids)
     t = system.system_type
     method_object_id = Object.instance_method(:object_id)

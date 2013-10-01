@@ -55,6 +55,7 @@ describe Bookie::Sender do
       :cores => test_config.cores,
       :memory => test_config.memory,
     }
+    #TODO: replace with let()?
     @sys_1 = Bookie::Database::System.new(fields)
     @sys_1.start_time = base_time
     @sys_1.end_time = base_time + 1000
@@ -74,23 +75,23 @@ describe Bookie::Sender do
     rollback_transaction
   end
   
+  let(:sender) { Bookie::Sender.new(test_config) }
   before(:each) do
-    @sender = Bookie::Sender.new(test_config)
     Bookie::Database::Job.delete_all
   end
   
   it "correctly filters jobs" do
     job = JobStub.new
     job.user_name = "root"
-    @sender.filtered?(job).should eql true
+    sender.filtered?(job).should eql true
     job.user_name = "test"
-    @sender.filtered?(job).should eql false
+    sender.filtered?(job).should eql false
   end
   
   it "correctly sends jobs" do
     config = test_config.clone
     config.excluded_users = Set.new
-    @sender.send_data('snapshot/torque_large')
+    sender.send_data('snapshot/torque_large')
     jobs = Bookie::Database::Job.all_with_relations
     jobs.each do |job|
       job.system.name.should eql config.hostname
@@ -99,20 +100,20 @@ describe Bookie::Sender do
   end
   
   it "refuses to send jobs when jobs already have been sent from a file" do
-    @sender.send_data('snapshot/torque_large')
+    sender.send_data('snapshot/torque_large')
     expect {
-      @sender.send_data('snapshot/torque_large')
+      sender.send_data('snapshot/torque_large')
     }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
   end
   
   it "correctly handles empty files" do
     Bookie::Database::Job.any_instance.expects(:'save!').never
     ActiveRecord::Relation.any_instance.expects(:'delete_all').never
-    @sender.send_data('/dev/null')
+    sender.send_data('/dev/null')
   end
   
   it "handles missing files" do
-    expect { @sender.send_data('snapshot/abc') }.to raise_error("File 'snapshot/abc' does not exist.")
+    expect { sender.send_data('snapshot/abc') }.to raise_error("File 'snapshot/abc' does not exist.")
   end
   
   it "chooses the correct systems" do
@@ -129,14 +130,15 @@ describe Bookie::Sender do
   end
 
   it "correctly finds duplicates" do
-    @sender.send_data('snapshot/torque')
+    sender.send_data('snapshot/torque')
     job = Bookie::Database::Job.first
     stub = JobStub.from_job(job)
     #The job's system should be @sys_2.
     #Just to make sure this test doesn't break later, I'll check it.
+    #TODO: restore?
     #expect(job.system).to eql @sys_2
-    #@sender.duplicate(stub, @sys_1).should eql nil
-    @sender.duplicate(stub, job.system).should eql job
+    #sender.duplicate(stub, @sys_1).should eql nil
+    sender.duplicate(stub, job.system).should eql job
     [:user_name, :group_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
       old_val = stub.send(field)
       if old_val.is_a?(String)
@@ -144,18 +146,18 @@ describe Bookie::Sender do
       else
         stub.send("#{field}=", old_val + 1)
       end
-      @sender.duplicate(stub, @sys_2).should eql nil
+      sender.duplicate(stub, @sys_2).should eql nil
       stub.send("#{field}=", old_val)
     end
   end
   
   it "deletes cached summaries that overlap the new jobs" do
-    @sender.send_data('snapshot/torque_large')
+    sender.send_data('snapshot/torque_large')
     time_min = Bookie::Database::Job.order(:start_time).first.start_time
     time_max = Bookie::Database::Job.order('end_time DESC').first.end_time
     Bookie::Database::Job.delete_all
-    @sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
-    @sender.send_data('snapshot/torque_large')
+    sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
+    sender.send_data('snapshot/torque_large')
   end
   
   describe "#clear_summaries" do
@@ -199,14 +201,14 @@ describe Bookie::Sender do
   
   describe "#undo_send" do
     it "removes the correct entries" do
-      @sender.send_data('snapshot/torque_large')
-      @sender.send_data('snapshot/torque')
-      @sender.undo_send('snapshot/torque_large')
+      sender.send_data('snapshot/torque_large')
+      sender.send_data('snapshot/torque')
+      sender.undo_send('snapshot/torque_large')
       
       Bookie::Database::Job.count.should eql 1
       job = Bookie::Database::Job.first
       Bookie::Database::Job.delete_all
-      @sender.send_data('snapshot/torque')
+      sender.send_data('snapshot/torque')
       job2 = Bookie::Database::Job.first
       job2.id = job.id
       job2.should eql job
@@ -232,11 +234,11 @@ describe Bookie::Sender do
     end
 
     it "deletes cached summaries in the affected range" do
-      @sender.send_data('snapshot/torque_large')
+      sender.send_data('snapshot/torque_large')
       time_min = Bookie::Database::Job.order(:start_time).first.start_time
       time_max = Bookie::Database::Job.order('end_time DESC').first.end_time
-      @sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
-      @sender.undo_send('snapshot/torque_large')
+      sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
+      sender.undo_send('snapshot/torque_large')
     end
   end
 end
@@ -253,10 +255,9 @@ describe Bookie::ModelHelpers do
     @job.memory = 300
   end
   
-  #To consider: check user/group somewhere?
-  it "correctly converts jobs to models" do
+  it "correctly converts jobs to records" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
-    djob = @job.to_model
+    djob = @job.to_record
     djob.command_name.should eql @job.command_name
     djob.start_time.should eql @job.start_time
     djob.end_time.should eql @job.start_time + @job.wall_time

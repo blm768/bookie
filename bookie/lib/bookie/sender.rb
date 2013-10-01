@@ -47,7 +47,7 @@ module Bookie
       #Send the job data:
       each_job(filename) do |job|
         next if filtered?(job)
-        model = job.to_model
+        model = job.to_record
         time_min = (model.start_time < time_min) ? model.start_time : time_min
         time_max = (model.end_time > time_max) ? model.end_time : time_max
         #To consider: handle files that don't have jobs sorted by end time?
@@ -151,7 +151,7 @@ module Bookie
   module ModelHelpers
     ##
     #Converts the object to a Bookie::Database::Job
-    def to_model()
+    def to_record()
       job = Bookie::Database::Job.new
       job.command_name = self.command_name
       job.start_time = self.start_time
@@ -162,8 +162,6 @@ module Bookie
       job
     end
 
-    ##
-    #Returns the end time
     def end_time
       start_time + wall_time
     end
