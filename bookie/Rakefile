@@ -3,14 +3,21 @@ require 'bundler'
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-require 'erb'
+require 'find'
 
 task :default => :spec
 
 desc "Run specs"
 RSpec::Core::RakeTask.new(:spec) do |task|
   task.rspec_opts =%w{--color --order rand --format progress}
-  task.pattern = 'spec/*_spec.rb'
+  #TODO: include all levels of subdirectories?
+  paths = []
+  Find.find('spec') do |path|
+    if File.directory?(path)
+      paths << "#{path}/*_spec.rb"
+    end
+  end
+  task.pattern = paths.join(" ")
 end
 
 task :rdoc do
