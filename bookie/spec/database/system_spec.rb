@@ -78,42 +78,38 @@ describe Bookie::Database::System do
     let(:summary) { create_summaries(System, base_time) }
     let(:summary_wide) { System.summary(base_time - 1.hours ... Time.now + 1.hours) }
     
-    #The first system was only up for 10 hours; the others were not decommissioned.
-    let(:total_wall_time) { (10 + 30 + 20 + 10).hours }
     #All systems should have the same amount of memory.
     let(:memory_per_system) { System.first.memory }
+    let(:cores_per_system) { System.first.cores }
+    #The first system was only up for 10 hours; the others were not decommissioned.
+    let(:total_wall_time) { (10 + 30 + 20 + 10).hours }
+    let(:total_memory_time) { total_wall_time * memory_per_system }
 
     context "when some systems are active" do
       it "produces correct summaries" do
-        total_cpu_time = total_wall_time * 2
-        avg_mem = Float(memory_per_system * total_wall_time / 40.hours)
         expect(summary[:all]).to eql({
           :num_systems => 4,
-          :avail_cpu_time => total_cpu_time,
-          :avail_memory_time => 1000000 * total_wall_time,
-          :avail_memory_avg => avg_mem,
+          :avail_cpu_time => total_wall_time * cores_per_system,
+          :avail_memory_time => total_wall_time * memory_per_system,
+          :avail_memory_avg => Float(total_memory_time) / 40.hours,
         })
 
         expect(summary[:all_constrained]).to eql(summary[:all])
 
         clipped_wall_time = (10 + 15 + 5).hours - 30.minutes
-        clipped_cpu_time = clipped_wall_time * 2
-        clipped_avg_mem = Float(memory_per_system * clipped_wall_time) / (25.hours - 30.minutes)
         expect(summary[:clipped]).to eql({
           :num_systems => 3,
-          :avail_cpu_time => clipped_cpu_time,
-          :avail_memory_time => memory_per_system * clipped_wall_time,
-          :avail_memory_avg => clipped_avg_mem,
+          :avail_cpu_time => clipped_wall_time * cores_per_system,
+          :avail_memory_time => clipped_wall_time * memory_per_system,
+          :avail_memory_avg => Float(clipped_wall_time * memory_per_system) / (25.hours - 30.minutes),
         })
 
-        wide_wall_time = total_wall_time + 2.hours
-        wide_cpu_time = wide_wall_time * 2
-        wide_avg_mem = Float(memory_per_system * wide_wall_time) / 42.hours
+        wide_wall_time = total_wall_time + 1.hours
         expect(summary_wide).to eql({
           :num_systems => 4,
-          :avail_cpu_time => wide_cpu_time,
+          :avail_cpu_time => wide_wall_time * cores_per_system,
           :avail_memory_time => memory_per_system * wide_wall_time,
-          :avail_memory_avg => wide_avg_mem,
+          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / 42.hours,
         })
 
         expect(summary[:empty]).to eql({
@@ -140,7 +136,7 @@ describe Bookie::Database::System do
 
         s1 = System.summary(base_time ... Time.now + 1.hour)
         s2 = summary[:all].dup
-        s2[:avail_memory_avg] = Float(memory_per_system * total_wall_time) / 41.hours
+        s2[:avail_memory_avg] = Float(total_memory_time) / 41.hours
         s1.should eql s2
       end
     end

@@ -259,6 +259,7 @@ describe Bookie::Database::Job do
       })
 
       expect(summary[:all_constrained]).to eql(summary[:all])
+      expect(summary[:wide]).to eql(summary[:all])
 
       expect(summary[:all_filtered]).to eql({
         :num_jobs => count / 2,

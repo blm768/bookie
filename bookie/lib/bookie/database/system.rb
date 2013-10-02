@@ -140,14 +140,14 @@ Please make sure that all previous systems with this hostname have been marked a
           else
             end_time ||= current_time
           end
-          system_wall_time = end_time.to_i - start_time.to_i
-          avail_cpu_time += system.cores * system_wall_time
-          avail_memory_time += system.memory * system_wall_time
+          wall_time = end_time.to_i - start_time.to_i
+          avail_cpu_time += system.cores * wall_time
+          avail_memory_time += system.memory * wall_time
         end
         
-        wall_time = 0
+        time_span = 0
         if time_range
-          wall_time = time_range.last - time_range.first
+          time_span = time_range.last - time_range.first
         else
           time_min = System.minimum(:start_time)
           #Is there actually a minimum start time?
@@ -158,7 +158,7 @@ Please make sure that all previous systems with this hostname have been marked a
             else
               time_max = System.maximum(:end_time)
             end
-            wall_time = time_max - time_min
+            time_span = time_max - time_min
           end
         end
           
@@ -166,7 +166,7 @@ Please make sure that all previous systems with this hostname have been marked a
           :num_systems => all_systems.length,
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
-          :avail_memory_avg => if wall_time == 0 then 0.0 else Float(avail_memory_time) / wall_time end,
+          :avail_memory_avg => if time_span == 0 then 0.0 else Float(avail_memory_time) / time_span end,
         }
       end
       
