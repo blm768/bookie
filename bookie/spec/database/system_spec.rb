@@ -89,21 +89,32 @@ describe Bookie::Database::System do
         avg_mem = Float(1000000 * total_wall_time / 40.hours)
         clipped_avg_mem = Float(1000000 * clipped_wall_time) / (3600 * 25 - 1800)
         wide_avg_mem = Float(1000000 * wide_wall_time) / 42.hours
-        summary[:all][:systems].length.should eql 4
-        summary[:all][:avail_cpu_time].should eql total_cpu_time
-        summary[:all][:avail_memory_time].should eql 1000000 * total_wall_time
-        summary[:all][:avail_memory_avg].should eql avg_mem
+
+        expect(summary[:all]).to eql({
+          :num_systems => 4,
+          :avail_cpu_time => total_cpu_time,
+          :avail_memory_time => 1000000 * total_wall_time,
+          :avail_memory_avg => avg_mem,
+        })
+
         expect(summary[:all_constrained]).to eql(summary[:all])
-        summary[:clipped][:systems].length.should eql 3
-        summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
-        summary[:clipped][:avail_memory_time].should eql clipped_wall_time * 1000000
-        summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
-        summary_wide[:systems].length.should eql 4
-        summary_wide[:avail_cpu_time].should eql wide_cpu_time
-        summary_wide[:avail_memory_time].should eql 1000000 * wide_wall_time
-        summary_wide[:avail_memory_avg].should eql wide_avg_mem
+
+        expect(summary[:clipped]).to eql({
+          :num_systems => 3,
+          :avail_cpu_time => clipped_cpu_time,
+          :avail_memory_time => clipped_wall_time * 1000000,
+          :avail_memory_avg => clipped_avg_mem,
+        })
+
+        expect(summary_wide).to eql({
+          :num_systems => 4,
+          :avail_cpu_time => wide_cpu_time,
+          :avail_memory_time => 1000000 * wide_wall_time,
+          :avail_memory_avg => wide_avg_mem,
+        })
+
         expect(summary[:empty]).to eql({
-          :systems => [],
+          :num_systems => 0,
           :avail_cpu_time => 0,
           :avail_memory_time => 0,
           :avail_memory_avg => 0.0,
@@ -120,12 +131,14 @@ describe Bookie::Database::System do
             system.save!
           end
         end
-        summary_all_systems_ended = System.summary()
-        summary_all_systems_ended.should eql summary[:all]
-        summary_all_systems_ended = System.summary(base_time ... Time.now + 1.hour)
+
+        s1 = System.summary()
+        s1.should eql summary[:all]
+
+        s1 = System.summary(base_time ... Time.now + 1.hour)
         s2 = summary[:all].dup
-        s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / 41.hours
-        summary_all_systems_ended.should eql s2
+        s2[:avail_memory_avg] = Float(1000000 * total_wall_time) / 41.hours
+        s1.should eql s2
       end
     end
     

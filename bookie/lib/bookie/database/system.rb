@@ -164,7 +164,7 @@ Please make sure that all previous systems with this hostname have been marked a
         end
           
         {
-          :systems => all_systems,
+          :num_systems => all_systems.length,
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
           :avail_memory_avg => if wall_time == 0 then 0.0 else Float(avail_memory_time) / wall_time end,

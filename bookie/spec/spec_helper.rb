@@ -56,6 +56,8 @@ module Helpers
       :clipped => obj.summary(start_time_2 ... end_time_2),
       :empty => obj.summary(Time.at(0) ... Time.at(0)),
     }
+
+    #TODO: move?
     if obj.respond_to?(:by_command_name)
       summaries[:all_filtered] = obj.by_command_name('vi').summary(start_time_1 ... end_time_1)
     end
