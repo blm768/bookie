@@ -53,9 +53,9 @@ module Helpers
     end_time_2 = base_time + 25.hours
     summaries = {
       :all => obj.summary,
-      :all_constrained => obj.summary(start_time_1 .. end_time_1),
+      :all_constrained => obj.summary(start_time_1 ... end_time_1),
       :clipped => obj.summary(start_time_2 ... end_time_2),
-      :empty => obj.summary(Time.at(0) ... Time.at(0)),
+      :empty => obj.summary(start_time_1 ... start_time_1),
     }
 
     #TODO: move?

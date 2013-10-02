@@ -83,7 +83,6 @@ describe Bookie::Database::System do
     #All systems should have the same amount of memory.
     let(:memory_per_system) { System.first.memory }
 
-    #TODO: figure out why this randomly fails.
     context "when some systems are active" do
       it "produces correct summaries" do
         total_cpu_time = total_wall_time * 2

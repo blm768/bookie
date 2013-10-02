@@ -108,7 +108,6 @@ Please make sure that all previous systems with this hostname have been marked a
       #Notes:
       #
       #Results may be slightly off when an inclusive range is used.
-      #TODO: fix this.
       def self.summary(time_range = nil)
         #TODO: how to handle time zones with Rails apps?
         current_time = Time.now
@@ -119,8 +118,8 @@ Please make sure that all previous systems with this hostname have been marked a
         #Find all the systems within the time range.
         systems = System
         if time_range
+          #TODO: unit test?
           time_range = time_range.exclusive.normalized
-          #TODO: unit test.
           systems = systems.by_time_range(time_range)
         end
 
