@@ -80,7 +80,7 @@ module Bookie
           self.none
         else
           time_range = time_range.exclusive
-          where('? <= jobs.end_time AND jobs.start_time < ?', time_range.begin, time_range.end)
+          where('jobs.end_time > ? AND jobs.start_time < ?', time_range.begin, time_range.end)
         end
       end
 
@@ -154,6 +154,7 @@ module Bookie
               end_time = [job.end_time, time_range.end].min
               clipped_wall_time = end_time.to_i - start_time.to_i
               if job.wall_time != 0
+                #TODO: switch to floating-point arithmetic?
                 cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
                 memory_time += job.memory * clipped_wall_time
               end

@@ -179,8 +179,8 @@ describe Bookie::Database::JobSummary do
     
     it "produces correct summaries" do
       1.upto(3) do |num_days|
-        [0, -7200, 7200].each do |offset_begin|
-          [0, -7200, 7200].each do |offset_end|
+        [0, -2.hours, 2.hours, 3.minutes].each do |offset_begin|
+          [0, -2.hours, 2.hours, 3.minutes].each do |offset_end|
             [true, false].each do |exclude_end|
               time_range = Range.new(base_time + offset_begin, base_time + num_days.days + offset_end, exclude_end)
               sum1 = JobSummary.summary(:range => time_range)
@@ -195,10 +195,10 @@ describe Bookie::Database::JobSummary do
 
     it "distinguishes between inclusive and exclusive ranges" do
       Summary = JobSummary
-      sum = Summary.summary(:range => (base_time ... base_time + 1.days + 3600 * 2))
+      sum = Summary.summary(:range => (base_time ... base_time + 1.days + 2.hours))
       sum[:num_jobs].should eql 26
       sum[:successful].should eql 13
-      sum = Summary.summary(:range => (base_time .. base_time + 1.days + 3600 * 2))
+      sum = Summary.summary(:range => (base_time .. base_time + 1.days + 2.hours))
       sum[:num_jobs].should eql 27
       sum[:successful].should eql 14
     end

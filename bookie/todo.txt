@@ -4,4 +4,5 @@ Rename #to_model to #to_record?
 Allow configuration of date boundary to midnight in local time zone?
 Make sure all source files have the required "require"s
 Use "let" in RSpect tests
+Replace 3600 with 2.hours, etc.
 

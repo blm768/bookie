@@ -40,11 +40,24 @@ describe Bookie::Database::Job do
       job.end_time.should eql job.start_time + job.wall_time
       job.end_time.should eql job.read_attribute(:end_time)
     end
+
     #Test the update hook.
     job = Job.first
-    job.start_time = job.start_time - 1
+    job.start_time -= 1
     job.save!
     job.end_time.should eql job.read_attribute(:end_time)
+  end
+
+  describe "#end_time=" do
+    it "correctly adjusts time values" do
+      job = Job.first
+      old_end_time = job.end_time
+      job.end_time -= 1
+      #We use #to_i because directly subtracting Time objects produces
+      #floating-point numbers.
+      expect(job.wall_time).to eql(job.end_time.to_i - job.start_time.to_i)
+      expect(job.end_time).to eql(old_end_time - 1)
+    end
   end
   
   it "correctly filters by user" do
@@ -120,29 +133,33 @@ describe Bookie::Database::Job do
   end
   
   describe "#by_time_range" do
+    let(:base_start) { base_time + 1.days }
+    let(:base_end) { base_start + 2.hours }
+
     it "filters by inclusive time range" do
-      jobs = Job.by_time_range(base_time ... base_time + 3600 * 2 + 1)
+      jobs = Job.by_time_range(base_start ... base_end + 1)
       jobs.count.should eql 3
-      jobs = Job.by_time_range(base_time + 1 ... base_time + 3600 * 2)
+      jobs = Job.by_time_range(base_start + 1 ... base_end) 
       jobs.count.should eql 2
-      jobs = Job.by_time_range(base_time ... base_time)
+      jobs = Job.by_time_range(base_start ... base_start)
       jobs.length.should eql 0
     end
 
     it "filters by exclusive time range" do
-      jobs = Job.by_time_range(base_time + 1 .. base_time + 3600 * 2)
+      jobs = Job.by_time_range(base_start + 1 .. base_end)
       jobs.count.should eql 3
-      jobs = Job.by_time_range(base_time .. base_time + 3600 * 2 - 1)
+      jobs = Job.by_time_range(base_start .. base_end - 1)
       jobs.count.should eql 2
-      jobs = Job.by_time_range(base_time .. base_time)
+      jobs = Job.by_time_range(base_start .. base_start)
       jobs.count.should eql 1
     end
     
-    it "correctly handles empty/inverted ranges" do
-      t = base_time
-      (-1 .. 0).each do |offset|
-        jobs = Job.by_time_range(t ... t + offset)
-        jobs.count.should eql 0
+    context "with an empty range" do
+      it "finds no jobs" do
+        (-1 .. 0).each do |offset|
+          jobs = Job.by_time_range(base_start ... base_start + offset)
+          jobs.count.should eql 0
+        end
       end
     end
   end
@@ -161,6 +178,10 @@ describe Bookie::Database::Job do
         end
       end
     end
+
+    context "with an empty range" do
+      it "finds no jobs"
+    end
   end
 
   describe "overlapping_edges" do
@@ -171,28 +192,26 @@ describe Bookie::Database::Job do
       it "finds jobs that overlap the edges" do
         #Overlapping beginning
         jobs = Job.overlapping_edges(base_start + 1 ... base_end)
-        expect(jobs.length).to eql 1
+        expect(jobs.count).to eql 1
         expect(jobs.first.start_time).to eql base_time
         
         #Overlapping end
         jobs = Job.overlapping_edges(base_start ... base_end - 1)
-        expect(jobs.length).to eql 1
+        expect(jobs.count).to eql 1
         expect(jobs.first.start_time).to eql base_time
 
         #One job overlapping both
         jobs = Job.overlapping_edges(base_start + 1 ... base_end - 1)
-        expect(jobs.length).to eql 1
+        expect(jobs.count).to eql 1
         expect(jobs.first.start_time).to eql base_time
 
         #Two jobs overlapping the endpoints
         jobs = Job.overlapping_edges(base_end - 1 ... base_end + 1) 
-        expect(jobs.length).to eql 2
+        expect(jobs.count).to eql 2
         
         #Not overlapping any endpoints
         jobs = Job.overlapping_edges(base_start ... base_end)
-        expect(jobs.length).to eql 0
-        jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
-        expect(jobs.length).to eql 0
+        expect(jobs.count).to eql 0
       end
     end
 
@@ -201,10 +220,19 @@ describe Bookie::Database::Job do
         #This is more pared-down because inclusive and exclusive ranges mostly
         #share the same codepath.
         jobs = Job.overlapping_edges(base_start .. base_end)
-        expect(jobs.length).to eql 1
+        expect(jobs.count).to eql 1
 
         jobs = Job.overlapping_edges(base_start .. base_start)
-        expect(jobs.length).to eql 1
+        expect(jobs.count).to eql 1
+      end
+    end
+
+    context "with empty ranges" do
+      it "finds no jobs" do
+        jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
+        expect(jobs.count).to eql 0
+        jobs = Job.overlapping_edges(base_start + 1 .. base_start)
+        expect(jobs.count).to eql 0
       end
     end
   end
@@ -217,6 +245,7 @@ describe Bookie::Database::Job do
     let(:length) { Job.count }
     let(:summary) { create_summaries(Job, base_time) }
     
+    #TODO: test the case where a job extends on both sides of the summary range?
     it "produces correct summary totals" do
       summary[:all][:num_jobs].should eql length
       summary[:all][:successful].should eql 20
