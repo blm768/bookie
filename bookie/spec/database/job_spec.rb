@@ -23,6 +23,17 @@ RSpec::Matchers.define :have_unique_associations do
   end
 end
 
+RSpec::Matchers.define :be_job_within_time_range do |time_range|
+  match do |job|
+    expect(time_range).to cover(job.start_time)
+    #This check is required because of a peculiarity of #within_time_range;
+    #jobs with an end_time one second beyond the last value in the range
+    #are still included (intentionally).
+    range_extended = Range.new(time_range.begin, time_range.end + 1, time_range.exclude_end?)
+    expect(range_extended).to cover(job.end_time)
+  end
+end
+
 describe Bookie::Database::Job do
   it "correctly sets end times" do
     Job.find_each do |job|
@@ -136,12 +147,22 @@ describe Bookie::Database::Job do
     end
   end
 
-  #TODO: implement.
   describe "#within_time_range" do
-    it "finds jobs within the range"
+    let(:base_start) { base_time + 3600 + 1 }
+    let(:base_end) { base_time + 3600 * 5 - 1 }
+
+    it "finds jobs within the range" do
+      [true, false].each do |exclude_end|
+        time_range = Range.new(base_start, base_end, exclude_end)
+        jobs = Job.within_time_range(time_range)
+        expect(jobs.count).to eql (exclude_end ? 2 : 3)
+        jobs.each do |job|
+          expect(job).to be_job_within_time_range(time_range)
+        end
+      end
+    end
   end
 
-  #TODO: implement.
   describe "overlapping_edges" do
     let(:base_start) { base_time }
     let(:base_end) { base_time + 3600 }

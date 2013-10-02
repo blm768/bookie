@@ -3,7 +3,6 @@ require 'spec_helper'
 require 'bookie/senders/torque_cluster.rb'
 
 #Stubbed out for now so the 'describe' line works
-#TODO: figure out why this seems to occasionally cause unit test failures.
 module Bookie
   module Senders
     module TorqueCluster

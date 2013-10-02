@@ -93,6 +93,9 @@ module Bookie
         else
           time_range = time_range.exclusive
           #The second "<=" operator _is_ intentional.
+          #If the job's end_time is one second past the last value in the range, it
+          #is still considered to be contained within time_range because it did not
+          #run outside time_range; it only _stopped_ outside it.
           where('? <= jobs.start_time AND jobs.end_time <= ?', time_range.begin, time_range.end)
         end
       end
