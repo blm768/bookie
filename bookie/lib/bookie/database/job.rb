@@ -19,6 +19,7 @@ module Bookie
     class Job < ActiveRecord::Base
       belongs_to :user
       belongs_to :system
+      #TODO: include group and system_type with a :through association?
       
       ##
       #The time at which the job ended

@@ -22,8 +22,8 @@ RSpec::Matchers.define :have_unique_system_associations do
 end
 
 describe Bookie::Database::System do
-  it "correctly finds active systems" do
-    System.active_systems.length.should eql 3
+  describe "#active" do
+    it { System.active.length.should eql 3 }
   end
   
   it "correctly filters by name" do
@@ -44,23 +44,25 @@ describe Bookie::Database::System do
   end
 
   #TODO: rename this method and create a common example.
-  describe "#by_time_range_inclusive" do
-    it "correctly filters by inclusive time range" do
-      systems = System.by_time_range_inclusive(base_time ... base_time + 36000 * 2 + 1)
+  describe "#by_time_range" do
+    it "correctly filters by time range" do
+      systems = System.by_time_range(base_time ... base_time + 36000 * 2 + 1)
       systems.count.should eql 3
-      systems = System.by_time_range_inclusive(base_time + 1 ... base_time + 36000 * 2)
+      systems = System.by_time_range(base_time + 1 ... base_time + 36000 * 2)
       systems.count.should eql 2
-      systems = System.by_time_range_inclusive(base_time ... base_time)
+      systems = System.by_time_range(base_time ... base_time)
       systems.length.should eql 0
-      systems = System.by_time_range_inclusive(base_time .. base_time + 36000 * 2)
+      systems = System.by_time_range(base_time .. base_time + 36000 * 2)
       systems.count.should eql 3
-      systems = System.by_time_range_inclusive(base_time .. base_time)
+      systems = System.by_time_range(base_time .. base_time)
       systems.count.should eql 1
     end
+
+    #TODO: split inclusive/exclusive range tests
     
     it "correctly handles empty/inverted ranges" do
       (-1 .. 0).each do |offset|
-        systems = System.by_time_range_inclusive(base_time ... base_time + offset)
+        systems = System.by_time_range(base_time ... base_time + offset)
         systems.count.should eql 0
       end
     end
@@ -68,54 +70,63 @@ describe Bookie::Database::System do
 
   describe "#summary" do
     before(:all) do
-      Time.expects(:now).returns(base_time + 3600 * 40).at_least_once
+      Time.expects(:now).returns(base_time + 40.hours).at_least_once
     end
 
     let(:summary) { create_summaries(System, base_time) }
     let(:summary_wide) { System.summary(base_time - 1.hours ... base_time + 41.hours) }
     
-    #TODO: figure out why this randomly fails.
-    it "produces correct summaries" do
-      system_total_wall_time = 1.hours * (10 + 30 + 20 + 10)
-      system_clipped_wall_time = 1.hours * (10 + 15 + 5) - 30.minutes
-      system_wide_wall_time = system_total_wall_time + 3.hours
-      system_total_cpu_time = system_total_wall_time * 2
-      clipped_cpu_time = system_clipped_wall_time * 2
-      system_wide_cpu_time = system_wide_wall_time * 2
-      avg_mem = Float(1000000 * system_total_wall_time / (3600 * 40))
-      clipped_avg_mem = Float(1000000 * system_clipped_wall_time) / (3600 * 25 - 1800)
-      wide_avg_mem = Float(1000000 * system_wide_wall_time) / (3600 * 42)
-      summary[:all][:systems].length.should eql 4
-      summary[:all][:avail_cpu_time].should eql system_total_cpu_time
-      summary[:all][:avail_memory_time].should eql 1000000 * system_total_wall_time
-      summary[:all][:avail_memory_avg].should eql avg_mem
-      expect(summary[:all_constrained]).to eql(summary[:all])
-      summary[:clipped][:systems].length.should eql 3
-      summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
-      summary[:clipped][:avail_memory_time].should eql system_clipped_wall_time * 1000000
-      summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
-      summary_wide[:systems].length.should eql 4
-      summary_wide[:avail_cpu_time].should eql system_wide_cpu_time
-      summary_wide[:avail_memory_time].should eql 1000000 * system_wide_wall_time
-      summary_wide[:avail_memory_avg].should eql wide_avg_mem
-      summary[:empty][:systems].length.should eql 0
-      summary[:empty][:avail_cpu_time].should eql 0
-      summary[:empty][:avail_memory_time].should eql 0
-      summary[:empty][:avail_memory_avg].should eql 0.0
+    let(:total_wall_time) { (10 + 30 + 20 + 10).hours }
 
-      System.find_each do |system|
-        unless system.end_time
-          #Only works because of the mock in the before(:all) block
-          system.end_time = Time.now
-          system.save!
-        end
+    #TODO: figure out why this randomly fails.
+    context "when some systems are active" do
+      it "produces correct summaries" do
+        clipped_wall_time = (10 + 15 + 5).hours - 30.minutes
+        wide_wall_time = total_wall_time + 3.hours
+        total_cpu_time = total_wall_time * 2
+        clipped_cpu_time = clipped_wall_time * 2
+        wide_cpu_time = wide_wall_time * 2
+        avg_mem = Float(1000000 * total_wall_time / 40.hours)
+        clipped_avg_mem = Float(1000000 * clipped_wall_time) / (3600 * 25 - 1800)
+        wide_avg_mem = Float(1000000 * wide_wall_time) / 42.hours
+        summary[:all][:systems].length.should eql 4
+        summary[:all][:avail_cpu_time].should eql total_cpu_time
+        summary[:all][:avail_memory_time].should eql 1000000 * total_wall_time
+        summary[:all][:avail_memory_avg].should eql avg_mem
+        expect(summary[:all_constrained]).to eql(summary[:all])
+        summary[:clipped][:systems].length.should eql 3
+        summary[:clipped][:avail_cpu_time].should eql clipped_cpu_time
+        summary[:clipped][:avail_memory_time].should eql clipped_wall_time * 1000000
+        summary[:clipped][:avail_memory_avg].should eql clipped_avg_mem
+        summary_wide[:systems].length.should eql 4
+        summary_wide[:avail_cpu_time].should eql wide_cpu_time
+        summary_wide[:avail_memory_time].should eql 1000000 * wide_wall_time
+        summary_wide[:avail_memory_avg].should eql wide_avg_mem
+        expect(summary[:empty]).to eql({
+          :systems => [],
+          :avail_cpu_time => 0,
+          :avail_memory_time => 0,
+          :avail_memory_avg => 0.0,
+        })
       end
-      summary_all_systems_ended = System.summary()
-      summary_all_systems_ended.should eql summary[:all]
-      summary_all_systems_ended = System.summary(base_time ... Time.now + 1.hour)
-      s2 = summary[:all].dup
-      s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / (3600 * 41)
-      summary_all_systems_ended.should eql s2
+    end
+
+    context "when no systems are active" do
+      it "produces correct summaries" do
+        System.find_each do |system|
+          unless system.end_time
+            #Only works because of the mock in the before(:all) block
+            system.end_time = Time.now
+            system.save!
+          end
+        end
+        summary_all_systems_ended = System.summary()
+        summary_all_systems_ended.should eql summary[:all]
+        summary_all_systems_ended = System.summary(base_time ... Time.now + 1.hour)
+        s2 = summary[:all].dup
+        s2[:avail_memory_avg] = Float(1000000 * system_total_wall_time) / 41.hours
+        summary_all_systems_ended.should eql s2
+      end
     end
     
     it "correctly handles inverted ranges" do
@@ -179,7 +190,7 @@ describe Bookie::Database::System do
   end
 
   it "correctly decommissions" do
-    sys = System.active_systems.find_by_name('test1')
+    sys = System.active.find_by_name('test1')
     begin
       sys.decommission(sys.start_time + 3)
       sys.end_time.should eql sys.start_time + 3

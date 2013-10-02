@@ -251,20 +251,31 @@ describe Bookie::Database::Job do
     
     #TODO: test the case where a job extends on both sides of the summary range?
     it "produces correct summary totals" do
-      summary[:all][:num_jobs].should eql length
-      summary[:all][:successful].should eql 20
-      summary[:all][:cpu_time].should eql length * 100
-      summary[:all][:memory_time].should eql length * 200 * 1.hour
+      expect(summary[:all]).to eql({
+        :num_jobs => length,
+        :successful => 20,
+        :cpu_time => length * 100,
+        :memory_time => length * 200 * 1.hour,
+      })
+
       expect(summary[:all_constrained]).to eql(summary[:all])
-      summary[:all_filtered][:num_jobs].should eql length / 2
-      summary[:all_filtered][:successful].should eql 20
-      summary[:all_filtered][:cpu_time].should eql length * 100 / 2
-      summary[:all_filtered][:memory_time].should eql length * 100 * 3600
+
+      expect(summary[:all_filtered]).to eql({
+        :num_jobs => length / 2,
+        :successful => 20,
+        :cpu_time => length * 100 / 2,
+        :memory_time => length * 100 * 3600,
+      })
+
       num_clipped_jobs = summary[:clipped][:num_jobs]
-      num_clipped_jobs.should eql 25
-      summary[:clipped][:cpu_time].should eql num_clipped_jobs * 100 - 50
-      summary[:clipped][:memory_time].should eql num_clipped_jobs * 200 * 3600 - 100 * 3600
-      summary[:clipped][:successful].should eql num_clipped_jobs / 2 + 1
+      #num_clipped_jobs.should eql 25
+
+      expect(summary[:clipped]).to eql({
+        :num_jobs => 25,
+        :cpu_time => num_clipped_jobs * 100 - 50,
+        :memory_time => num_clipped_jobs * 200 * 3600 - 100 * 3600,
+        :successful => num_clipped_jobs / 2 + 1,
+      })
     end
     
     it "correctly handles summaries of empty sets" do

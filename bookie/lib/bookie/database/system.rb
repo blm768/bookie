@@ -17,7 +17,7 @@ module Bookie
       
       ##
       #Finds all systems that are active (i.e. all systems with NULL values for end_time)
-      def self.active_systems
+      def self.active
         where('systems.end_time IS NULL')
       end
       
@@ -37,13 +37,12 @@ module Bookie
       #Finds all systems whose running intervals overlap the given time range
       #
       #TODO: unit test.
-      def self.by_time_range_inclusive(time_range)
+      def self.by_time_range(time_range)
         if time_range.empty?
           self.none
-        elsif time_range.exclude_end?
-          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time < ?', time_range.first, time_range.last)
         else
-          where('(? <= systems.end_time OR systems.end_time IS NULL) AND systems.start_time <= ?', time_range.first, time_range.last)
+          time_range = time_range.exclusive
+          where('(? < systems.end_time OR systems.end_time IS NULL) AND systems.start_time < ?', time_range.first, time_range.last)
         end
       end
 
@@ -79,6 +78,7 @@ Please make sure that all previous systems with this hostname have been marked a
       #
       #Associations are not cached between calls.
       def self.all_with_associations
+        #TODO: confirm that this produces inner joins when combined with #joins().
         self.includes(:system_type).to_a
 #        systems = self.where(nil).to_a
 #        system_types = {}
@@ -110,53 +110,56 @@ Please make sure that all previous systems with this hostname have been marked a
       #Results may be slightly off when an inclusive range is used.
       #TODO: fix this.
       def self.summary(time_range = nil)
-        #To consider: how to handle time zones with Rails apps?
+        #TODO: how to handle time zones with Rails apps?
         current_time = Time.now
-        #Sums that are actually returned
+
         avail_cpu_time = 0
         avail_memory_time = 0
+
         #Find all the systems within the time range.
         systems = System
         if time_range
-          time_range = time_range.normalized
+          time_range = time_range.exclusive.normalized
           #TODO: unit test.
-          systems = systems.by_time_range_inclusive(time_range)
+          systems = systems.by_time_range(time_range)
         end
 
         all_systems = systems.all_with_associations
 
         all_systems.each do |system|
-          system_start_time = system.start_time
-          system_end_time = system.end_time
+          start_time = system.start_time
+          end_time = system.end_time
           #Is there a time range constraint?
           if time_range
-            system_start_time = [system_start_time, time_range.first].max
-            system_end_time = [system_end_time, time_range.last].min if system.end_time
-            system_end_time ||= time_range.last
+            #If so, trim start_time and end_time to fit within the range.
+            start_time = [start_time, time_range.first].max
+            if end_time
+              end_time = [end_time, time_range.last].min
+            else
+              end_time ||= time_range.last
+            end
           else
-            system_end_time ||= current_time
+            end_time ||= current_time
           end
-          system_wall_time = system_end_time.to_i - system_start_time.to_i
+          system_wall_time = end_time.to_i - start_time.to_i
           avail_cpu_time += system.cores * system_wall_time
           avail_memory_time += system.memory * system_wall_time
         end
         
-        #TODO: split into a new method?
-        wall_time_range = 0
+        wall_time = 0
         if time_range
-          wall_time_range = time_range.last - time_range.first
+          wall_time = time_range.last - time_range.first
         else
-          first_started_system = systems.order(:start_time).first
-          if first_started_system
-            #Is there a system still active?
-            last_ended_system = systems.where('systems.end_time IS NULL').first
-            if last_ended_system
-              wall_time_range = current_time.to_i - first_started_system.start_time.to_i
+          time_min = System.minimum(:start_time)
+          #Is there actually a minimum start time?
+          #(In other words, are there any systems in the database?)
+          if time_min
+            if System.active.any?
+              time_max = current_time
             else
-              #No; find the system that was brought down last.
-              last_ended_system = systems.order('end_time DESC').first
-              wall_time_range = last_ended_system.end_time.to_i - first_started_system.start_time.to_i
+              time_max = System.maximum(:end_time)
             end
+            wall_time = time_max - time_min
           end
         end
           
@@ -164,7 +167,7 @@ Please make sure that all previous systems with this hostname have been marked a
           :systems => all_systems,
           :avail_cpu_time => avail_cpu_time,
           :avail_memory_time => avail_memory_time,
-          :avail_memory_avg => if wall_time_range == 0 then 0.0 else Float(avail_memory_time) / wall_time_range end,
+          :avail_memory_avg => if wall_time == 0 then 0.0 else Float(avail_memory_time) / wall_time end,
         }
       end
       
