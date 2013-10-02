@@ -75,22 +75,23 @@ Please make sure that all previous systems with this hostname have been marked a
       end
       
       ##
-      #Returns an array of all systems, pre-loading relations to reduce the need for extra queries
+      #Returns an array of all systems, pre-loading associations to reduce the need for extra queries
       #
-      #Relations are not cached between calls.
-      def self.all_with_relations
-        systems = self.where(nil).to_a
-        system_types = {}
-        systems.each do |system|
-          system_type = system_types[system.system_type_id]
-          if system_type
-            system.system_type = system_type
-          else
-            system_type = system.system_type
-            system_types[system_type.id] = system_type
-          end
-        end
-        systems
+      #Associations are not cached between calls.
+      def self.all_with_associations
+        self.includes(:system_type).to_a
+#        systems = self.where(nil).to_a
+#        system_types = {}
+#        systems.each do |system|
+#          system_type = system_types[system.system_type_id]
+#          if system_type
+#            system.system_type = system_type
+#          else
+#            system_type = system.system_type
+#            system_types[system_type.id] = system_type
+#          end
+#        end
+#        systems
       end
  
       ##
@@ -107,7 +108,7 @@ Please make sure that all previous systems with this hostname have been marked a
       #Notes:
       #
       #Results may be slightly off when an inclusive range is used.
-      #To consider: is this worth fixing?
+      #TODO: fix this.
       def self.summary(time_range = nil)
         #To consider: how to handle time zones with Rails apps?
         current_time = Time.now
@@ -122,8 +123,8 @@ Please make sure that all previous systems with this hostname have been marked a
           systems = systems.by_time_range_inclusive(time_range)
         end
 
-        all_systems = systems.all_with_relations
-        
+        all_systems = systems.all_with_associations
+
         all_systems.each do |system|
           system_start_time = system.start_time
           system_end_time = system.end_time
@@ -140,6 +141,7 @@ Please make sure that all previous systems with this hostname have been marked a
           avail_memory_time += system.memory * system_wall_time
         end
         
+        #TODO: split into a new method?
         wall_time_range = 0
         if time_range
           wall_time_range = time_range.last - time_range.first

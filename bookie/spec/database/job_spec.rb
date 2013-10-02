@@ -9,17 +9,18 @@ RSpec::Matchers.define :have_unique_associations do
     association_ids = {}
     jobs.each do |job|
       associations = [job.user, job.user.group, job.system, job.system.system_type]
-      associations.each do |r|
+      associations.each do |association|
+        association_id = method_object_id.bind(association).call
         #Have we seen this association?
-        if association_ids.include?(r)
-          unless association_ids[r] == method_object_id.bind(r).call
-            return false
-          end
+        if association_ids.include?(association)
+          return false unless association_ids[association] == association_id
         else
-          association_ids[r] = method_object_id.bind(r).call
+          association_ids[association] = association_id
         end
       end
     end
+
+    true
   end
 end
 
@@ -133,7 +134,7 @@ describe Bookie::Database::Job do
   end
   
   describe "#by_time_range" do
-    let(:base_start) { base_time + 1.days }
+    let(:base_start) { base_time + 1.hours }
     let(:base_end) { base_start + 2.hours }
 
     it "filters by inclusive time range" do
@@ -165,8 +166,8 @@ describe Bookie::Database::Job do
   end
 
   describe "#within_time_range" do
-    let(:base_start) { base_time + 3600 + 1 }
-    let(:base_end) { base_time + 3600 * 5 - 1 }
+    let(:base_start) { base_time + 1.hours + 1 }
+    let(:base_end) { base_time + 5.hours - 1 }
 
     it "finds jobs within the range" do
       [true, false].each do |exclude_end|
@@ -180,7 +181,10 @@ describe Bookie::Database::Job do
     end
 
     context "with an empty range" do
-      it "finds no jobs"
+      it "finds no jobs" do
+        jobs = Job.within_time_range(base_start ... base_start)
+        expect(jobs.count).to eql(0)
+      end
     end
   end
 
@@ -250,7 +254,7 @@ describe Bookie::Database::Job do
       summary[:all][:num_jobs].should eql length
       summary[:all][:successful].should eql 20
       summary[:all][:cpu_time].should eql length * 100
-      summary[:all][:memory_time].should eql length * 200 * 3600
+      summary[:all][:memory_time].should eql length * 200 * 1.hour
       expect(summary[:all_constrained]).to eql(summary[:all])
       summary[:all_filtered][:num_jobs].should eql length / 2
       summary[:all_filtered][:successful].should eql 20

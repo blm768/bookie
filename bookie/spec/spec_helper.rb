@@ -46,9 +46,10 @@ module Helpers
 
   def create_summaries(obj, base_time)
     start_time_1 = base_time
-    end_time_1   = base_time + 3600 * 40
-    start_time_2 = base_time + 1800
-    end_time_2 = base_time + (3600 * 25)
+    end_time_1   = base_time + 40.hours
+    #TODO: push this farther forward?
+    start_time_2 = base_time + 30.minutes
+    end_time_2 = base_time + 25.hours
     summaries = {
       :all => obj.summary,
       :all_constrained => obj.summary(start_time_1 .. end_time_1),
