@@ -133,7 +133,7 @@ formatter.print_summary(jobs, summaries, systems, time_range)
 if include_details
   #TODO: include separator or blank line.
 
-  jobs = jobs.by_time_range_inclusive(time_range) if time_range
+  jobs = jobs.by_time_range(time_range) if time_range
   jobs = jobs.order(:start_time)
 
   if details_per_page
@@ -144,7 +144,7 @@ if include_details
       jobs = jobs.offset(page_start).limit(details_per_page)
     end
   end
-  formatter.print_jobs(jobs.all_with_relations)
+  formatter.print_jobs(jobs.all_with_associations)
 end
 
 formatter.flush
