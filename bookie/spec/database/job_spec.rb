@@ -248,7 +248,7 @@ describe Bookie::Database::Job do
   describe "#summary" do
     let(:count) { Job.count }
     let(:summary) { create_summaries(Job, base_time) }
-    
+
     #TODO: test the case where a job extends on both sides of the summary range?
     it "produces correct summary totals" do
       expect(summary[:all]).to eql({
