@@ -4,4 +4,6 @@ Make sure all source files have the required "require"s
 Use "let" in RSpect tests
 Replace 3600 with 2.hours, etc.
 Also clear out other "magic" numbers.
+Split some tests up.
+Validate uniqueness?
 

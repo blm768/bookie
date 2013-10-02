@@ -246,33 +246,32 @@ describe Bookie::Database::Job do
   end
   
   describe "#summary" do
-    let(:length) { Job.count }
+    let(:count) { Job.count }
     let(:summary) { create_summaries(Job, base_time) }
     
     #TODO: test the case where a job extends on both sides of the summary range?
     it "produces correct summary totals" do
       expect(summary[:all]).to eql({
-        :num_jobs => length,
+        :num_jobs => count,
         :successful => 20,
-        :cpu_time => length * 100,
-        :memory_time => length * 200 * 1.hour,
+        :cpu_time => count * 100,
+        :memory_time => count * 200 * 1.hour,
       })
 
       expect(summary[:all_constrained]).to eql(summary[:all])
 
       expect(summary[:all_filtered]).to eql({
-        :num_jobs => length / 2,
+        :num_jobs => count / 2,
         :successful => 20,
-        :cpu_time => length * 100 / 2,
-        :memory_time => length * 100 * 3600,
+        :cpu_time => count * 100 / 2,
+        :memory_time => count * 100 * 1.hour,
       })
 
       num_clipped_jobs = summary[:clipped][:num_jobs]
-      #num_clipped_jobs.should eql 25
-
       expect(summary[:clipped]).to eql({
         :num_jobs => 25,
         :cpu_time => num_clipped_jobs * 100 - 50,
+        #TODO: this seems off. Why?
         :memory_time => num_clipped_jobs * 200 * 3600 - 100 * 3600,
         :successful => num_clipped_jobs / 2 + 1,
       })

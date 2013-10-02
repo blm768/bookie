@@ -10,7 +10,6 @@ task :default => :spec
 desc "Run specs"
 RSpec::Core::RakeTask.new(:spec) do |task|
   task.rspec_opts =%w{--color --order rand --format progress}
-  #TODO: include all levels of subdirectories?
   paths = []
   Find.find('spec') do |path|
     if File.directory?(path)

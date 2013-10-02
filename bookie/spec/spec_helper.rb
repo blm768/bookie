@@ -44,6 +44,7 @@ module Helpers
     ActiveRecord::Base.connection.rollback_transaction
   end
 
+  #Creates summaries under diffferent conditions
   def create_summaries(obj, base_time)
     start_time_1 = base_time
     end_time_1   = base_time + 40.hours
@@ -65,81 +66,68 @@ module Helpers
     summaries
   end
   
-  def test_system_relation_identity(system, relation_ids)
-    t = system.system_type
-    method_object_id = Object.instance_method(:object_id)
-    if relation_ids.include?(t)
-      relation_ids[t].should eql method_object_id.bind(t).call
-    else
-      relation_ids[t] = method_object_id.bind(t).call
-    end
-  end
-
   BASE_TIME = Time.utc(2012)
   #To get around the "formal argument cannot be a constant" error
   def base_time
     BASE_TIME
   end
 
+  #Create test database
   def self.generate_database
-    #Create test database
     groups = {}
     group_names = ['root', 'default', 'admin', 'admin']
-    group_names.each do |name|
-      unless groups[name]
-        group = Bookie::Database::Group.new
-        group.name = name
-        group.save!
-        groups[name] = group
-      end
+    group_names[0 .. 2].each do |name|
+      group = Bookie::Database::Group.create!(:name => name)
+      groups[name] = group
     end
-    users = {}
+
+    users = []
     user_names = ['root', 'test', 'test', 'blm768']
-    user_names.each_index do |i|
-      name = user_names[i]
-      unless users[[name, group_names[i]]]
-        user = Bookie::Database::User.new
-        user.name = name
-        user.group = groups[group_names[i]]
-        user.save!
-        users[name] ||= {}
-        users[[name, group_names[i]]] = user
-      end
+    user_names.each_with_index do |name, i|
+      user = Bookie::Database::User.new
+      user.name = name
+      user.group = groups[group_names[i]]
+      user.save!
+      users << user
     end
+
     system_types = [
       Bookie::Database::SystemType.create!(
         :name => 'Standalone',
-        :memory_stat_type => :avg),
+        :memory_stat_type => :avg
+      ),
       Bookie::Database::SystemType.create!(
         :name => 'TORQUE cluster',
-        :memory_stat_type => :max)]
+        :memory_stat_type => :max
+      ),
+    ]
+
     systems = []
     system_names = ['test1', 'test1', 'test2', 'test3']
-    system_names.each_index do |i|
-      name = system_names[i]
-      unless systems.include?name
-        system = Bookie::Database::System.create!(
-          :name => name,
-          :system_type => system_types[i % 2],
-          :start_time => BASE_TIME + (36000 * i),
-          :cores => 2,
-          :memory => 1000000)
-        systems << system
-      end
+    system_names.each_with_index do |name, i|
+      system = Bookie::Database::System.create!(
+        :name => name,
+        :system_type => system_types[i % 2],
+        :start_time => BASE_TIME + (10.hours * i),
+        :cores => 2,
+        :memory => 1000000
+      )
+      systems << system
     end
-    systems[0].end_time = BASE_TIME + 36000
+    systems[0].end_time = systems[1].start_time
     systems[0].save!
-    for i in 0 ... 40 do
+
+    40.times do |i|
       job = Bookie::Database::Job.new
-      job.user = users[[user_names[i % user_names.length], group_names[i % user_names.length]]]
+      job.user = users[i % users.length]
       job.system = systems[i / 10]
       if i & 1 == 0
         job.command_name = 'vi'
       else
         job.command_name = 'emacs'
       end
-      job.start_time = BASE_TIME + 3600 * i
-      job.wall_time = 3600
+      job.start_time = BASE_TIME + i.hours
+      job.wall_time = 1.hours
       job.cpu_time = 100
       job.memory = 200
       job.exit_code = i & 1
@@ -170,8 +158,6 @@ end
 
 RSpec.configure do |config|
   config.include Helpers
-
-  #config.fail_fast = true
 
   config.mock_with(:mocha)
 

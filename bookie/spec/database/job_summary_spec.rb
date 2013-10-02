@@ -216,16 +216,20 @@ describe Bookie::Database::JobSummary do
       job.save!
       check_time_bounds
       JobSummary.delete_all
+      
       #Check the case where all systems are decommissioned.
+      #TODO: split into a context?
       JobSummary.transaction(:requires_new => true) do
-        System.active_systems.each do |sys|
+        System.active.each do |sys|
           sys.end_time = base_time + 2.days
           sys.save!
         end
         check_time_bounds
         raise ActiveRecord::Rollback
       end
+
       #Check the case where there are no jobs.
+      #TODO: split into a context?
       Job.delete_all
       sum = JobSummary.summary
       sum.should eql(@empty_summary)
