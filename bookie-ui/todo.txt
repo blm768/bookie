@@ -1,6 +1,6 @@
 Unit testing
 Change (and don't release!) the session secret key before deployment.
 Fix issue: filters that exist at page load cannot be re-added.
-Improve date selection
 Respond with 404 on invalid deletes (and some other operations?)
+Add useful scopes to WebUsers
 
