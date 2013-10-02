@@ -104,7 +104,8 @@ describe Bookie::Database::System do
           :avail_memory_avg => Float(clipped_wall_time * memory_per_system) / (25.hours - 30.minutes),
         })
 
-        wide_wall_time = total_wall_time + 1.hours
+        #One extra hour of wall time for each active system
+        wide_wall_time = total_wall_time + 3.hours
         expect(summary_wide).to eql({
           :num_systems => 4,
           :avail_cpu_time => wide_wall_time * cores_per_system,

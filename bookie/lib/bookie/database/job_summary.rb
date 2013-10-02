@@ -163,6 +163,8 @@ module Bookie
       # jobs = Bookie::Database::Job.by_user_name('root')
       # summaries = Bookie::Database::Job.by_user_name('root')
       # puts summaries.summary(:jobs => jobs)
+      #
+      # TODO: test that summaries are created on UTC date boundaries?
       def self.summary(opts = {})
         jobs = opts[:jobs] || Job
         time_range = opts[:range]
