@@ -136,12 +136,11 @@ module Bookie
     end
     
     #Used internally by #send_data and #undo_send
-    #TODO: lock the job_summaries table?
     def clear_summaries(date_min, date_max)
       #Since joins don't mix with DELETE statements, we have to do this the hard way.
-      systems = Database::System.by_name(@config.hostname).select(:id).to_a
-      systems.map!{ |sys| sys.id }
-      Database::JobSummary.where('job_summaries.system_id in (?)', systems).where('date >= ? AND date <= ?', date_min, date_max).delete_all
+      #To consider: prune systems by time?
+      system_ids = Database::System.by_name(@config.hostname).pluck(:id)
+      Database::JobSummary.where('job_summaries.system_id in (?)', system_ids).where('date >= ? AND date <= ?', date_min, date_max).delete_all
     end
     private :clear_summaries
   end
