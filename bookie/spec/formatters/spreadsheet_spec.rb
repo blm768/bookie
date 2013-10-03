@@ -9,6 +9,9 @@ module Bookie
   end
 end
 
+include Bookie
+include Bookie::Database
+
 class MockWorkbook
   def initialize
     @worksheets = {}
@@ -20,6 +23,9 @@ class MockWorkbook
 end
 
 class MockWorksheet
+  attr_reader :mock_rows
+  attr_reader :mock_columns
+  
   def initialize
     @mock_rows = []
     @mock_columns = []
@@ -28,17 +34,9 @@ class MockWorksheet
   def row(num)
     @mock_rows[num] ||= []
   end
-  
-  def mock_rows
-    @mock_rows
-  end
-  
+
   def column(num)
     @mock_columns[num] ||= MockColumn.new
-  end
-  
-  def mock_columns
-    @mock_columns
   end
   
   def last_row_index
@@ -57,41 +55,39 @@ class MockColumn
 end
 
 describe Bookie::Formatters::Spreadsheet do
-  before(:all) do
-    @jobs = Bookie::Database::Job
-    @summaries = Bookie::Database::JobSummary
-  end
-  
+  let(:mock_workbook) { MockWorkbook.new }
   before(:each) do
-    @m = MockWorkbook.new
-    Spreadsheet::Workbook.expects(:new).returns(@m)
-    @formatter = Bookie::Formatter.new(:spreadsheet, 'test.xls')
+    Spreadsheet::Workbook.expects(:new).returns(mock_workbook)
   end
+  let(:formatter) { Bookie::Formatter.new(:spreadsheet, 'test.xls') }
   
   it "correctly formats jobs" do
     with_utc do
-      @formatter.print_jobs(@jobs.limit(2).to_a)
-      w = @m.worksheet('Details')
-      w.last_row_index.should eql 2
+      formatter.print_jobs(Job.limit(2).to_a)
+      w = mock_workbook.worksheet('Details')
       w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
       w.mock_columns.each do |col|
         col.width.should_not eql nil
       end
-      w.row(0).should eql Bookie::Formatter::DETAILS_FIELD_LABELS
-      w.row(1).should eql ["root", "root", "test1", "Standalone", "2012-01-01 00:00:00",
-        "2012-01-01 01:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'vi', 0]
-      w.row(2).should eql ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00",
-        "2012-01-01 02:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'emacs', 1]
+      expect(w.mock_rows).to eql([
+        Bookie::Formatter::DETAILS_FIELD_LABELS,
+        [
+          "root", "root", "test1", "Standalone", "2012-01-01 00:00:00", "2012-01-01 01:00:00",
+          "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'vi', 0
+        ],
+        ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00", "2012-01-01 02:00:00",
+         "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'emacs', 1
+        ],
+      ])
     end
   end
   
   it "correctly formats summaries" do
     Time.expects(:now).returns(base_time + 40.hours).at_least_once
-    @formatter.print_summary(@jobs, @summaries, Bookie::Database::System)
-    w = @m.worksheet('Summary')
+    formatter.print_summary(Job, JobSummary, System)
+    w = mock_workbook.worksheet('Summary')
     w.column(0).width.should_not eql nil
-    w.last_row_index.should eql 6
-    w.mock_rows.should eql [
+    expect(w.mock_rows).to eql([
       ["Number of jobs", 40],
       ["Total CPU time", "0 weeks, 0 days, 01:06:40"],
       ["Successful", "50.0000%"],
@@ -99,11 +95,11 @@ describe Bookie::Formatters::Spreadsheet do
       ["CPU time used", "0.7937%"],
       ["Available memory (average)", "1750000 kb"],
       ["Memory used (average)", "0.0114%"],
-    ]
+    ])
   end
   
   it "correctly flushes output" do
-    @m.expects(:write).with('test.xls')
-    @formatter.do_flush
+    mock_workbook.expects(:write).with('test.xls')
+    formatter.do_flush
   end
 end
