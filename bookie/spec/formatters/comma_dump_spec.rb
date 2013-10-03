@@ -1,13 +1,6 @@
 require 'spec_helper'
 
-#Declared early so the first "describe" clause works:
-module Bookie
-  module Formatters
-    module CommaDump
-    
-    end
-  end
-end
+require 'bookie/formatters/comma_dump'
 
 include Bookie
 include Bookie::Database

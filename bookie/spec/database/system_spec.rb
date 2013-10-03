@@ -2,25 +2,6 @@ require 'spec_helper'
 
 include Bookie::Database
 
-RSpec::Matchers.define :have_unique_system_associations do
-  match do |systems|
-    method_object_id = Object.instance_method(:object_id)
-    #Maps associations to object_ids
-    association_ids = {}
-    systems.each do |system|
-      sys_type = system.system_type
-      sys_type_id = method_object_id.bind(sys_type).call
-      if association_ids.include?(sys_type)
-        return false unless association_ids[sys_type] == sys_type_id
-      else
-        association_ids[sys_type] = sys_type_id
-      end
-    end
-
-    true
-  end
-end
-
 describe Bookie::Database::System do
   describe "#active" do
     it { System.active.length.should eql 3 }
@@ -39,11 +20,7 @@ describe Bookie::Database::System do
     end
   end
 
-  describe "#all_with_associations" do
-    it { expect(System.limit(5).all_with_associations).to have_unique_system_associations }
-  end
-
-  #TODO: rename this method and create a common example.
+  #TODO: create a common example.
   describe "#by_time_range" do
     it "correctly filters by time range" do
       systems = System.by_time_range(base_time ... base_time + 36000 * 2 + 1)

@@ -131,7 +131,7 @@ module Bookie
 
         num_jobs = 0
         successful = 0
-        cpu_time = 0
+        cpu_time = 0.0
         memory_time = 0
 
         if time_range
@@ -150,13 +150,12 @@ module Bookie
             #Any jobs that overlap an edge of the time range
             #must be clipped.
             jobs_overlapped = jobs.overlapping_edges(time_range)
-            jobs_overlapped.each do |job|
+            jobs_overlapped.find_each do |job|
               start_time = [job.start_time, time_range.begin].max
               end_time = [job.end_time, time_range.end].min
               clipped_wall_time = end_time.to_i - start_time.to_i
               if job.wall_time != 0
-                #TODO: switch to floating-point arithmetic?
-                cpu_time += job.cpu_time * clipped_wall_time / job.wall_time
+                cpu_time += Float(job.cpu_time * clipped_wall_time) / job.wall_time
                 memory_time += job.memory * clipped_wall_time
               end
               num_jobs += 1
@@ -174,19 +173,9 @@ module Bookie
         return {
           :num_jobs => num_jobs,
           :successful => successful,
-          :cpu_time => cpu_time,
+          :cpu_time => cpu_time.round,
           :memory_time => memory_time,
         }
-      end
-      
-      ##
-      #Returns an array of all jobs, pre-loading associations to reduce the need for extra queries
-      #
-      #Relations are not cached between calls.
-      #
-      #TODO: use ActiveRecord's #includes instead of this scheme?
-      def self.all_with_associations
-        return self.includes(:user, :group, :system, :system_type).to_a
       end
       
       before_save do

@@ -55,6 +55,7 @@ module Bookie
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
     def print_summary(jobs, summaries, systems, time_range = nil)
+      jobs = jobs.includes(:user, :group, :system, :system_type)
       jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
       num_jobs = jobs_summary[:num_jobs]
       systems_summary = systems.summary(time_range)
@@ -79,8 +80,11 @@ module Bookie
     ##
     #Prints a table containing all details of <tt>jobs</tt>
     #
-    #<tt>jobs</tt> should be an array.
+    #<tt>jobs</tt> should be an ActiveRecord model or relation.
+    #
+    #To consider: allow any Enumerable?
     def print_jobs(jobs)
+      #TODO: conver to a relation here?
       do_print_jobs(jobs)
     end
     

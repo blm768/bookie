@@ -2,28 +2,6 @@ require 'spec_helper'
 
 include Bookie::Database
 
-RSpec::Matchers.define :have_unique_associations do
-  match do |jobs|
-    method_object_id = Object.instance_method(:object_id)
-    #Maps associations to object_ids
-    association_ids = {}
-    jobs.each do |job|
-      associations = [job.user, job.user.group, job.system, job.system.system_type]
-      associations.each do |association|
-        association_id = method_object_id.bind(association).call
-        #Have we seen this association?
-        if association_ids.include?(association)
-          return false unless association_ids[association] == association_id
-        else
-          association_ids[association] = association_id
-        end
-      end
-    end
-
-    true
-  end
-end
-
 RSpec::Matchers.define :be_job_within_time_range do |time_range|
   match do |job|
     expect(time_range).to cover(job.start_time)
@@ -241,10 +219,6 @@ describe Bookie::Database::Job do
     end
   end
    
-  describe "#all_with_associations" do
-    it { expect(Job.limit(5).all_with_associations).to have_unique_associations }
-  end
-  
   describe "#summary" do
     let(:count) { Job.count }
     let(:summary) { create_summaries(Job, base_time) }

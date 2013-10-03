@@ -10,4 +10,5 @@ Unit test uniqueness constraints?
 Use optimistic concurrency control?
 Make units more independent.
 Make unit test success more independent.
+Replace #each with #find_each where needed.
 

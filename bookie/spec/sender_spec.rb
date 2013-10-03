@@ -92,7 +92,7 @@ describe Bookie::Sender do
     config = test_config.clone
     config.excluded_users = Set.new
     sender.send_data('snapshot/torque_large')
-    jobs = Bookie::Database::Job.all_with_associations
+    jobs = Job.includes(:system)
     jobs.each do |job|
       job.system.name.should eql config.hostname
     end
