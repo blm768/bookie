@@ -35,8 +35,6 @@ module Bookie
       
       ##
       #Finds all systems whose running intervals overlap the given time range
-      #
-      #TODO: unit test.
       def self.by_time_range(time_range)
         if time_range.empty?
           self.none
@@ -84,7 +82,6 @@ Please make sure that all previous systems with this hostname have been marked a
       #
       #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
       def self.summary(time_range = nil)
-        #TODO: how to handle time zones with Rails apps?
         current_time = Time.now
 
         num_systems = 0
@@ -94,7 +91,6 @@ Please make sure that all previous systems with this hostname have been marked a
         #Find all the systems within the time range.
         systems = System
         if time_range
-          #TODO: unit test?
           time_range = time_range.exclusive.normalized
           systems = systems.by_time_range(time_range)
         end

@@ -97,8 +97,6 @@ module Bookie
       #If there is nothing to summarize, a dummy summary will be created.
       #
       #Uses Lock::synchronize internally; should not be used in transaction blocks
-      #
-      #TODO: what if this is called while jobs are being sent?
       def self.summarize(date)
         jobs = Job
         unscoped = self.unscoped
@@ -170,7 +168,6 @@ module Bookie
         time_range = opts[:range]
 
         unless time_range
-          #TODO: put this in its own method.
           start_time = jobs.minimum(:start_time)
           end_time = jobs.maximum(:end_time)
           if start_time && end_time
@@ -203,7 +200,7 @@ module Bookie
         cpu_time = 0
         memory_time = 0
         
-        #TODO: check if num_jobs is zero so we can skip all this?
+        #To consider: check if num_jobs is zero so we can skip all this?
         if rounded_date_begin
           #We need to get a summary for the chunk up to the first whole day.
           summary = jobs.summary(time_range.begin ... date_begin.to_utc_time)
@@ -241,6 +238,7 @@ module Bookie
             #Nope. Create the summaries.
             unscoped.summarize(date)
             #To consider: optimize out the query?
+            #TODO: what if a Sender deletes the summaries right before this?
             by_date(date).each do |sum|
               cpu_time += sum.cpu_time
               memory_time += sum.memory_time

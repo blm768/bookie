@@ -19,7 +19,7 @@ describe Bookie::Formatters::CommaDump do
   
   it "correctly formats jobs" do
     with_utc do
-      formatter.print_jobs(Job.order(:start_time).limit(2).to_a)
+      formatter.print_jobs(Job.order(:start_time).limit(2))
       io_mock.buf.should eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Command, Exit code
 "root", "root", "test1", "Standalone", "2012-01-01 00:00:00", "2012-01-01 01:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "vi", "0"

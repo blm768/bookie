@@ -84,7 +84,6 @@ module Bookie
     #
     #To consider: allow any Enumerable?
     def print_jobs(jobs)
-      #TODO: conver to a relation here?
       do_print_jobs(jobs)
     end
     
@@ -102,7 +101,7 @@ module Bookie
     #call-seq:
     #  fields_for_each_job(jobs) { |fields| ... }
     #
-    #<tt>jobs</tt> should be an array of Bookie::Database::Job objects.
+    #<tt>jobs</tt> should be an ActiveRecord model or relation.
     #
     #===Examples
     #  formatter.fields_for_each_job(jobs) do |fields|
@@ -134,7 +133,6 @@ module Bookie
         ]
       end
     end
-    protected :fields_for_each_job
     
     ##
     #Formats a duration in a human-readable format

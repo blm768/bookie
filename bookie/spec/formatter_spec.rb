@@ -39,7 +39,7 @@ describe Bookie::Formatter do
   
   it "correctly calculates fields for jobs" do
     with_utc do
-      formatter.send(:fields_for_each_job, jobs.limit(1).to_a) do |fields|
+      formatter.fields_for_each_job(jobs.limit(1)) do |fields|
         fields.should eql [
             'root',
             'root',
@@ -92,8 +92,8 @@ describe Bookie::Formatter do
   end
   
   it "forwards print_jobs to do_print_jobs" do
-    formatter.expects(:do_print_jobs)
-    formatter.print_jobs(nil)
+    formatter.expects(:do_print_jobs).with(Job)
+    formatter.print_jobs(Job)
   end
   
   it "forwards flush to do_flush" do

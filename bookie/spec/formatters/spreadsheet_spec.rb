@@ -56,7 +56,7 @@ describe Bookie::Formatters::Spreadsheet do
   
   it "correctly formats jobs" do
     with_utc do
-      formatter.print_jobs(Job.limit(2).to_a)
+      formatter.print_jobs(Job.limit(2))
       w = mock_workbook.worksheet('Details')
       w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
       w.mock_columns.each do |col|
