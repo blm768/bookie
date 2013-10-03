@@ -19,7 +19,8 @@ module Bookie
     class Job < ActiveRecord::Base
       belongs_to :user
       belongs_to :system
-      #TODO: include group and system_type with a :through association?
+      has_one :group, :through => :user
+      has_one :system_type, :through => :system
       
       ##
       #The time at which the job ended
@@ -27,7 +28,6 @@ module Bookie
         return start_time + wall_time
       end
 
-      #TODO: unit test.
       def end_time=(time)
         self.wall_time = (time - start_time)
       end
@@ -186,43 +186,7 @@ module Bookie
       #
       #TODO: use ActiveRecord's #includes instead of this scheme?
       def self.all_with_associations
-        jobs = self.where(nil).to_a
-        users = {}
-        groups = {}
-        systems = {}
-        system_types = {}
-        jobs.each do |job|
-          system = systems[job.system_id]
-          if system
-            job.system = system
-          else
-            system = job.system
-            systems[system.id] = system
-          end
-          system_type = system_types[system.system_type_id]
-          if system_type
-            system.system_type = system_type
-          else
-            system_type = system.system_type
-            system_types[system_type.id] = system_type
-          end
-          user = users[job.user_id]
-          if user
-            job.user = user
-          else
-            user = job.user
-            users[user.id] = user
-          end
-          group = groups[user.group_id]
-          if group
-            user.group = group
-          else
-            group = user.group
-            groups[group.id] = group
-          end
-        end
-        
-        jobs
+        return self.includes(:user, :group, :system, :system_type).to_a
       end
       
       before_save do

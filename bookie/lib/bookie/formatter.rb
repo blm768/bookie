@@ -38,6 +38,7 @@ module Bookie
       
       ##
       #An array containing the labels for each field in a details table
+      #TODO: remove some fields?
       DETAILS_FIELD_LABELS = [
         'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
         'CPU time', 'Memory usage', 'Command', 'Exit code'
@@ -53,7 +54,6 @@ module Bookie
     #Both <tt>jobs</tt>, <tt>summaries</tt>, and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
-    #TODO: stop returning the summaries?
     def print_summary(jobs, summaries, systems, time_range = nil)
       jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
       num_jobs = jobs_summary[:num_jobs]
@@ -63,6 +63,7 @@ module Bookie
       memory_time = jobs_summary[:memory_time]
       avail_memory_time = systems_summary[:avail_memory_time]
       successful = (num_jobs == 0) ? 0.0 : Float(jobs_summary[:successful]) / num_jobs
+
       field_values = [
         num_jobs,
         Formatter.format_duration(cpu_time),
@@ -73,7 +74,6 @@ module Bookie
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
       do_print_summary(field_values)
-      return jobs_summary, systems_summary
     end
     
     ##

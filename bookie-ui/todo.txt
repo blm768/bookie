@@ -3,4 +3,5 @@ Change (and don't release!) the session secret key before deployment.
 Fix issue: filters that exist at page load cannot be re-added.
 Respond with 404 on invalid deletes (and some other operations?)
 Add useful scopes to WebUsers
+Handle concurrency issues with Web users.
 

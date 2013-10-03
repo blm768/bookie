@@ -6,4 +6,6 @@ Replace 3600 with 2.hours, etc.
 Also clear out other "magic" numbers.
 Split some tests up.
 Validate uniqueness?
+Unit test uniqueness constraints?
+Use optimistic concurrency control?
 
