@@ -237,9 +237,8 @@ module Bookie
           if new_index == index && !(unscoped.by_date(date).any?)
             #Nope. Create the summaries.
             unscoped.summarize(date)
-            #To consider: optimize out the query?
             #TODO: what if a Sender deletes the summaries right before this?
-            by_date(date).each do |sum|
+            self.by_date(date).each do |sum|
               cpu_time += sum.cpu_time
               memory_time += sum.memory_time
             end
