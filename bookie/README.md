@@ -1,29 +1,9 @@
 # Bookie
-
-TODO: Write a gem description
+A simple system to consolidate and analyze process accounting records
 
 ## Installation
+See the [Installation](https://github.com/blm768/bookie/wiki/Installation) page on the wiki.
 
-Add this line to your application's Gemfile:
+##Usage
+The wiki contains a [command reference](https://github.com/blm768/bookie/wiki/Command-line-utilities
 
-    gem 'bookie'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install bookie
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request

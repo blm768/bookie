@@ -5,8 +5,8 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Ben Merritt"]
   gem.email         = ["blm768@gmail.com"]
   gem.license       = "MIT"
-  gem.description   = %q{A simple system to record and query process accounting records}
-  gem.summary       = %q{A simple system to record and query process accounting records}
+  gem.description   = %q{A simple system to consolidate and analyze process accounting records}
+  gem.summary       = %q{A simple system to consolidate and analyze process accounting records}
   gem.homepage      = "https://github.com/blm768/bookie/"
 
   gem.files         = `git ls-files`.split($\)
@@ -20,7 +20,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('json')
   #We need this because Bundler has no concept of optional dependencies
   #and complains about using non-dependency gems.
-  #To do: figure out how to remove (file issue?)
+  #TODO: figure out how to remove
   gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
   #Introduces the old ActiveRecord mass assignment security methods
