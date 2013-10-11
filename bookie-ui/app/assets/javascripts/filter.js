@@ -56,10 +56,11 @@ function addFilter() {
 
 function removeFilter(filter) {
   //Re-enable the correct entry in the "Add filter" select box:
-  var type = filter.children('.filter_type').text()
+  //TODO: find a cleaner method of doing this?
+  var type = $.trim(filter.children('.filter_type').text())
   $('#add_filter').children().each(function() {
     var $this = $(this)
-    if($this.text() == type) {
+    if($.trim($this.text()) == type) {
       $this.prop('disabled', false)
       return false
     }

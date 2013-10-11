@@ -85,7 +85,7 @@ class JobsController < ApplicationController
       num_jobs = @jobs_summary[:num_jobs]
       @num_pages = num_jobs / JOBS_PER_PAGE + ((num_jobs % JOBS_PER_PAGE) > 0 ? 1 : 0)
       @num_pages = 1 if @num_pages == 0
-      @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start).all_with_relations
+      @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start).includes(:user, :group, :system, :system_type).to_a
     end
     
     respond_to do |format|
