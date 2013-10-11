@@ -37,7 +37,8 @@ class SystemsController < ApplicationController
     end
     
     @systems_summary = systems.summary(summary_time_range)
-    @systems = @systems_summary[:systems]
+    systems = systems.by_time_range(summary_time_range) if summary_time_range
+    @systems = systems
   end
 
   def show
