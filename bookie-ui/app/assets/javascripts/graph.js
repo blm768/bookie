@@ -115,6 +115,11 @@ function addPlot(type) {
   plot.plot(
     type_info.series,
     {
+      /*lines: { show: false },
+      bars: { 
+        show: true,
+        //width: 
+      },*/
       xaxis: {
         mode: 'time',
         timezone: 'browser',
