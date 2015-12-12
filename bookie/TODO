@@ -1,1 +1,14 @@
 
+Replace deprecated find_by_* methods with find_by!(:attribute => value).
+Allow configuration of date boundary to midnight in local time zone?
+Make sure all source files have the required "require"s
+Use "let" in RSpect tests
+Replace 3600 with 2.hours, etc.
+Also clear out other "magic" numbers.
+Split some tests up.
+Validate uniqueness?
+Unit test uniqueness constraints?
+Use optimistic concurrency control?
+Make units more independent.
+Make unit test success more independent.
+
