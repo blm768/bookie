@@ -1,5 +1,4 @@
 require 'active_record'
-require 'protected_attributes'
 
 require 'bookie/database/job'
 require 'bookie/database/system'
@@ -16,8 +15,6 @@ module Bookie
 
       belongs_to :user
       belongs_to :system
-
-      attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :cpu_time, :memory_time
 
       ##
       #Filters by date

@@ -15,14 +15,10 @@ Gem::Specification.new do |gem|
   gem.name          = "bookie_accounting"
   gem.require_paths = ["lib"]
   gem.version       = Bookie::VERSION
-  
+
   gem.add_dependency('activerecord')
   gem.add_dependency('json')
   gem.add_dependency('pacct')
-  #Introduces the old ActiveRecord mass assignment security methods
-  #(until I update the database code for the new methods)
-  #TODO: get rid of this.
-  gem.add_dependency('protected_attributes')
   gem.add_dependency('spreadsheet')
 end
 

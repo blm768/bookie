@@ -175,10 +175,8 @@ describe Bookie::Sender do
             :system => system,
             :user => user,
             :command_name => 'vi',
-            :num_jobs => 1,
             :cpu_time => 1,
-            :memory_time => 100,
-            :successful => 1
+            :memory_time => 100
           )
         end
       end

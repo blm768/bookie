@@ -18,8 +18,7 @@ describe Bookie::Database::JobSummary do
               :command_name => command_name,
               :date => date,
               :cpu_time => 0,
-              :memory_time => 0,
-              :successful => 0
+              :memory_time => 0
             )
           end
         end

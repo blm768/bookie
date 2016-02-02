@@ -2,8 +2,6 @@ require 'bookie/config'
 require 'bookie/extensions'
 
 require 'active_record'
-#TODO: remove when code is updated.
-require 'protected_attributes'
 
 require 'bookie/database/job'
 require 'bookie/database/job_summary'
@@ -21,7 +19,7 @@ module Bookie
     #- <tt>:avg => 1</tt>
     #- <tt>:max => 2</tt>
     #
-      
+
     ##
     #Database migrations
     module Migration
@@ -35,12 +33,12 @@ module Bookie
             t.index [:name, :group_id], :unique => true
           end
         end
-        
+
         def down
           drop_table :users
         end
       end
-      
+
       class CreateGroups < ActiveRecord::Migration
         def up
           create_table :groups do |t|
@@ -50,12 +48,12 @@ module Bookie
             t.index :name, :unique => true
           end
         end
-        
+
         def down
           drop_table :groups
         end
       end
-      
+
       class CreateSystems < ActiveRecord::Migration
         def up
           create_table :systems do |t|
@@ -73,12 +71,12 @@ module Bookie
             t.index :system_type_id
           end
         end
-        
+
         def down
           drop_table :systems
         end
       end
-      
+
       class CreateSystemTypes < ActiveRecord::Migration
         def up
           create_table :system_types do |t|
@@ -89,12 +87,12 @@ module Bookie
             t.index :name, :unique => true
           end
         end
-        
+
         def down
           drop_table :system_types
         end
       end
-      
+
       class CreateJobs < ActiveRecord::Migration
         def up
           create_table :jobs do |t|
@@ -118,12 +116,12 @@ module Bookie
             t.index :exit_code
           end
         end
-      
+
         def down
           drop_table :jobs
         end
       end
-      
+
       class CreateJobSummaries < ActiveRecord::Migration
         def up
           create_table :job_summaries do |t|
@@ -140,12 +138,12 @@ module Bookie
             t.index :date
           end
         end
-        
+
         def down
          drop_table :job_summaries
         end
       end
-      
+
       class CreateLocks < ActiveRecord::Migration
         def up
           create_table :locks do |t|
@@ -154,17 +152,17 @@ module Bookie
           change_table :locks do |t|
             t.index :name, :unique => true
           end
-          
+
           ['users', 'groups', 'systems', 'system_types', 'job_summaries'].each do |name|
             Lock.create!(:name => name)
           end
         end
-          
+
         def down
           drop_table :locks
         end
       end
-    
+
       class << self;
         ##
         #Brings up all migrations
@@ -178,7 +176,7 @@ module Bookie
           CreateJobSummaries.new.up
           CreateLocks.new.up
         end
-        
+
         ##
         #Brings down all migrations
         #
