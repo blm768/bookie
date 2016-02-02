@@ -23,13 +23,13 @@ describe Bookie::Database::System do
   #TODO: create a common example.
   describe "#by_time_range" do
     it "correctly filters by time range" do
-      systems = System.by_time_range(base_time ... base_time + 36000 * 2 + 1)
+      systems = System.by_time_range(base_time ... base_time + 20.hours + 1)
       expect(systems.count).to eql 3
-      systems = System.by_time_range(base_time + 1 ... base_time + 36000 * 2)
+      systems = System.by_time_range(base_time + 1 ... base_time + 20.hours)
       expect(systems.count).to eql 2
       systems = System.by_time_range(base_time ... base_time)
       expect(systems.length).to eql 0
-      systems = System.by_time_range(base_time .. base_time + 36000 * 2)
+      systems = System.by_time_range(base_time .. base_time + 20.hours)
       expect(systems.count).to eql 3
       systems = System.by_time_range(base_time .. base_time)
       expect(systems.count).to eql 1
