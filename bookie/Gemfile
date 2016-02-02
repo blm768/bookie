@@ -2,11 +2,17 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'bundler', :group => :development
-gem 'byebug', :group => :test
-gem 'mocha', :group => :test
-gem 'rspec', :group => :test
-gem 'simplecov', :group => :test
-gem 'sqlite3', :group => :development
-gem 'mysql2', :group => :development
+group :development do
+  gem 'bundler'
+  gem 'mysql2'
+end
+
+group :test do
+  gem 'byebug'
+  gem 'mocha'
+  gem 'rake'
+  gem 'rspec'
+  gem 'simplecov'
+  gem 'sqlite3'
+end
 
