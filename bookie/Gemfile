@@ -4,11 +4,11 @@ gemspec
 
 group :development do
   gem 'bundler'
+  gem 'byebug'
   gem 'mysql2'
 end
 
 group :test do
-  gem 'byebug'
   gem 'mocha'
   gem 'rake'
   gem 'rspec'
