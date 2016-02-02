@@ -5,5 +5,5 @@ A simple system to consolidate and analyze process accounting records
 See the [Installation](https://github.com/blm768/bookie/wiki/Installation) page on the wiki.
 
 ##Usage
-The wiki contains a [command reference](https://github.com/blm768/bookie/wiki/Command-line-utilities
+The wiki contains a [command reference](https://github.com/blm768/bookie/wiki/Command-line-utilities)
 
