@@ -18,10 +18,6 @@ Gem::Specification.new do |gem|
   
   gem.add_dependency('activerecord')
   gem.add_dependency('json')
-  #We need this because Bundler has no concept of optional dependencies
-  #and complains about using non-dependency gems.
-  #TODO: figure out how to remove
-  gem.add_dependency('mysql2')
   gem.add_dependency('pacct')
   #Introduces the old ActiveRecord mass assignment security methods
   #(until I update the database code for the new methods)

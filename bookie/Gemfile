@@ -8,4 +8,5 @@ gem 'mocha', :group => :test
 gem 'rspec', :group => :test
 gem 'simplecov', :group => :test
 gem 'sqlite3', :group => :development
+gem 'mysql2', :group => :development
 
