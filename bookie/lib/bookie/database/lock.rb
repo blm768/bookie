@@ -21,15 +21,15 @@ module Bookie
           yield
         end
       end
-      
+
       @locks = {}
-      
+
       ##
       #Returns a lock by name
       def self.[](name)
-        @locks[name.to_sym] ||= find_by_name(name.to_s) or raise "Unable to find lock '#{name}'"
+        @locks[name.to_sym] ||= find_by!(name: name.to_s)
       end
-      
+
       validates_presence_of :name
     end
   end

@@ -9,7 +9,7 @@ module Bookie
     #Model for a user
     class User < ActiveRecord::Base
       belongs_to :group
-      
+
       def self.by_name(name)
         where('users.name = ?', name)
       end
@@ -19,11 +19,11 @@ module Bookie
       end
 
       def self.by_group_name(name)
-        group = Group.find_by_name(name)
+        group = Group.find_by(name: name)
         return by_group(group) if group
         self.none
       end
-      
+
       ##
       #Finds a user by name and group, creating it if it doesn't exist
       #
@@ -36,7 +36,7 @@ module Bookie
         unless user
           Lock[:users].synchronize do
             #Does the user already exist?
-            user = Bookie::Database::User.find_by_name_and_group_id(name, group.id)
+            user = Bookie::Database::User.find_by(name: name, group_id: group.id)
             user ||= Bookie::Database::User.create!(
               :name => name,
               :group => group
@@ -46,7 +46,7 @@ module Bookie
         end
         user
       end
-      
+
       validates_presence_of :group, :name
     end
 

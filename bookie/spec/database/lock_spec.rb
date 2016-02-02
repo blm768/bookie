@@ -7,7 +7,7 @@ describe Bookie::Database::Lock do
     expect(Lock[:users].name).to eql 'users'
     expect(Lock[:groups]).to_not eql nil
     expect(Lock[:groups].name).to eql 'groups'
-    expect { Lock[:dummy] }.to raise_error("Unable to find lock 'dummy'")
+    expect { Lock[:dummy] }.to raise_error(ActiveRecord::RecordNotFound)
   end
 
   it "locks records (will probably fail if the testing DB doesn't support row locks)" #do

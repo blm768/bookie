@@ -1,5 +1,5 @@
 Use bulk inserts?
-Replace deprecated find_by_* methods with find_by!(:attribute => value).
+Replace by_* methods with a "find_all_by()" method? (or just "where"...)
 Allow configuration of date boundary to midnight in local time zone?
 Make sure all source files have the required "require"s
 Use "let" in RSpect tests

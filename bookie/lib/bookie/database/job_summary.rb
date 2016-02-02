@@ -13,12 +13,12 @@ module Bookie
     #Most summary operations should be performed through this class to improve efficiency.
     class JobSummary < ActiveRecord::Base
       self.table_name = :job_summaries
-    
+
       belongs_to :user
       belongs_to :system
 
       attr_accessible :date, :user, :user_id, :system, :system_id, :command_name, :cpu_time, :memory_time
-      
+
       ##
       #Filters by date
       def self.by_date(date)
@@ -35,25 +35,25 @@ module Bookie
           where('? <= job_summaries.date AND job_summaries.date <= ?', range.begin, range.end)
         end
       end
-      
+
       ##
       #Filters by user
       def self.by_user(user)
         where('job_summaries.user_id = ?', user.id)
       end
-      
+
       ##
       #Filters by user name
       def self.by_user_name(name)
         joins(:user).where('users.name = ?', name)
       end
-      
+
       ##
       #Filters by group
       def self.by_group(group)
         joins(:user).where('users.group_id = ?', group.id)
       end
-      
+
       ##
       #Filters by group name
       def self.by_group_name(name)
@@ -64,31 +64,31 @@ module Bookie
           self.none
         end
       end
-      
+
       ##
       #Filters by system
       def self.by_system(system)
         where('job_summaries.system_id = ?', system.id)
       end
-      
+
       ##
       #Filters by system name
       def self.by_system_name(name)
         joins(:system).where('systems.name = ?', name)
       end
-      
+
       ##
       #Filters by system type
       def self.by_system_type(type)
         joins(:system).where('systems.system_type_id = ?', type.id)
       end
-      
+
       ##
       #Filters by command name
       def self.by_command_name(cmd)
         where('job_summaries.command_name = ?', cmd)
       end
-      
+
       ##
       #Create cached summaries for the given date
       #
@@ -100,12 +100,12 @@ module Bookie
       def self.summarize(date)
         jobs = Job
         unscoped = self.unscoped
-        time_min = date.to_utc_time 
+        time_min = date.to_utc_time
         time_range = time_min ... time_min + 1.days
         day_jobs = jobs.by_time_range(time_range)
 
         #Find the unique combinations of values for some of the jobs' attributes.
-        value_sets = day_jobs.select('user_id, system_id, command_name').uniq
+        value_sets = day_jobs.uniq.pluck(:user_id, :system_id, :command_name)
         if value_sets.empty?
           #There are no jobs, so create a dummy summary.
           user = User.select(:id).first
@@ -128,17 +128,17 @@ module Bookie
         else
           value_sets.each do |set|
             summary_jobs = jobs.where(
-              :user_id => set.user_id,
-              :system_id => set.system_id,
-              :command_name => set.command_name
+              :user_id => set[0],
+              :system_id => set[1],
+              :command_name => set[2]
             )
             summary = summary_jobs.summary(time_range)
             Lock[:job_summaries].synchronize do
               sum = unscoped.find_or_initialize_by(
                 :date => date,
-                :user_id => set.user_id,
-                :system_id => set.system_id,
-                :command_name => set.command_name
+                :user_id => set[0],
+                :system_id => set[1],
+                :command_name => set[2]
               )
               sum.cpu_time = summary[:cpu_time]
               sum.memory_time = summary[:memory_time]
@@ -147,7 +147,7 @@ module Bookie
           end
         end
       end
-      
+
       ##
       #Returns a summary of jobs in the database
       #
@@ -178,7 +178,7 @@ module Bookie
         end
 
         time_range = time_range.normalized
-        
+
         date_begin = time_range.begin.utc.to_date
         rounded_date_begin = false
         #Round date_begin up.
@@ -199,7 +199,7 @@ module Bookie
         successful = jobs_in_range.where('jobs.exit_code = 0').count
         cpu_time = 0
         memory_time = 0
-        
+
         #To consider: check if num_jobs is zero so we can skip all this?
         if rounded_date_begin
           #We need to get a summary for the chunk up to the first whole day.
@@ -218,7 +218,7 @@ module Bookie
         end
 
         date_range = date_begin ... date_end
-        
+
         #Now we can process the cached summaries.
         unscoped = self.unscoped
         summaries = by_date_range(date_range).order(:date).to_a
@@ -245,7 +245,7 @@ module Bookie
           end
           index = new_index
         end
-        
+
         {
           :num_jobs => num_jobs,
           :successful => successful,
@@ -253,13 +253,13 @@ module Bookie
           :memory_time => memory_time,
         }
       end
-      
+
       validates_presence_of :user_id, :system_id, :date, :cpu_time, :memory_time
-      
+
       validates_each :command_name do |record, attr, value|
         record.errors.add(attr, 'must not be nil') if value == nil
       end
-      
+
       validates_each :cpu_time, :memory_time do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end

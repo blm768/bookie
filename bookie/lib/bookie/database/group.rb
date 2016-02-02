@@ -19,14 +19,14 @@ module Bookie
         group = known_groups[name] if known_groups
         unless group
           Lock[:groups].synchronize do
-            group = find_by_name(name)
-            group ||= create!(:name => name)
+            group = find_by(name: name)
+            group ||= create!(name: name)
           end
           known_groups[name] = group if known_groups
         end
         group
       end
-      
+
       validates_presence_of :name
     end
   end

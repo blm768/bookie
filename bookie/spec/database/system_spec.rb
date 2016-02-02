@@ -15,7 +15,7 @@ describe Bookie::Database::System do
 
   it "correctly filters by system type" do
     ['Standalone', 'TORQUE cluster'].each do |type|
-      t = SystemType.find_by_name(type)
+      t = SystemType.find_by(name: type)
       expect(System.by_system_type(t).length).to eql 2
     end
   end
@@ -172,7 +172,7 @@ describe Bookie::Database::System do
         }.to raise_error(System::SystemConflictError)
         config.unstub(field)
       end
-      sender.expects(:system_type).returns(SystemType.find_by_name("Standalone"))
+      sender.expects(:system_type).returns(SystemType.find_by(name: "Standalone"))
       expect {
         System.find_current(sender)
       }.to raise_error(System::SystemConflictError)
@@ -180,7 +180,7 @@ describe Bookie::Database::System do
   end
 
   it "correctly decommissions" do
-    sys = System.active.find_by_name('test1')
+    sys = System.active.find_by(name: 'test1')
     begin
       sys.decommission(sys.start_time + 3)
       expect(sys.end_time).to eql sys.start_time + 3

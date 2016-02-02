@@ -96,10 +96,10 @@ describe Bookie::Database::Job do
   end
 
   it "correctly filters by system type" do
-    sys_type = SystemType.find_by_name('Standalone')
+    sys_type = SystemType.find_by(name: 'Standalone')
     jobs = Job.by_system_type(sys_type)
     expect(jobs.length).to eql 20
-    sys_type = SystemType.find_by_name('TORQUE cluster')
+    sys_type = SystemType.find_by(name: 'TORQUE cluster')
     jobs = Job.by_system_type(sys_type)
     expect(jobs.length).to eql 20
   end

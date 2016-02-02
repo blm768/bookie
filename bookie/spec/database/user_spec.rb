@@ -10,8 +10,8 @@ describe Bookie::Database::User do
   end
 
   it "correctly filters by group" do
-    expect(Bookie::Database::User.by_group(Bookie::Database::Group.find_by_name('admin')).count).to eql 2
-    expect(Bookie::Database::User.by_group(Bookie::Database::Group.find_by_name('root')).count).to eql 1
+    expect(Bookie::Database::User.by_group(Bookie::Database::Group.find_by(name: 'admin')).count).to eql 2
+    expect(Bookie::Database::User.by_group(Bookie::Database::Group.find_by(name: 'root')).count).to eql 1
   end
 
   it "correctly filters by group name" do
@@ -21,7 +21,7 @@ describe Bookie::Database::User do
 
   describe "#find_or_create" do
     before(:each) do
-      @group = Bookie::Database::Group.find_by_name('admin')
+      @group = Bookie::Database::Group.find_by(name: 'admin')
     end
 
     it "creates the user if needed" do
@@ -31,15 +31,15 @@ describe Bookie::Database::User do
     end
 
     it "returns the cached user if one exists" do
-      user = Bookie::Database::User.find_by_name('root')
+      user = Bookie::Database::User.find_by(name: 'root')
       known_users = {['root', user.group] => user}
       expect(Bookie::Database::User.find_or_create!('root', user.group, known_users)).to equal user
     end
 
     it "queries the database when this user is not cached" do
-      user = Bookie::Database::User.find_by_name_and_group_id('root', 1)
+      user = Bookie::Database::User.find_by!(name: 'root', group_id: 1)
       known_users = {}
-      Bookie::Database::User.expects(:find_by_name_and_group_id).returns(user).twice
+      Bookie::Database::User.expects(:find_by).returns(user).twice
       Bookie::Database::User.expects(:"create!").never
       expect(Bookie::Database::User.find_or_create!('root', user.group, known_users)).to eql user
       expect(Bookie::Database::User.find_or_create!('root', user.group, nil)).to eql user

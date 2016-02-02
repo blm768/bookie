@@ -64,7 +64,7 @@ describe Bookie::Database::JobSummary do
   end
 
   it "correctly filters by group" do
-    g = Group.find_by_name('admin')
+    g = Group.find_by(name: 'admin')
     sums = JobSummary.by_group(g).to_a
     expect(sums.length).to eql 32
     sums.each do |sum|
@@ -136,8 +136,7 @@ describe Bookie::Database::JobSummary do
         found_sums.add([sum.user.id, sum.system.id, sum.command_name])
       end
       #Is it catching all of the combinations of categories?
-      Job.by_time_range(range).select(:id, :user_id, :system_id, :command_name).uniq.find_each do |values|
-        values = [values.user_id, values.system_id, values.command_name]
+      Job.by_time_range(range).uniq.pluck(:user_id, :system_id, :command_name).each do |values|
         expect(found_sums.include?(values)).to eql true
       end
     end

@@ -21,7 +21,7 @@ module Bookie
       belongs_to :system
       has_one :group, :through => :user
       has_one :system_type, :through => :system
-      
+
       ##
       #The time at which the job ended
       def end_time
@@ -33,17 +33,17 @@ module Bookie
       end
 
       #To consider: disable #end_time= ?
-      
+
       def self.by_user(user)
         where('jobs.user_id = ?', user.id)
       end
-      
+
       ##
       #Filters by user name
       def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
       end
-      
+
       def self.by_system(system)
         where('jobs.system_id = ?', system.id)
       end
@@ -53,27 +53,30 @@ module Bookie
       def self.by_system_name(system_name)
         joins(:system).where('systems.name = ?', system_name)
       end
-      
+
       ##
       #Filters by group name
       def self.by_group_name(group_name)
-        group = Group.find_by_name(group_name)
-        return joins(:user).where('users.group_id = ?', group.id) if group
-        self.none
+        group = Group.find_by(name: group_name)
+        if group then
+          joins(:user).where('users.group_id = ?', group.id)
+        else
+          self.none
+        end
       end
-      
+
       ##
       #Filters by system type
       def self.by_system_type(system_type)
         joins(:system).where('systems.system_type_id = ?', system_type.id)
       end
-      
+
       ##
       #Filters by command name
       def self.by_command_name(c_name)
         where('jobs.command_name = ?', c_name)
       end
-      
+
       ##
       #Finds all jobs that were running at some point in a given time range
       def self.by_time_range(time_range)
@@ -100,7 +103,7 @@ module Bookie
           where('? <= jobs.start_time AND jobs.end_time <= ?', time_range.begin, time_range.end)
         end
       end
-      
+
       ##
       #Finds all jobs that overlap the edges of the given time range
       def self.overlapping_edges(time_range)
@@ -112,7 +115,7 @@ module Bookie
           where(query_str, {:begin => time_range.begin, :end => time_range.end})
         end
       end
-     
+
       ##
       #Produces a summary of the jobs in the given time interval
       #
@@ -177,22 +180,22 @@ module Bookie
           :memory_time => memory_time,
         }
       end
-      
+
       before_save do
         write_attribute(:end_time, end_time)
       end
-      
+
       before_update do
         write_attribute(:end_time, end_time)
       end
-      
+
       validates_presence_of :user, :system, :cpu_time,
         :start_time, :wall_time, :memory, :exit_code
-        
+
       validates_each :command_name do |record, attr, value|
         record.errors.add(attr, 'must not be nil') if value == nil
       end
-       
+
       validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end
