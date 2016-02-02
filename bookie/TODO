@@ -2,7 +2,7 @@ Use bulk inserts?
 Replace by_* methods with a "find_all_by()" method? (or just "where"...)
 Allow configuration of date boundary to midnight in local time zone?
 Make sure all source files have the required "require"s
-Use "let" in RSpect tests
+Use "let" in RSpect tests?
 Replace 3600 with 2.hours, etc.
 Also clear out other "magic" numbers.
 Split some tests up.
