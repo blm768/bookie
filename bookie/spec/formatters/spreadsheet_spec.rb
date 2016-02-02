@@ -18,7 +18,7 @@ end
 class MockWorksheet
   attr_reader :mock_rows
   attr_reader :mock_columns
-  
+
   def initialize
     @mock_rows = []
     @mock_columns = []
@@ -31,7 +31,7 @@ class MockWorksheet
   def column(num)
     @mock_columns[num] ||= MockColumn.new
   end
-  
+
   def last_row_index
     @mock_rows.length - 1
   end
@@ -41,7 +41,7 @@ class MockColumn
   def width=(value)
     @width = value
   end
-  
+
   def width
     @width
   end
@@ -53,14 +53,14 @@ describe Bookie::Formatters::Spreadsheet do
     Spreadsheet::Workbook.expects(:new).returns(mock_workbook)
   end
   let(:formatter) { Bookie::Formatter.new(:spreadsheet, 'test.xls') }
-  
+
   it "correctly formats jobs" do
     with_utc do
       formatter.print_jobs(Job.limit(2))
       w = mock_workbook.worksheet('Details')
-      w.mock_columns.length.should eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
+      expect(w.mock_columns.length).to eql Bookie::Formatter::DETAILS_FIELD_LABELS.length
       w.mock_columns.each do |col|
-        col.width.should_not eql nil
+        expect(col.width).to_not eql nil
       end
       expect(w.mock_rows).to eql([
         Bookie::Formatter::DETAILS_FIELD_LABELS,
@@ -74,12 +74,12 @@ describe Bookie::Formatters::Spreadsheet do
       ])
     end
   end
-  
+
   it "correctly formats summaries" do
     Time.expects(:now).returns(base_time + 40.hours).at_least_once
     formatter.print_summary(Job, JobSummary, System)
     w = mock_workbook.worksheet('Summary')
-    w.column(0).width.should_not eql nil
+    expect(w.column(0).width).to_not eql nil
     expect(w.mock_rows).to eql([
       ["Number of jobs", 40],
       ["Total CPU time", "0 weeks, 0 days, 01:06:40"],
@@ -90,7 +90,7 @@ describe Bookie::Formatters::Spreadsheet do
       ["Memory used (average)", "0.0114%"],
     ])
   end
-  
+
   it "correctly flushes output" do
     mock_workbook.expects(:write).with('test.xls')
     formatter.do_flush

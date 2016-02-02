@@ -11,27 +11,27 @@ describe Bookie::Formatters::CommaDump do
     File.expects(:open).at_least(0).returns(io_mock)
   end
   let(:formatter) { Bookie::Formatter.new(:comma_dump, 'test.csv') }
-  
+
   it "correctly opens files" do
     File.expects(:open).with('test.csv')
     Bookie::Formatter.new(:comma_dump, 'test.csv')
   end
-  
+
   it "correctly formats jobs" do
     with_utc do
       formatter.print_jobs(Job.order(:start_time).limit(2))
-      io_mock.buf.should eql <<-eos
+      expect(io_mock.buf).to eql <<-eos
 User, Group, System, System type, Start time, End time, Wall time, CPU time, Memory usage, Command, Exit code
 "root", "root", "test1", "Standalone", "2012-01-01 00:00:00", "2012-01-01 01:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "vi", "0"
 "test", "default", "test1", "Standalone", "2012-01-01 01:00:00", "2012-01-01 02:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "emacs", "1"
 eos
     end
   end
-  
+
   it "correctly formats summaries" do
     Time.expects(:now).returns(base_time + 40.hours).at_least_once
     formatter.print_summary(Job, JobSummary, System)
-    io_mock.buf.should eql <<-eos
+    expect(io_mock.buf).to eql <<-eos
 "Number of jobs", "40"
 "Total CPU time", "0 weeks, 0 days, 01:06:40"
 "Successful", "50.0000%"
@@ -44,8 +44,8 @@ eos
 
   it "correctly quotes values" do
     formatter = Formatters::CommaDump
-    formatter.quote("test").should eql '"test"'
-    formatter.quote('"test"').should eql '"""test"""'
-    formatter.quote(0).should eql '"0"'
+    expect(formatter.quote("test")).to eql '"test"'
+    expect(formatter.quote('"test"')).to eql '"""test"""'
+    expect(formatter.quote(0)).to eql '"0"'
   end
 end

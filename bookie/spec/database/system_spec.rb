@@ -4,19 +4,19 @@ include Bookie::Database
 
 describe Bookie::Database::System do
   describe "#active" do
-    it { System.active.length.should eql 3 }
+    it { expect(System.active.length).to eql 3 }
   end
-  
+
   it "correctly filters by name" do
-    System.by_name('test1').length.should eql 2
-    System.by_name('test2').length.should eql 1
-    System.by_name('test3').length.should eql 1
+    expect(System.by_name('test1').length).to eql 2
+    expect(System.by_name('test2').length).to eql 1
+    expect(System.by_name('test3').length).to eql 1
   end
-  
+
   it "correctly filters by system type" do
     ['Standalone', 'TORQUE cluster'].each do |type|
       t = SystemType.find_by_name(type)
-      System.by_system_type(t).length.should eql 2
+      expect(System.by_system_type(t).length).to eql 2
     end
   end
 
@@ -24,23 +24,23 @@ describe Bookie::Database::System do
   describe "#by_time_range" do
     it "correctly filters by time range" do
       systems = System.by_time_range(base_time ... base_time + 36000 * 2 + 1)
-      systems.count.should eql 3
+      expect(systems.count).to eql 3
       systems = System.by_time_range(base_time + 1 ... base_time + 36000 * 2)
-      systems.count.should eql 2
+      expect(systems.count).to eql 2
       systems = System.by_time_range(base_time ... base_time)
-      systems.length.should eql 0
+      expect(systems.length).to eql 0
       systems = System.by_time_range(base_time .. base_time + 36000 * 2)
-      systems.count.should eql 3
+      expect(systems.count).to eql 3
       systems = System.by_time_range(base_time .. base_time)
-      systems.count.should eql 1
+      expect(systems.count).to eql 1
     end
 
     #TODO: split inclusive/exclusive range tests
-    
+
     it "correctly handles empty/inverted ranges" do
       (-1 .. 0).each do |offset|
         systems = System.by_time_range(base_time ... base_time + offset)
-        systems.count.should eql 0
+        expect(systems.count).to eql 0
       end
     end
   end
@@ -54,7 +54,7 @@ describe Bookie::Database::System do
 
     let(:summary) { create_summaries(System, base_time) }
     let(:summary_wide) { System.summary(base_time - 1.hours ... Time.now + 1.hours) }
-    
+
     #All systems should have the same amount of memory.
     let(:memory_per_system) { System.first.memory }
     let(:cores_per_system) { System.first.cores }
@@ -110,44 +110,44 @@ describe Bookie::Database::System do
         end
 
         s1 = System.summary()
-        s1.should eql summary[:all]
+        expect(s1).to eql summary[:all]
 
         s1 = System.summary(base_time ... Time.now + 1.hour)
         s2 = summary[:all].dup
         s2[:avail_memory_avg] = Float(total_memory_time) / 41.hours
-        s1.should eql s2
+        expect(s1).to eql s2
       end
     end
-    
+
     it "correctly handles inverted ranges" do
       t = base_time
-      System.summary(t ... t - 1).should eql summary[:empty]
-      System.summary(t .. t - 1).should eql summary[:empty]
+      expect(System.summary(t ... t - 1)).to eql summary[:empty]
+      expect(System.summary(t .. t - 1)).to eql summary[:empty]
     end
   end
 
   describe "#find_current" do
     before(:all) do
       @config_t1 = test_config.clone
-      
+
       @config_t1.hostname = 'test1'
       @config_t1.system_type = 'standalone'
       @config_t1.cores = 2
       @config_t1.memory = 1000000
-      
+
       @config_t2 = @config_t1.clone
       @config_t2.system_type = 'torque_cluster'
-      
+
       @sender_1 = Bookie::Sender.new(@config_t1)
       @sender_2 = Bookie::Sender.new(@config_t2)
     end
 
     it "finds the correct system" do
-      System.find_current(@sender_2).id.should eql 2
-      System.find_current(@sender_2, Time.now).id.should eql 2
-      System.find_current(@sender_1, base_time).id.should eql 1
+      expect(System.find_current(@sender_2).id).to eql 2
+      expect(System.find_current(@sender_2, Time.now).id).to eql 2
+      expect(System.find_current(@sender_1, base_time).id).to eql 1
     end
-    
+
     it "correctly detects the lack of a matching system" do
       expect {
         System.find_current(@sender_1, base_time - 1.years)
@@ -157,7 +157,7 @@ describe Bookie::Database::System do
         System.find_current(@sender_1, base_time)
       }.to raise_error(/^There is no system with hostname 'test1000' that was recorded as active at /)
     end
-    
+
     it "correctly detects conflicts" do
       config = test_config.clone
       config.hostname = 'test1'
@@ -183,13 +183,13 @@ describe Bookie::Database::System do
     sys = System.active.find_by_name('test1')
     begin
       sys.decommission(sys.start_time + 3)
-      sys.end_time.should eql sys.start_time + 3
+      expect(sys.end_time).to eql sys.start_time + 3
     ensure
       sys.end_time = nil
       sys.save!
     end
   end
-  
+
   it "validates fields" do
     fields = {
       :name => 'test',
@@ -198,35 +198,34 @@ describe Bookie::Database::System do
       :system_type => SystemType.first,
       :start_time => base_time
     }
-    
-    System.new(fields).valid?.should eql true
-    
+
+    expect(System.new(fields).valid?).to eql true
+
     fields.each_key do |field|
       system = System.new(fields)
       system.method("#{field}=".intern).call(nil)
-      system.valid?.should eql false
+      expect(system.valid?).to eql false
     end
-    
+
     system = System.new(fields)
     system.name = ''
-    system.valid?.should eql false
-    
+    expect(system.valid?).to eql false
+
     [:cores, :memory].each do |field|
       system = System.new(fields)
       m = system.method("#{field}=".intern)
       m.call(-1)
-      system.valid?.should eql false
+      expect(system.valid?).to eql false
       m.call(0)
-      system.valid?.should eql true
+      expect(system.valid?).to eql true
     end
-    
+
     system = System.new(fields)
     system.end_time = base_time
-    system.valid?.should eql true
+    expect(system.valid?).to eql true
     system.end_time += 5
-    system.valid?.should eql true
+    expect(system.valid?).to eql true
     system.end_time -= 10
-    system.valid?.should eql false
+    expect(system.valid?).to eql false
   end
 end
-

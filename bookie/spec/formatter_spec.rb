@@ -6,9 +6,9 @@ module Bookie
       attr_reader :mock_field_values
 
       def open(filename)
-      
+
       end
-      
+
       def do_print_summary(field_values)
         @mock_field_values = field_values
       end
@@ -22,7 +22,7 @@ describe Bookie::Formatter do
   before(:each) do
     Formatter.any_instance.stubs(:require)
   end
-  
+
   let(:formatter) { Formatter.new(:mock) }
   let(:jobs) { Database::Job }
   let(:summaries) { Database::JobSummary }
@@ -31,16 +31,16 @@ describe Bookie::Formatter do
     Formatter.any_instance.expects(:require).with('bookie/formatters/mock')
     Formatter.new(:mock)
   end
-  
+
   it "correctly formats durations" do
-    Formatter.format_duration(1.seconds + 2.minutes + 3.hours + 4.days + 5.weeks).should eql '5 weeks, 4 days, 03:02:01'
-    Formatter.format_duration(1.weeks + 1.days).should eql '1 week, 1 day, 00:00:00'
+    expect(Formatter.format_duration(1.seconds + 2.minutes + 3.hours + 4.days + 5.weeks)).to eql '5 weeks, 4 days, 03:02:01'
+    expect(Formatter.format_duration(1.weeks + 1.days)).to eql '1 week, 1 day, 00:00:00'
   end
-  
+
   it "correctly calculates fields for jobs" do
     with_utc do
       formatter.fields_for_each_job(jobs.limit(1)) do |fields|
-        fields.should eql [
+        expect(fields).to eql [
             'root',
             'root',
             'test1',
@@ -57,11 +57,11 @@ describe Bookie::Formatter do
       jobs = [Database::Job.first]
       jobs[0].system.system_type.memory_stat_type = :unknown
       formatter.send(:fields_for_each_job, jobs) do |fields|
-        fields[8].should eql '200kb'
+        expect(fields[8]).to eql '200kb'
       end
     end
   end
-  
+
   describe "#print_summary" do
     it "prints the correct summary fields" do
       with_utc do
@@ -69,12 +69,12 @@ describe Bookie::Formatter do
 
         formatter.print_summary(jobs, summaries, Database::System)
         formatter.flush
-        formatter.mock_field_values.should eql [
+        expect(formatter.mock_field_values).to eql [
           40, "0 weeks, 0 days, 01:06:40", "50.0000%",
           "0 weeks, 5 days, 20:00:00", "0.7937%",
           "1750000 kb", "0.0114%"
         ]
-        
+
         Database::System.expects(:summary).returns(
           :avail_cpu_time => 0,
           :avail_memory_time => 0,
@@ -82,7 +82,7 @@ describe Bookie::Formatter do
         )
         formatter.print_summary(jobs, summaries, Database::System, base_time ... base_time)
         formatter.flush
-        formatter.mock_field_values.should eql [
+        expect(formatter.mock_field_values).to eql [
           0, "0 weeks, 0 days, 00:00:00", "0.0000%",
           "0 weeks, 0 days, 00:00:00", "0.0000%",
           "0 kb", "0.0000%"
@@ -90,12 +90,12 @@ describe Bookie::Formatter do
       end
     end
   end
-  
+
   it "forwards print_jobs to do_print_jobs" do
     formatter.expects(:do_print_jobs).with(Job)
     formatter.print_jobs(Job)
   end
-  
+
   it "forwards flush to do_flush" do
     formatter.expects(:'respond_to?').with(:do_flush).returns(false)
     formatter.expects(:do_flush).never

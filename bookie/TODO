@@ -1,4 +1,4 @@
-
+Use bulk inserts?
 Replace deprecated find_by_* methods with find_by!(:attribute => value).
 Allow configuration of date boundary to midnight in local time zone?
 Make sure all source files have the required "require"s

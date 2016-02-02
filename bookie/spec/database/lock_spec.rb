@@ -3,13 +3,13 @@ require 'spec_helper'
 describe Bookie::Database::Lock do
   it "finds locks" do
     Lock = Bookie::Database::Lock
-    Lock[:users].should_not eql nil
-    Lock[:users].name.should eql 'users'
-    Lock[:groups].should_not eql nil
-    Lock[:groups].name.should eql 'groups'
+    expect(Lock[:users]).to_not eql nil
+    expect(Lock[:users].name).to eql 'users'
+    expect(Lock[:groups]).to_not eql nil
+    expect(Lock[:groups].name).to eql 'groups'
     expect { Lock[:dummy] }.to raise_error("Unable to find lock 'dummy'")
   end
-  
+
   it "locks records (will probably fail if the testing DB doesn't support row locks)" #do
     #lock = Bookie::Database::Lock[:users]
     #thread = nil
@@ -21,21 +21,20 @@ describe Bookie::Database::Lock do
     #        Bookie::Database::User.first
     #      end
     #    end
-    #    (Time.now - t).should >= 0.5
+    #    expect(Time.now - t).to >= 0.5
     #  }
     #  sleep(1)
     #end
     #thread.join
   #end
-  
+
   it "validates fields" do
     lock = Bookie::Database::Lock.new
     lock.name = nil
-    lock.valid?.should eql false
+    expect(lock.valid?).to eql false
     lock.name = ''
-    lock.valid?.should eql false
+    expect(lock.valid?).to eql false
     lock.name = 'test'
-    lock.valid?.should eql true
+    expect(lock.valid?).to eql true
   end
 end
-

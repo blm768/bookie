@@ -29,7 +29,7 @@ class JobStub
   attr_accessor :cpu_time
   attr_accessor :memory
   attr_accessor :exit_code
-  
+
   include Bookie::ModelHelpers
 
   def self.from_job(job)
@@ -74,59 +74,59 @@ describe Bookie::Sender do
   after(:all) do
     rollback_transaction
   end
-  
+
   let(:sender) { Bookie::Sender.new(test_config) }
   before(:each) do
     Bookie::Database::Job.delete_all
   end
-  
+
   it "correctly filters jobs" do
     job = JobStub.new
     job.user_name = "root"
-    sender.filtered?(job).should eql true
+    expect(sender.filtered?(job)).to eql true
     job.user_name = "test"
-    sender.filtered?(job).should eql false
+    expect(sender.filtered?(job)).to eql false
   end
-  
+
   it "correctly sends jobs" do
     config = test_config.clone
     config.excluded_users = Set.new
     sender.send_data('snapshot/torque_large')
     jobs = Job.includes(:system)
     jobs.each do |job|
-      job.system.name.should eql config.hostname
+      expect(job.system.name).to eql config.hostname
     end
-    jobs.length.should eql 100
+    expect(jobs.length).to eql 100
   end
-  
+
   it "refuses to send jobs when jobs already have been sent from a file" do
     sender.send_data('snapshot/torque_large')
     expect {
       sender.send_data('snapshot/torque_large')
     }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
   end
-  
+
   it "correctly handles empty files" do
     Bookie::Database::Job.any_instance.expects(:'save!').never
     ActiveRecord::Relation.any_instance.expects(:'delete_all').never
     sender.send_data('/dev/null')
   end
-  
+
   it "handles missing files" do
     expect { sender.send_data('snapshot/abc') }.to raise_error("File 'snapshot/abc' does not exist.")
   end
-  
+
   it "chooses the correct systems" do
     sender = Bookie::Sender.new(test_config)
 
     redefine_each_job(sender)
-   
+
     #The filename is just a dummy argument.
     sender.send_data('snapshot/pacct')
-    
+
     jobs = Bookie::Database::Job.by_system_name(test_config.hostname).order(:end_time).to_a
-    jobs[0].system.should eql @sys_1
-    jobs[1].system.should eql @sys_2
+    expect(jobs[0].system).to eql @sys_1
+    expect(jobs[1].system).to eql @sys_2
   end
 
   it "correctly finds duplicates" do
@@ -136,9 +136,9 @@ describe Bookie::Sender do
     #The job's system should be @sys_2.
     #Just to make sure this test doesn't break later, I'll check it.
     #TODO: restore?
-    #expect(job.system).to eql @sys_2
-    #sender.duplicate(stub, @sys_1).should eql nil
-    sender.duplicate(stub, job.system).should eql job
+    #expect(expect(job.system).to eql @sys_2
+    #expect(sender.duplicate(stub, @sys_1)).to eql nil
+    expect(sender.duplicate(stub, job.system)).to eql job
     [:user_name, :group_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
       old_val = stub.send(field)
       if old_val.is_a?(String)
@@ -146,11 +146,11 @@ describe Bookie::Sender do
       else
         stub.send("#{field}=", old_val + 1)
       end
-      sender.duplicate(stub, @sys_2).should eql nil
+      expect(sender.duplicate(stub, @sys_2)).to eql nil
       stub.send("#{field}=", old_val)
     end
   end
-  
+
   it "deletes cached summaries that overlap the new jobs" do
     sender.send_data('snapshot/torque_large')
     time_min = Bookie::Database::Job.order(:start_time).first.start_time
@@ -159,12 +159,12 @@ describe Bookie::Sender do
     sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
     sender.send_data('snapshot/torque_large')
   end
-  
+
   describe "#clear_summaries" do
     it "deletes cached summaries" do
       sender = Bookie::Sender.new(test_config)
       sender.send_data('snapshot/torque_large')
-      
+
       user = Bookie::Database::User.first
       date_start = Date.new(2012) - 2
       date_end = date_start + 4
@@ -182,43 +182,43 @@ describe Bookie::Sender do
           )
         end
       end
-      
+
       sender.send(:clear_summaries, date_start + 1, date_end - 1)
-      
+
       sums = Bookie::Database::JobSummary.all.to_a
-      sums.length.should eql 9
+      expect(sums.length).to eql 9
       sums.each do |sum|
         #Since there are no jobs for @sys_dummy, its summaries should be left intact.
         unless sum.system == @sys_dummy
-          (date_start + 1 .. date_end - 1).cover?(sum.date).should eql false
+          expect((date_start + 1 .. date_end - 1).cover?(sum.date)).to eql false
         end
       end
       sums = Bookie::Database::JobSummary.by_date(Date.new(2012))
-      sums.count.should eql 1
-      sums.first.system.should eql @sys_dummy
+      expect(sums.count).to eql 1
+      expect(sums.first.system).to eql @sys_dummy
     end
   end
-  
+
   describe "#undo_send" do
     it "removes the correct entries" do
       sender.send_data('snapshot/torque_large')
       sender.send_data('snapshot/torque')
       sender.undo_send('snapshot/torque_large')
-      
-      Bookie::Database::Job.count.should eql 1
+
+      expect(Bookie::Database::Job.count).to eql 1
       job = Bookie::Database::Job.first
       Bookie::Database::Job.delete_all
       sender.send_data('snapshot/torque')
       job2 = Bookie::Database::Job.first
       job2.id = job.id
-      job2.should eql job
+      expect(job2).to eql job
     end
 
     it "switches systems if needed" do
       sender = Bookie::Sender.new(test_config)
 
       redefine_each_job(sender)
-     
+
       #The filename is just a dummy argument.
       sender.send_data('snapshot/pacct')
 
@@ -254,21 +254,21 @@ describe Bookie::ModelHelpers do
     @job.cpu_time = 2
     @job.memory = 300
   end
-  
+
   it "correctly converts jobs to records" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
     djob = @job.to_record
-    djob.command_name.should eql @job.command_name
-    djob.start_time.should eql @job.start_time
-    djob.end_time.should eql @job.start_time + @job.wall_time
-    djob.wall_time.should eql @job.wall_time
-    djob.cpu_time.should eql @job.cpu_time
-    djob.memory.should eql @job.memory
-    djob.exit_code.should eql @job.exit_code
+    expect(djob.command_name).to eql @job.command_name
+    expect(djob.start_time).to eql @job.start_time
+    expect(djob.end_time).to eql @job.start_time + @job.wall_time
+    expect(djob.wall_time).to eql @job.wall_time
+    expect(djob.cpu_time).to eql @job.cpu_time
+    expect(djob.memory).to eql @job.memory
+    expect(djob.exit_code).to eql @job.exit_code
   end
 
   it "correctly calculates end time" do
-    @job.end_time.should eql @job.start_time + @job.wall_time
+    expect(@job.end_time).to eql @job.start_time + @job.wall_time
   end
 end
 

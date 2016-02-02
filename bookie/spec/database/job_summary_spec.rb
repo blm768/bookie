@@ -39,79 +39,79 @@ describe Bookie::Database::JobSummary do
   it "correctly filters by date range" do
     d = Date.new(2012)
     sums = JobSummary
-    sums.by_date_range(d .. d).count.should eql sums.by_date(d).count
-    sums.by_date_range(d ... d).count.should eql 0
-    sums.by_date_range(d + 1 .. d).count.should eql 0
-    sums.by_date_range(d .. d + 1).count.should eql sums.by_date(d).count + sums.by_date(d + 1).count
-    sums.by_date_range(d ... d + 1).count.should eql sums.by_date(d).count
+    expect(sums.by_date_range(d .. d).count).to eql sums.by_date(d).count
+    expect(sums.by_date_range(d ... d).count).to eql 0
+    expect(sums.by_date_range(d + 1 .. d).count).to eql 0
+    expect(sums.by_date_range(d .. d + 1).count).to eql sums.by_date(d).count + sums.by_date(d + 1).count
+    expect(sums.by_date_range(d ... d + 1).count).to eql sums.by_date(d).count
   end
-  
+
   it "correctly filters by user" do
     u = User.first
     sums = JobSummary.by_user(u).to_a
-    sums.length.should eql 16
+    expect(sums.length).to eql 16
     sums.each do |sum|
-      sum.user.should eql u
+      expect(sum.user).to eql u
     end
   end
-  
+
   it "correctly filters by user name" do
     sums = JobSummary.by_user_name('test').to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.user.name.should eql 'test'
+      expect(sum.user.name).to eql 'test'
     end
   end
-  
+
   it "correctly filters by group" do
     g = Group.find_by_name('admin')
     sums = JobSummary.by_group(g).to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.user.group.should eql g
+      expect(sum.user.group).to eql g
     end
   end
-  
+
   it "correctly filters by group name" do
     sums = JobSummary.by_group_name('admin').to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.user.group.name.should eql 'admin'
+      expect(sum.user.group.name).to eql 'admin'
     end
-    JobSummary.by_group_name('fake_group').count.should eql 0
+    expect(JobSummary.by_group_name('fake_group').count).to eql 0
   end
-  
+
   it "correctly filters by system" do
     s = System.first
     sums = JobSummary.by_system(s).to_a
-    sums.length.should eql 16
+    expect(sums.length).to eql 16
     sums.each do |sum|
-      sum.system.should eql s
+      expect(sum.system).to eql s
     end
   end
-  
+
   it "correctly filters by system name" do
     sums = JobSummary.by_system_name('test1').to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.system.name.should eql 'test1'
+      expect(sum.system.name).to eql 'test1'
     end
   end
-  
+
   it "correctly filters by system type" do
     s = SystemType.first
     sums = JobSummary.by_system_type(s).to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.system.system_type.should eql s
+      expect(sum.system.system_type).to eql s
     end
   end
-  
+
   it "correctly filters by command name" do
     sums = JobSummary.by_command_name('vi').to_a
-    sums.length.should eql 32
+    expect(sums.length).to eql 32
     sums.each do |sum|
-      sum.command_name.should eql 'vi'
+      expect(sum.command_name).to eql 'vi'
     end
   end
 
@@ -119,7 +119,7 @@ describe Bookie::Database::JobSummary do
     before(:each) do
       JobSummary.delete_all
     end
-    
+
     it "produces correct summaries" do
       d = Date.new(2012)
       range = base_time ... base_time + 1.days
@@ -127,7 +127,7 @@ describe Bookie::Database::JobSummary do
       sums = JobSummary.all.to_a
       found_sums = Set.new
       sums.each do |sum|
-        sum.date.should eql Date.new(2012)
+        expect(sum.date).to eql Date.new(2012)
         jobs = Job.by_user(sum.user).by_system(sum.system).by_command_name(sum.command_name)
         sum_2 = jobs.summary(range)
         [:cpu_time, :memory_time].each do |field|
@@ -136,20 +136,20 @@ describe Bookie::Database::JobSummary do
         found_sums.add([sum.user.id, sum.system.id, sum.command_name])
       end
       #Is it catching all of the combinations of categories?
-      Job.by_time_range(range).select('user_id, system_id, command_name').uniq.find_each do |values|
+      Job.by_time_range(range).select(:id, :user_id, :system_id, :command_name).uniq.find_each do |values|
         values = [values.user_id, values.system_id, values.command_name]
-        found_sums.include?(values).should eql true
+        expect(found_sums.include?(values)).to eql true
       end
     end
-    
+
     it "creates dummy summaries when there are no jobs" do
       d = Date.new(2012) + 5
       JobSummary.summarize(d)
       sums = JobSummary.by_date(d).to_a
-      sums.length.should eql 1
+      expect(sums.length).to eql 1
       sum = sums[0]
-      sum.cpu_time.should eql 0
-      sum.memory_time.should eql 0
+      expect(sum.cpu_time).to eql 0
+      expect(sum.memory_time).to eql 0
 
       #Check the case where there are no users or no systems:
       JobSummary.delete_all
@@ -157,7 +157,7 @@ describe Bookie::Database::JobSummary do
         JobSummary.transaction(:requires_new => true) do
           klass.delete_all
           JobSummary.summarize(d)
-          JobSummary.by_date(d).count.should eql 0
+          expect(JobSummary.by_date(d).count).to eql 0
           raise ActiveRecord::Rollback
         end
       end
@@ -176,7 +176,7 @@ describe Bookie::Database::JobSummary do
         :memory_time => 0,
       }
     end
-    
+
     it "produces correct summaries" do
       1.upto(3) do |num_days|
         [0, -2.hours, 2.hours, 3.minutes].each do |offset_begin|
@@ -196,11 +196,11 @@ describe Bookie::Database::JobSummary do
     it "distinguishes between inclusive and exclusive ranges" do
       Summary = JobSummary
       sum = Summary.summary(:range => (base_time ... base_time + 1.days + 2.hours))
-      sum[:num_jobs].should eql 26
-      sum[:successful].should eql 13
+      expect(sum[:num_jobs]).to eql 26
+      expect(sum[:successful]).to eql 13
       sum = Summary.summary(:range => (base_time .. base_time + 1.days + 2.hours))
-      sum[:num_jobs].should eql 27
-      sum[:successful].should eql 14
+      expect(sum[:num_jobs]).to eql 27
+      expect(sum[:successful]).to eql 14
     end
 
     def check_time_bounds
@@ -208,7 +208,7 @@ describe Bookie::Database::JobSummary do
       expect(JobSummary.minimum(:date)).to eql(base_time.to_date)
       expect(JobSummary.maximum(:date)).to eql(Time.now.utc.to_date - 1)
     end
-    
+
     it "correctly finds the default time bounds" do
       Time.expects(:now).at_least(0).returns(base_time + 2.days)
       job = Job.order('end_time DESC').first
@@ -216,7 +216,7 @@ describe Bookie::Database::JobSummary do
       job.save!
       check_time_bounds
       JobSummary.delete_all
-      
+
       #Check the case where all systems are decommissioned.
       #TODO: split into a context?
       JobSummary.transaction(:requires_new => true) do
@@ -232,10 +232,10 @@ describe Bookie::Database::JobSummary do
       #TODO: split into a context?
       Job.delete_all
       sum = JobSummary.summary
-      sum.should eql(@empty_summary)
-      JobSummary.any?.should eql false
+      expect(sum).to eql(@empty_summary)
+      expect(JobSummary.any?).to eql false
     end
-    
+
     it "correctly handles filtered summaries" do
       filters = {
         :user_name => 'test',
@@ -250,12 +250,12 @@ describe Bookie::Database::JobSummary do
         expect(sum1).to eql(sum2)
       end
     end
-    
+
     it "correctly handles inverted ranges" do
       t = base_time
-      JobSummary.summary(:range => t .. t - 1).should eql(@empty_summary)
+      expect(JobSummary.summary(:range => t .. t - 1)).to eql(@empty_summary)
     end
-    
+
     it "caches summaries" do
       JobSummary.expects(:summarize)
       range = base_time ... base_time + 1.days
@@ -281,21 +281,21 @@ describe Bookie::Database::JobSummary do
     }
 
     sum = JobSummary.new(fields)
-    sum.valid?.should eql true
-    
+    expect(sum.valid?).to eql true
+
     fields.each_key do |field|
       job = JobSummary.new(fields)
       job.method("#{field}=".intern).call(nil)
-      job.valid?.should eql false
+      expect(job.valid?).to eql false
     end
-    
+
     [:cpu_time, :memory_time].each do |field|
       job = JobSummary.new(fields)
       method = job.method("#{field}=".intern)
       method.call(-1)
-      job.valid?.should eql false
+      expect(job.valid?).to eql false
       method.call(0)
-      job.valid?.should eql true
+      expect(job.valid?).to eql true
     end
   end
 end

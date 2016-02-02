@@ -8,7 +8,7 @@ require 'pacct'
 module Bookie
   module Senders
     module Standalone
-      
+
     end
   end
 end
@@ -16,26 +16,24 @@ end
 describe Bookie::Senders::Standalone do
   let(:config) { Bookie::Config.new('snapshot/pacct_test_config.json') }
   let(:sender) { Bookie::Sender.new(config) }
-  
+
   it "correctly yields jobs" do
     sender.each_job('snapshot/pacct') do |job|
-      job.class.should eql Pacct::Entry
-      job.user_name.should eql 'root'
+      expect(job.class).to eql Pacct::Entry
+      expect(job.user_name).to eql 'root'
     end
   end
-  
+
   it "has the correct system type name" do
-    sender.system_type_name.should eql 'Standalone'
+    expect(sender.system_type_name).to eql 'Standalone'
   end
-  
+
   it "has the correct memory stat type" do
-    sender.memory_stat_type.should eql :avg
+    expect(sender.memory_stat_type).to eql :avg
   end
 end
 
 describe Pacct::Entry do
-  it "has a to_record method" do
-    Pacct::Entry.new.respond_to?(:to_record).should eql true
-  end
+  it { expect(Pacct::Entry.new).to respond_to(:to_record) }
 end
 
