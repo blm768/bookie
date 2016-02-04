@@ -4,7 +4,7 @@ include Bookie::Database
 
 #Manually updated when we add new migrations
 #TODO: find a better way to do this?
-LATEST_MIGRATION = 1
+LATEST_MIGRATION = 2
 
 describe Bookie::Database do
   #The other database-related tests implicitly test the success of the migrations,

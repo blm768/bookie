@@ -23,16 +23,13 @@ module Bookie
       has_one :system_type, :through => :system
 
       ##
-      #The time at which the job ended
-      def end_time
-        return start_time + wall_time
+      #The number of seconds for which the job ran
+      def wall_time
+        #We use #to_i because directly subtracting Time objects produces
+        #floating-point numbers.
+        #To consider: could we actually _want_ floats?
+        return end_time.to_i - start_time.to_i
       end
-
-      def end_time=(time)
-        self.wall_time = (time - start_time)
-      end
-
-      #To consider: disable #end_time= ?
 
       def self.by_user(user)
         where('jobs.user_id = ?', user.id)
@@ -148,7 +145,7 @@ module Bookie
             num_jobs += jobs_within.count
             successful += jobs_within.where(:exit_code => 0).count
             cpu_time += jobs_within.sum(:cpu_time)
-            memory_time += jobs_within.sum('jobs.memory * jobs.wall_time')
+            memory_time += jobs_within.sum('jobs.memory * (jobs.end_time - jobs.start_time)')
 
             #Any jobs that overlap an edge of the time range
             #must be clipped.
@@ -170,7 +167,7 @@ module Bookie
           num_jobs = jobs.count
           successful = jobs.where(:exit_code => 0).count
           cpu_time = jobs.sum(:cpu_time)
-          memory_time = jobs.sum('jobs.memory * jobs.wall_time')
+          memory_time = jobs.sum('jobs.memory * (jobs.end_time - jobs.start_time)')
         end
 
         return {
@@ -181,22 +178,16 @@ module Bookie
         }
       end
 
-      before_save do
-        write_attribute(:end_time, end_time)
-      end
-
-      before_update do
-        write_attribute(:end_time, end_time)
-      end
-
       validates_presence_of :user, :system, :cpu_time,
-        :start_time, :wall_time, :memory, :exit_code
+        :start_time, :memory, :exit_code
+
+      #TODO: validate that start_time <= end_time
 
       validates_each :command_name do |record, attr, value|
         record.errors.add(attr, 'must not be nil') if value == nil
       end
 
-      validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
+      validates_each :cpu_time, :memory do |record, attr, value|
         record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
       end
     end

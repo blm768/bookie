@@ -7,7 +7,7 @@ module Bookie
   #An object that sends data to the database
   class Sender
     attr_reader :config
-    
+
     ##
     #Creates a new Sender
     #
@@ -18,20 +18,20 @@ module Bookie
       require "bookie/senders/#{sys_type}"
       extend Bookie::Senders.const_get(sys_type.camelize)
     end
-    
+
     ##
     #Sends job data from the given file to the database server
     def send_data(filename)
       raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
-    
+
       system = nil
-      
+
       known_users = {}
       known_groups = {}
-      
+
       time_min, time_max = nil
-      
-      #Grab data from the first job:  
+
+      #Grab data from the first job:
       each_job(filename) do |job|
         next if filtered?(job)
         system = Bookie::Database::System.find_current(self, job.end_time)
@@ -40,10 +40,10 @@ module Bookie
         time_max = job.end_time
         break
       end
-      
+
       #If there are no jobs, return.
       return unless time_min
-      
+
       #Send the job data:
       each_job(filename) do |job|
         next if filtered?(job)
@@ -65,21 +65,21 @@ module Bookie
         model.user = user
         model.save!
       end
-      
+
       #Clear out the summaries that would have been affected by the new data:
       clear_summaries(time_min.to_date, time_max.to_date)
     end
-    
+
     ##
     #Undoes a previous send operation
     def undo_send(filename)
       raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
-      
+
       system = nil
-      
+
       time_min, time_max = nil
-      
-      #Grab data from the first job:  
+
+      #Grab data from the first job:
       each_job(filename) do |job|
         next if filtered?(job)
         system = Bookie::Database::System.find_current(self, job.end_time)
@@ -87,9 +87,9 @@ module Bookie
         time_max = job.end_time
         break
       end
-      
+
       return unless time_min
-      
+
       each_job(filename) do |job|
         next if filtered?(job)
         if system.end_time && job.end_time > system.end_time
@@ -105,36 +105,36 @@ module Bookie
         time_max = [model.end_time, time_max].max
         model.delete
       end
-      
+
       clear_summaries(time_min.to_date, time_max.to_date)
     end
-    
+
     ##
     #The name of the Bookie::Database::SystemType that systems using this sender will have
     def system_type
       @system_type ||= Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
     end
-    
+
     ##
     #Returns whether a job should be filtered from the results
     #
     def filtered?(job)
       @config.excluded_users.include?job.user_name
     end
-    
+
     ##
     #Finds the first job that is a duplicate of the provided job
     def duplicate(job, system)
       system.jobs.where({
           :start_time => job.start_time,
-          :wall_time => job.wall_time,
+          :end_time => job.end_time,
           :command_name => job.command_name,
           :cpu_time => job.cpu_time,
           :memory => job.memory,
           :exit_code => job.exit_code
         }).by_user_name(job.user_name).by_group_name(job.group_name).first
     end
-    
+
     #Used internally by #send_data and #undo_send
     def clear_summaries(date_min, date_max)
       #Since joins don't mix with DELETE statements, we have to do this the hard way.
@@ -144,7 +144,7 @@ module Bookie
     end
     private :clear_summaries
   end
-  
+
   ##
   #This module is mixed into various job classes used internally by senders.
   module ModelHelpers
@@ -154,7 +154,7 @@ module Bookie
       job = Bookie::Database::Job.new
       job.command_name = self.command_name
       job.start_time = self.start_time
-      job.wall_time = self.wall_time
+      job.end_time = self.end_time
       job.cpu_time = self.cpu_time
       job.memory = self.memory
       job.exit_code = self.exit_code
@@ -168,6 +168,6 @@ module Bookie
 
   #Contains all sender plugins
   module Senders
-    
+
   end
 end

@@ -14,28 +14,13 @@ RSpec::Matchers.define :be_job_within_time_range do |time_range|
 end
 
 describe Bookie::Database::Job do
-  it "correctly sets end times" do
-    Job.find_each do |job|
-      expect(job.end_time).to eql job.start_time + job.wall_time
-      expect(job.end_time).to eql job.read_attribute(:end_time)
-    end
-
-    #Test the update hook.
-    job = Job.first
-    job.start_time -= 1
-    job.save!
-    expect(job.end_time).to eql job.read_attribute(:end_time)
-  end
-
-  describe "#end_time=" do
-    it "correctly adjusts time values" do
-      job = Job.first
-      old_end_time = job.end_time
-      job.end_time -= 1
-      #We use #to_i because directly subtracting Time objects produces
-      #floating-point numbers.
-      expect(job.wall_time).to eql(job.end_time.to_i - job.start_time.to_i)
-      expect(job.end_time).to eql(old_end_time - 1)
+  describe "#wall_time" do
+    it "produces correct values" do
+      Job.find_each do |job|
+        #We use #to_i because directly subtracting Time objects produces
+        #floating-point numbers.
+        expect(job.wall_time).to eql job.end_time.to_i - job.start_time.to_i
+      end
     end
   end
 
@@ -281,7 +266,7 @@ describe Bookie::Database::Job do
       :command_name => '',
       :cpu_time => 100,
       :start_time => base_time,
-      :wall_time => 1000,
+      :end_time => base_time + 1000,
       :memory => 10000,
       :exit_code => 0
     }
@@ -295,7 +280,7 @@ describe Bookie::Database::Job do
       expect(job.valid?).to eql false
     end
 
-    [:cpu_time, :wall_time, :memory].each do |field|
+    [:cpu_time, :memory].each do |field|
       job = Job.new(fields)
       m = job.method("#{field}=".intern)
       m.call(-1)

@@ -10,7 +10,7 @@ module Helpers
         job.group_name = 'blm'
         job.command_name = 'vi'
         job.start_time = Helpers::BASE_TIME + offset
-        job.wall_time = 1000
+        job.end_time = job.start_time + 1000
         job.cpu_time = 2
         job.memory = 300
         job.exit_code = 0
@@ -21,13 +21,10 @@ module Helpers
 end
 
 class JobStub
-  attr_accessor :user_name
-  attr_accessor :group_name
+  attr_accessor :user_name, :group_name
   attr_accessor :command_name
-  attr_accessor :start_time
-  attr_accessor :wall_time
-  attr_accessor :cpu_time
-  attr_accessor :memory
+  attr_accessor :start_time, :end_time
+  attr_accessor :cpu_time, :memory
   attr_accessor :exit_code
 
   include Bookie::ModelHelpers
@@ -38,7 +35,7 @@ class JobStub
     stub.group_name = job.user.group.name
     stub.command_name = job.command_name
     stub.start_time = job.start_time
-    stub.wall_time = job.wall_time
+    stub.end_time = job.end_time
     stub.cpu_time = job.cpu_time
     stub.memory = job.memory
     stub.exit_code = job.exit_code
@@ -139,8 +136,9 @@ describe Bookie::Sender do
     #expect(expect(job.system).to eql @sys_2
     #expect(sender.duplicate(stub, @sys_1)).to eql nil
     expect(sender.duplicate(stub, job.system)).to eql job
-    [:user_name, :group_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
+    [:user_name, :group_name, :command_name, :start_time, :end_time, :cpu_time, :memory, :exit_code].each do |field|
       old_val = stub.send(field)
+      #Switch up the field values:
       if old_val.is_a?(String)
         stub.send("#{field}=", 'string')
       else
@@ -244,29 +242,20 @@ end
 describe Bookie::ModelHelpers do
   before(:all) do
     @job = JobStub.new
-    @job.user_name = "root"
-    @job.group_name = "root"
     @job.command_name =  "vi"
     @job.start_time = Time.new
-    @job.wall_time = 3
+    @job.end_time = @job.start_time + 3
     @job.cpu_time = 2
     @job.memory = 300
+    @job.exit_code = 0
   end
 
   it "correctly converts jobs to records" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
     djob = @job.to_record
-    expect(djob.command_name).to eql @job.command_name
-    expect(djob.start_time).to eql @job.start_time
-    expect(djob.end_time).to eql @job.start_time + @job.wall_time
-    expect(djob.wall_time).to eql @job.wall_time
-    expect(djob.cpu_time).to eql @job.cpu_time
-    expect(djob.memory).to eql @job.memory
-    expect(djob.exit_code).to eql @job.exit_code
-  end
-
-  it "correctly calculates end time" do
-    expect(@job.end_time).to eql @job.start_time + @job.wall_time
+    #TODO: grab this list from somewhere useful instead of hard-coding it?
+    [:command_name, :start_time, :end_time, :cpu_time, :memory, :exit_code].each do |field|
+      expect(djob.send(field)).to eql @job.send(field)
+    end
   end
 end
-

@@ -126,7 +126,7 @@ module Helpers
         job.command_name = 'emacs'
       end
       job.start_time = BASE_TIME + i.hours
-      job.wall_time = 1.hours
+      job.end_time = job.start_time + 1.hours
       job.cpu_time = 100
       job.memory = 200
       job.exit_code = i & 1

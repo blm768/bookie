@@ -14,4 +14,5 @@ Make unit test success more independent.
 Fix memory specification issue
 Specify dependency versions
 Replace Mocha with rspec-mocks? 
+Figure out how to portably find difference between start and end times in a query
 
