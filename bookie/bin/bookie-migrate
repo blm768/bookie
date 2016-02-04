@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+require 'bookie/database'
+
+config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
+
+target_version = nil
+
+opts = OptionParser.new do |opts|
+  opts.banner = "bookie-migrate [options]"
+
+  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
+    config_file = file
+  end
+
+  opts.on('-v', '--version VERSION', Integer, "specify the target migration version") do |version|
+    target_version = version
+  end
+end
+begin
+  opts.parse!(ARGV)
+rescue OptionParser::ParseError => e
+  puts e.message
+  puts opts
+  exit 1
+end
+
+config = Bookie::Config.new(config_file)
+config.connect
+
+target_version ||= Bookie::Database.latest_version
+current_version = ActiveRecord::Migrator.current_version
+
+if target_version < current_version then
+  puts 'Warning: target version is less than current version. The database will be rolled back.'
+end
+
+puts "Migrations may cause loss of data. Ensure that you have a current backup of your database."
+STDOUT.write "Proceed with migration? (YES/NO): "
+response = nil
+until response
+  response = STDIN.gets.chomp
+  case response
+  when "YES"
+    puts "Migrating to version #{target_version}"
+    Bookie::Database.migrate(target_version)
+  when /^no?$/i
+    exit 0
+  else
+    $stdout.write "Please answer 'YES' or 'NO'. "
+    response = nil
+  end
+end

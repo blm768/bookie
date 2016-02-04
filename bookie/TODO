@@ -12,3 +12,6 @@ Use optimistic concurrency control?
 Make units more independent.
 Make unit test success more independent.
 Fix memory specification issue
+Specify dependency versions
+Replace Mocha with rspec-mocks? 
+

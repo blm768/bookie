@@ -15,20 +15,20 @@ class IOMock
   def initialize
     @buf = ""
   end
-  
+
   def puts(str)
     @buf << str.to_s
     @buf << "\n"
   end
-  
+
   def write(str)
     @buf << str.to_s
   end
-  
+
   def printf(format, *args)
     @buf << sprintf(format, *args)
   end
-  
+
   def buf
     @buf
   end
@@ -44,7 +44,7 @@ module Helpers
     ActiveRecord::Base.connection.rollback_transaction
   end
 
-  #Creates summaries under diffferent conditions
+  #Creates summaries under different conditions
   def create_summaries(obj, base_time)
     base_start = base_time
     base_end   = base_time + 40.hours
@@ -61,10 +61,10 @@ module Helpers
     if obj.respond_to?(:by_command_name)
       summaries[:all_filtered] = obj.by_command_name('vi').summary(base_start ... base_end)
     end
-    
+
     summaries
   end
-  
+
   BASE_TIME = Time.utc(2012)
   #To get around the "formal argument cannot be a constant" error
   def base_time
@@ -164,7 +164,7 @@ RSpec.configure do |config|
     Helpers.test_config = Bookie::Config.new('snapshot/test_config.json')
     Helpers.test_config.connect
 
-    Bookie::Database::Migration.up
+    Bookie::Database.migrate
     Helpers.generate_database
   end
 
@@ -173,7 +173,7 @@ RSpec.configure do |config|
   config.before(:all) do
     begin_transaction
   end
-  
+
   config.after(:all) do
     rollback_transaction
   end
@@ -181,7 +181,7 @@ RSpec.configure do |config|
   config.before(:each) do
     begin_transaction
   end
-  
+
   config.after(:each) do
     rollback_transaction
   end
