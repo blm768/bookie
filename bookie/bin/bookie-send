@@ -14,27 +14,32 @@ system_end_time = nil
 
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-send [data-file] [options]"
-  
+
   opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
     config_file = file
   end
-  
+
   opts.on('-u', '--undo', String, "undo a previous send operation (file must be specified)") do
     will_undo = true
   end
-  
+
   opts.on("--create [TIME]",
   "Create an entry for this system, recording the given time as its start time") do |time|
     will_create = true
     system_start_time = Time.parse(time) if time
   end
-  
+
   opts.on("--decommission [HOSTNAME [TIME]]",
   String, String,
   "Decommission the system with the given hostname, recording the given time as its end time") do |hostname, time|
     will_decommission = true
     system_hostname = hostname if hostname
     system_end_time = Time.parse(time) if time
+  end
+
+  opts.on_tail('-h', '--help', "Show this message") do
+    puts opts
+    exit
   end
 end
 begin
