@@ -19,7 +19,7 @@ module Bookie
 
       def do_print_jobs(jobs)
         #TODO: optimize by moving out of the function?
-        format_string = "%-15.15s %-15.15s %-20.20s %-20.20s %-26.26s %-26.26s %-30.30s %-30.30s %-20.20s %-20.20s %-11.11s"
+        format_string = "%-15.15s %-20.20s %-26.26s %-26.26s %-30.30s %-30.30s %-20.20s %-20.20s %-11.11s"
         heading = sprintf(format_string, *Formatter::DETAILS_FIELD_LABELS)
         @io.puts heading.rstrip
         @io.puts '-' * (heading.length)

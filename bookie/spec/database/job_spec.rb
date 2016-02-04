@@ -49,29 +49,16 @@ describe Bookie::Database::Job do
   end
 
   it "correctly filters by user name" do
+    #TODO: simplify?
     jobs = Job.by_user_name('root').to_a
     expect(jobs.length).to eql 10
     expect(jobs[0].user.name).to eql "root"
     jobs = Job.by_user_name('test').order(:end_time).to_a
-    expect(jobs.length).to eql 20
+    expect(jobs.length).to eql 10
     jobs.each do |job|
       expect(job.user.name).to eql 'test'
     end
-    expect(jobs[0].user_id).to_not eql jobs[-1].user_id
     jobs = Job.by_user_name('user').to_a
-    expect(jobs.length).to eql 0
-  end
-
-  it "correctly filters by group name" do
-    jobs = Job.by_group_name("root").to_a
-    expect(jobs.length).to eql 10
-    jobs.each do |job|
-      expect(job.user.group.name).to eql "root"
-    end
-    jobs = Job.by_group_name("admin").order(:start_time).to_a
-    expect(jobs.length).to eql 20
-    expect(jobs[0].user.name).to_not eql jobs[1].user.name
-    jobs = Job.by_group_name("test").to_a
     expect(jobs.length).to eql 0
   end
 

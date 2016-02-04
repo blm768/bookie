@@ -7,7 +7,6 @@ module Helpers
       [0, 1001].each do |offset|
         job = JobStub.new
         job.user_name = 'blm'
-        job.group_name = 'blm'
         job.command_name = 'vi'
         job.start_time = Helpers::BASE_TIME + offset
         job.wall_time = 1000
@@ -22,7 +21,6 @@ end
 
 class JobStub
   attr_accessor :user_name
-  attr_accessor :group_name
   attr_accessor :command_name
   attr_accessor :start_time
   attr_accessor :wall_time
@@ -35,7 +33,6 @@ class JobStub
   def self.from_job(job)
     stub = self.new
     stub.user_name = job.user.name
-    stub.group_name = job.user.group.name
     stub.command_name = job.command_name
     stub.start_time = job.start_time
     stub.wall_time = job.wall_time
@@ -139,7 +136,7 @@ describe Bookie::Sender do
     #expect(expect(job.system).to eql @sys_2
     #expect(sender.duplicate(stub, @sys_1)).to eql nil
     expect(sender.duplicate(stub, job.system)).to eql job
-    [:user_name, :group_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
+    [:user_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
       old_val = stub.send(field)
       if old_val.is_a?(String)
         stub.send("#{field}=", 'string')
@@ -245,7 +242,6 @@ describe Bookie::ModelHelpers do
   before(:all) do
     @job = JobStub.new
     @job.user_name = "root"
-    @job.group_name = "root"
     @job.command_name =  "vi"
     @job.start_time = Time.new
     @job.wall_time = 3

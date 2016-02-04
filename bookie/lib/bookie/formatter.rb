@@ -40,7 +40,7 @@ module Bookie
       #An array containing the labels for each field in a details table
       #TODO: remove some fields?
       DETAILS_FIELD_LABELS = [
-        'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
+        'User', 'System', 'Start time', 'End time', 'Wall time',
         'CPU time', 'Memory usage', 'Command', 'Exit code'
       ]
 
@@ -118,10 +118,7 @@ module Bookie
         end
         yield [
           job.user.name,
-          job.user.group.name,
           job.system.name,
-          #TODO: remove this field?
-          job.system.system_type.name,
           job.start_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
           job.end_time.getlocal.strftime('%Y-%m-%d %H:%M:%S'),
           Formatter.format_duration(job.end_time.to_i - job.start_time.to_i),

@@ -42,9 +42,7 @@ describe Bookie::Formatter do
       formatter.fields_for_each_job(jobs.limit(1)) do |fields|
         expect(fields).to eql [
             'root',
-            'root',
             'test1',
-            'Standalone',
             '2012-01-01 00:00:00',
             '2012-01-01 01:00:00',
             '0 weeks, 0 days, 01:00:00',
@@ -54,10 +52,12 @@ describe Bookie::Formatter do
             0,
           ]
       end
+
+      #Check a different memory stat type.
       jobs = [Database::Job.first]
       jobs[0].system.system_type.memory_stat_type = :unknown
       formatter.send(:fields_for_each_job, jobs) do |fields|
-        expect(fields[8]).to eql '200kb'
+        expect(fields[6]).to eql '200kb'
       end
     end
   end

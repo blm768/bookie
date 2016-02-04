@@ -73,19 +73,11 @@ module Helpers
 
   #Create test database
   def self.generate_database
-    groups = {}
-    group_names = ['root', 'default', 'admin', 'admin']
-    group_names[0 .. 2].each do |name|
-      group = Bookie::Database::Group.create!(:name => name)
-      groups[name] = group
-    end
-
     users = []
-    user_names = ['root', 'test', 'test', 'blm768']
+    user_names = ['root', 'test', 'blm', 'blm768']
     user_names.each_with_index do |name, i|
       user = Bookie::Database::User.new
       user.name = name
-      user.group = groups[group_names[i]]
       user.save!
       users << user
     end

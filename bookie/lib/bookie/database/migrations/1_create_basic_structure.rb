@@ -6,15 +6,8 @@ class CreateBasicStructure < ActiveRecord::Migration
   def change
     create_table :users do |t|
       t.string :name, null: false
-      t.references :group, null: false
 
-      t.index [:name, :group_id], unique: true
-    end
-
-    create_table :groups do |t|
-      t.string :name, null: false
-
-      t.index :name, :unique => true
+      t.index :name, unique: true
     end
 
     create_table :systems do |t|
@@ -79,7 +72,7 @@ class CreateBasicStructure < ActiveRecord::Migration
 
     reversible do |direction|
       direction.up do
-        ['users', 'groups', 'systems', 'system_types', 'job_summaries'].each do |name|
+        ['users', 'systems', 'system_types', 'job_summaries'].each do |name|
           Bookie::Database::Lock.create!(:name => name)
         end
       end

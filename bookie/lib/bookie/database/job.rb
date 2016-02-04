@@ -19,7 +19,6 @@ module Bookie
     class Job < ActiveRecord::Base
       belongs_to :user
       belongs_to :system
-      has_one :group, :through => :user
       has_one :system_type, :through => :system
 
       ##
@@ -40,6 +39,7 @@ module Bookie
 
       ##
       #Filters by user name
+      #TODO: remove!
       def self.by_user_name(user_name)
         joins(:user).where('users.name = ?', user_name)
       end
@@ -52,17 +52,6 @@ module Bookie
       #Filters by system name
       def self.by_system_name(system_name)
         joins(:system).where('systems.name = ?', system_name)
-      end
-
-      ##
-      #Filters by group name
-      def self.by_group_name(group_name)
-        group = Group.find_by(name: group_name)
-        if group then
-          joins(:user).where('users.group_id = ?', group.id)
-        else
-          self.none
-        end
       end
 
       ##

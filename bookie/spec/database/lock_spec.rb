@@ -3,10 +3,7 @@ require 'spec_helper'
 describe Bookie::Database::Lock do
   it "finds locks" do
     Lock = Bookie::Database::Lock
-    expect(Lock[:users]).to_not eql nil
     expect(Lock[:users].name).to eql 'users'
-    expect(Lock[:groups]).to_not eql nil
-    expect(Lock[:groups].name).to eql 'groups'
     expect { Lock[:dummy] }.to raise_error(ActiveRecord::RecordNotFound)
   end
 

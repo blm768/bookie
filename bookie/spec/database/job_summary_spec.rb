@@ -56,28 +56,10 @@ describe Bookie::Database::JobSummary do
 
   it "correctly filters by user name" do
     sums = JobSummary.by_user_name('test').to_a
-    expect(sums.length).to eql 32
+    expect(sums.length).to eql 16
     sums.each do |sum|
       expect(sum.user.name).to eql 'test'
     end
-  end
-
-  it "correctly filters by group" do
-    g = Group.find_by(name: 'admin')
-    sums = JobSummary.by_group(g).to_a
-    expect(sums.length).to eql 32
-    sums.each do |sum|
-      expect(sum.user.group).to eql g
-    end
-  end
-
-  it "correctly filters by group name" do
-    sums = JobSummary.by_group_name('admin').to_a
-    expect(sums.length).to eql 32
-    sums.each do |sum|
-      expect(sum.user.group.name).to eql 'admin'
-    end
-    expect(JobSummary.by_group_name('fake_group').count).to eql 0
   end
 
   it "correctly filters by system" do
@@ -237,9 +219,9 @@ describe Bookie::Database::JobSummary do
     it "correctly handles filtered summaries" do
       filters = {
         :user_name => 'test',
-        :group_name => 'admin',
         :command_name => 'vi',
       }
+      #TODO: do this a cleaner way?
       filters.each do |filter, value|
         filter_sym = "by_#{filter}".intern
         jobs = Job.send(filter_sym, value)

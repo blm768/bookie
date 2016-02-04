@@ -65,10 +65,10 @@ describe Bookie::Formatters::Spreadsheet do
       expect(w.mock_rows).to eql([
         Bookie::Formatter::DETAILS_FIELD_LABELS,
         [
-          "root", "root", "test1", "Standalone", "2012-01-01 00:00:00", "2012-01-01 01:00:00",
+          "root", "test1", "2012-01-01 00:00:00", "2012-01-01 01:00:00",
           "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'vi', 0
         ],
-        ["test", "default", "test1", "Standalone", "2012-01-01 01:00:00", "2012-01-01 02:00:00",
+        ["test", "test1", "2012-01-01 01:00:00", "2012-01-01 02:00:00",
          "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", 'emacs', 1
         ],
       ])
