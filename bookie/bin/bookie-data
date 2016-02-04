@@ -13,7 +13,6 @@ time_range = nil
 #TODO: make into a Hash?
 command_filter = nil
 user_filter = nil
-group_filter = nil
 system_filter = nil
 system_type_filter = nil
 
@@ -59,10 +58,6 @@ opts = OptionParser.new do |opts|
 
   opts.on('-u', '--user NAME', "filter by username") do |name|
     user_filter = name
-  end
-
-  opts.on('-g', '--group NAME', "filter by group") do |name|
-    group_filter = name
   end
 
   opts.on('-m', '--command', "filter by command") do |cmd|
@@ -124,11 +119,6 @@ end
 if user_filter then
   jobs = jobs.by_user_name(user_filter)
   summaries = summaries.by_user_name(user_filter)
-end
-
-if group_filter then
-  jobs = jobs.by_group_name(group_filter)
-  summaries = summaries.by_group_name(group_filter)
 end
 
 if system_filter then

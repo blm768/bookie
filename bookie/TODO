@@ -2,6 +2,7 @@ First priority:
 - Add user/group IDs
 - Remove concurrency control
 - Optimize summarization stuff.
+- Filter out 0-time jobs (use Ruby config w/ block?)
 
 Later:
 - Connect to users DB or LDAP?
