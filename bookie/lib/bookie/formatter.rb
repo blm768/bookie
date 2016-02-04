@@ -23,7 +23,7 @@ module Bookie
       extend Bookie::Formatters.const_get(type.camelize)
       self.open(filename)
     end
-    
+
     ##
     #An array containing the labels for each field in a summary
     SUMMARY_FIELD_LABELS = [
@@ -35,7 +35,7 @@ module Bookie
         "Available memory (average)",
         "Memory used (average)",
       ]
-      
+
       ##
       #An array containing the labels for each field in a details table
       #TODO: remove some fields?
@@ -43,7 +43,7 @@ module Bookie
         'User', 'Group', 'System', 'System type', 'Start time', 'End time', 'Wall time',
         'CPU time', 'Memory usage', 'Command', 'Exit code'
       ]
-    
+
     ##
     #Prints a summary of <tt>jobs</tt> and <tt>systems</tt> to <tt>io</tt>, using cached data from <tt>summaries</tt>
     #
@@ -55,7 +55,6 @@ module Bookie
     #
     #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
     def print_summary(jobs, summaries, systems, time_range = nil)
-      jobs = jobs.includes(:user, :group, :system, :system_type)
       jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
       num_jobs = jobs_summary[:num_jobs]
       systems_summary = systems.summary(time_range)
@@ -76,7 +75,7 @@ module Bookie
       ]
       do_print_summary(field_values)
     end
-    
+
     ##
     #Prints a table containing all details of <tt>jobs</tt>
     #
@@ -86,7 +85,7 @@ module Bookie
     def print_jobs(jobs)
       do_print_jobs(jobs)
     end
-    
+
     ##
     #Flushes all output
     #
@@ -94,7 +93,7 @@ module Bookie
     def flush()
       do_flush() if self.respond_to?(:do_flush)
     end
-    
+
     ##
     #For each job, yields an array containing the field values to be used when printing a table of jobs
     #
@@ -133,7 +132,7 @@ module Bookie
         ]
       end
     end
-    
+
     ##
     #Formats a duration in a human-readable format
     #
@@ -154,9 +153,9 @@ module Bookie
       "%i week%s, %i day%s, %02i:%02i:%02i" % [weeks, weeks == 1 ? '' : 's', days, days == 1 ? '' : 's', hours, minutes, seconds]
     end
   end
-  
+
   #Contains all formatter plugins
   module Formatters
-    
+
   end
 end
