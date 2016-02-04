@@ -18,6 +18,11 @@ opts = OptionParser.new do |opts|
   opts.on('-v', '--version VERSION', Integer, "specify the target migration version") do |version|
     target_version = version
   end
+
+  opts.on_tail('-h', '--help', "Show this message") do
+    puts opts
+    exit
+  end
 end
 begin
   opts.parse!(ARGV)
@@ -32,6 +37,13 @@ config.connect
 
 target_version ||= Bookie::Database.latest_version
 current_version = ActiveRecord::Migrator.current_version
+
+if target_version == current_version then
+  puts "The database is already at version #{target_version}. No migration is necessary."
+  exit 0
+end
+
+puts "Preparing to migrate from version #{current_version} to #{target_version}"
 
 if target_version < current_version then
   puts 'Warning: target version is less than current version. The database will be rolled back.'

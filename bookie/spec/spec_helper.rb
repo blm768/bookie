@@ -164,6 +164,7 @@ RSpec.configure do |config|
     Helpers.test_config = Bookie::Config.new('snapshot/test_config.json')
     Helpers.test_config.connect
 
+    ActiveRecord::Migration.verbose = false
     Bookie::Database.migrate
     Helpers.generate_database
   end

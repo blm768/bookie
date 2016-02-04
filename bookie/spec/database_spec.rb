@@ -29,6 +29,12 @@ describe Bookie::Database do
       end
     end
 
+    it "migrates up and down without errors" do
+      Bookie::Database.migrate(0)
+      Bookie::Database.migrate(LATEST_MIGRATION)
+      Bookie::Database.migrate(0)
+    end
+
     #TODO: remove this functionality?
     it "picks the current version as the default" do
       ActiveRecord::Migrator.expects(:migrate).with(MIGRATIONS_PATH, LATEST_MIGRATION)
