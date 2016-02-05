@@ -3,10 +3,8 @@ require 'bookie/extensions'
 
 require 'active_record'
 
-require 'bookie/database/group'
 require 'bookie/database/job'
 require 'bookie/database/job_summary'
-require 'bookie/database/lock'
 require 'bookie/database/system'
 require 'bookie/database/system_type'
 require 'bookie/database/user'

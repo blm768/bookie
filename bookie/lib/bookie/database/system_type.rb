@@ -25,27 +25,22 @@ module Bookie
       #Finds a system type by name and memory stat type, creating it if it doesn't exist
       #
       #It is an error to attempt to create two types with the same name but different memory stat types.
-      #
-      #This uses Lock#synchronize internally, so it probably should not be called within a transaction block.
       def self.find_or_create!(name, memory_stat_type)
-        sys_type = nil
-        Lock[:system_types].synchronize do
-          sys_type = SystemType.find_by(name: name)
-          if sys_type
-            unless sys_type.memory_stat_type == memory_stat_type
-              type_code = MEMORY_STAT_TYPE[memory_stat_type]
-              if type_code == nil
-                raise "Unrecognized memory stat type '#{memory_stat_type}'"
-              else
-                raise "The recorded memory stat type for system type '#{name}' does not match the required type of #{type_code}"
-              end
+        sys_type = SystemType.find_by(name: name)
+        if sys_type
+          unless sys_type.memory_stat_type == memory_stat_type
+            type_code = MEMORY_STAT_TYPE[memory_stat_type]
+            if type_code == nil
+              raise "Unrecognized memory stat type '#{memory_stat_type}'"
+            else
+              raise "The recorded memory stat type for system type '#{name}' does not match the required type of #{type_code}"
             end
-          else
-            sys_type = create!(
-              :name => name,
-              :memory_stat_type => memory_stat_type
-            )
           end
+        else
+          sys_type = create!(
+            :name => name,
+            :memory_stat_type => memory_stat_type
+          )
         end
         sys_type
       end

@@ -92,8 +92,6 @@ module Bookie
       #The date is interpreted as being in UTC.
       #
       #If there is nothing to summarize, a dummy summary will be created.
-      #
-      #Uses Lock::synchronize internally; should not be used in transaction blocks
       def self.summarize(date)
         jobs = Job
         unscoped = self.unscoped
@@ -111,17 +109,15 @@ module Bookie
           #To consider: figure out how to create the dummy summary anyway?
           return unless user && system
           #Create a dummy summary so summary() doesn't keep trying to create one.
-          Lock[:job_summaries].synchronize do
-            sum = unscoped.find_or_initialize_by(
-              :date => date,
-              :user_id => user.id,
-              :system_id => system.id,
-              :command_name => ''
-            )
-            sum.cpu_time = 0
-            sum.memory_time = 0
-            sum.save!
-          end
+          sum = unscoped.find_or_initialize_by(
+            :date => date,
+            :user_id => user.id,
+            :system_id => system.id,
+            :command_name => ''
+          )
+          sum.cpu_time = 0
+          sum.memory_time = 0
+          sum.save!
         else
           value_sets.each do |set|
             summary_jobs = jobs.where(
@@ -130,17 +126,15 @@ module Bookie
               :command_name => set[2]
             )
             summary = summary_jobs.summary(time_range)
-            Lock[:job_summaries].synchronize do
-              sum = unscoped.find_or_initialize_by(
-                :date => date,
-                :user_id => set[0],
-                :system_id => set[1],
-                :command_name => set[2]
-              )
-              sum.cpu_time = summary[:cpu_time]
-              sum.memory_time = summary[:memory_time]
-              sum.save!
-            end
+            sum = unscoped.find_or_initialize_by(
+              :date => date,
+              :user_id => set[0],
+              :system_id => set[1],
+              :command_name => set[2]
+            )
+            sum.cpu_time = summary[:cpu_time]
+            sum.memory_time = summary[:memory_time]
+            sum.save!
           end
         end
       end
@@ -152,14 +146,12 @@ module Bookie
       #- [<tt>:range</tt>] restricts the summary to a specific time interval (specified as a Range of Time objects)
       #- [<tt>:jobs</tt>] the jobs on which the summary should operate
       #
-      #Internally, this may call JobSummary::summarize, which uses Lock#synchronize, so this should not be used inside a transaction block.
-      #
       #When filtering, the same filters must be applied to both the Jobs and the JobSummaries. For example:
       # jobs = Bookie::Database::Job.by_user_name('root')
       # summaries = Bookie::Database::Job.by_user_name('root')
       # puts summaries.summary(:jobs => jobs)
       #
-      # TODO: test that summaries are created on UTC date boundaries?
+      # TODO: unit-test that summaries are created on UTC date boundaries?
       def self.summary(opts = {})
         jobs = opts[:jobs] || Job
         time_range = opts[:range]

@@ -7,6 +7,9 @@ First priority:
 Later:
 - Connect to users DB or LDAP?
 
+Testing:
+- Test executables somehow? (and integrate with Travis CI!
+
 Use bulk inserts?
 Replace by_* methods with a "find_all_by()" method? (or just "where"...)
 Allow configuration of date boundary to midnight in local time zone?

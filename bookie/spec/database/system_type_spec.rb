@@ -33,6 +33,7 @@ describe Bookie::Database::SystemType do
   it "raises an error if the existing type has the wrong memory stat type" do
     systype = SystemType.create!(:name => 'test', :memory_stat_type => :max)
     begin
+      #TODO: create a custom error class so we don't hard-code the error message here.
       expect {
         SystemType.find_or_create!('test', :avg)
       }.to raise_error("The recorded memory stat type for system type 'test' does not match the required type of 1")

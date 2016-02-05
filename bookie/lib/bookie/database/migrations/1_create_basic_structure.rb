@@ -63,19 +63,5 @@ class CreateBasicStructure < ActiveRecord::Migration
       t.index :command_name
       t.index :date
     end
-
-    create_table :locks do |t|
-      t.string :name, null: false
-
-      t.index :name, unique: true
-    end
-
-    reversible do |direction|
-      direction.up do
-        ['users', 'systems', 'system_types', 'job_summaries'].each do |name|
-          Bookie::Database::Lock.create!(:name => name)
-        end
-      end
-    end
   end
 end
