@@ -1,15 +1,20 @@
+begin
+  this_dir = File.dirname(__FILE__)
+  $LOAD_PATH << File.join(this_dir, '..', 'lib')
+  $LOAD_PATH << this_dir
+end
+
 if ENV['COVERAGE']
   require 'simplecov'
   SimpleCov.start
 end
 
-#TODO: remove?
-$LOAD_PATH.concat Dir.glob(File.join(Dir.pwd, "../*/lib"))
-
 require 'fileutils'
 require 'mocha/api'
 
 require 'bookie'
+
+require 'sender_helper'
 
 class IOMock
   def initialize
@@ -45,6 +50,7 @@ module Helpers
   end
 
   #Creates summaries under different conditions
+  #TODO: move to another helper file?
   def create_summaries(obj, base_time)
     base_start = base_time
     base_end   = base_time + 40.hours
@@ -76,10 +82,7 @@ module Helpers
     users = []
     user_names = ['root', 'test', 'blm', 'blm768']
     user_names.each_with_index do |name, i|
-      user = Bookie::Database::User.new
-      user.name = name
-      user.save!
-      users << user
+      users << Bookie::Database::User.create!(id: i + 1, name: name)
     end
 
     system_types = [
@@ -149,6 +152,7 @@ end
 
 RSpec.configure do |config|
   config.include Helpers
+  config.include SenderHelpers
 
   config.mock_with(:mocha)
 
@@ -179,4 +183,3 @@ RSpec.configure do |config|
     rollback_transaction
   end
 end
-

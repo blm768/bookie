@@ -22,12 +22,8 @@ module Bookie
     ##
     #Sends job data from the given file to the database server
     def send_data(filename)
-      raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
-
       system = nil
-
       known_users = {}
-
       time_min, time_max = nil
 
       #Grab data from the first job:
@@ -56,6 +52,7 @@ module Bookie
           system = Database::System.find_current(self, model.end_time)
         end
         user = Bookie::Database::User.find_or_create!(
+          job.user_id,
           job.user_name,
           known_users
         )
@@ -71,10 +68,7 @@ module Bookie
     ##
     #Undoes a previous send operation
     def undo_send(filename)
-      raise IOError.new("File '#{filename}' does not exist.") unless File.exists?(filename)
-
       system = nil
-
       time_min, time_max = nil
 
       #Grab data from the first job:

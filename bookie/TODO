@@ -1,23 +1,28 @@
 First priority:
 - Add user/group IDs
-- Remove concurrency control
 - Optimize summarization stuff.
+  - Put all the sums in one query.
 - Filter out 0-time jobs (use Ruby config w/ block?)
 
 Later:
 - Connect to users DB or LDAP?
 
 Testing:
-- Test executables somehow? (and integrate with Travis CI!
+- Test executables somehow? (and integrate with Travis CI)!
+- Use FactoryGirl to generate test objects?
 
-Use bulk inserts?
-Replace by_* methods with a "find_all_by()" method? (or just "where"...)
+Optimization:
+- Use bulk inserts?
+
+Cleanup:
+- Replace by_* methods with a "find_all_by()" method? (or just "where"...)
+- Use "let" in RSpect tests?
+- Replace 3600 with 2.hours, etc.
+- Also clear out other "magic" numbers.
+- Split some tests up.
+
 Allow configuration of date boundary to midnight in local time zone?
 Make sure all source files have the required "require"s
-Use "let" in RSpect tests?
-Replace 3600 with 2.hours, etc.
-Also clear out other "magic" numbers.
-Split some tests up.
 Validate uniqueness?
 Unit test uniqueness constraints?
 Use optimistic concurrency control?
@@ -26,6 +31,7 @@ Make unit test success more independent.
 Fix memory specification issue
 Specify dependency versions
 Replace Mocha with rspec-mocks? 
+Set up guard-rspec gem for testing?
 
 Data consistency considerations:
 If a user is deleted, how to we handle that? Mark the user's processes with an "unknown" UID?

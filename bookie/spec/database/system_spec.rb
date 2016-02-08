@@ -131,15 +131,14 @@ describe Bookie::Database::System do
       @config_t1 = test_config.clone
 
       @config_t1.hostname = 'test1'
-      @config_t1.system_type = 'standalone'
       @config_t1.cores = 2
       @config_t1.memory = 1000000
 
       @config_t2 = @config_t1.clone
-      @config_t2.system_type = 'torque_cluster'
+      @config_t2.hostname = 'test2'
 
-      @sender_1 = Bookie::Sender.new(@config_t1)
-      @sender_2 = Bookie::Sender.new(@config_t2)
+      @sender_1 = new_dummy_sender(@config_t1)
+      @sender_2 = new_dummy_sender(@config_t2)
     end
 
     it "finds the correct system" do
@@ -151,7 +150,7 @@ describe Bookie::Database::System do
     it "correctly detects the lack of a matching system" do
       expect {
         System.find_current(@sender_1, base_time - 1.years)
-      }.to raise_error(/^There is no system with hostname 'test1' that was recorded as active at /)
+      }.to raise_error(/^There is no system with hostname '#{@config_t1.hostname}' that was recorded as active at /)
       @config_t1.expects(:hostname).at_least_once.returns('test1000')
       expect {
         System.find_current(@sender_1, base_time)
@@ -164,7 +163,7 @@ describe Bookie::Database::System do
       config.cores = 2
       config.memory = 1000000
 
-      sender = Bookie::Sender.new(config)
+      sender = new_dummy_sender(config)
       [:cores, :memory].each do |field|
         config.expects(field).at_least_once.returns("value")
         expect {
@@ -172,7 +171,7 @@ describe Bookie::Database::System do
         }.to raise_error(System::SystemConflictError)
         config.unstub(field)
       end
-      sender.expects(:system_type).returns(SystemType.find_by(name: "Standalone"))
+      sender.expects(:system_type).returns(SystemType.find_by(name: "Dummy"))
       expect {
         System.find_current(sender)
       }.to raise_error(System::SystemConflictError)

@@ -6,23 +6,23 @@ describe Bookie::Config do
   it "loads correct data" do
     config = Bookie::Config.new('snapshot/test_config.json')
 
-    expect(config.db_type).to eql "sqlite3"
-    expect(config.server).to eql "localhost"
+    expect(config.db_type).to eql 'sqlite3'
+    expect(config.server).to eql 'localhost'
     expect(config.port).to eql 8080
-    expect(config.database).to eql ":memory:"
-    expect(config.username).to eql "blm768"
-    expect(config.password).to eql "test"
-    expect(config.excluded_users).to eql Set.new(["root"])
-    expect(config.hostname).to eql "localhost"
+    expect(config.database).to eql ':memory:'
+    expect(config.username).to eql 'blm768'
+    expect(config.password).to eql 'test'
+    expect(config.excluded_users).to eql Set.new(['root'])
+    expect(config.hostname).to eql 'localhost'
     expect(config.cores).to eql 8
     expect(config.memory).to eql 8000000
-    expect(config.system_type).to eql 'torque_cluster'
+    expect(config.system_type).to eql 'dummy'
   end
 
   it "correctly verifies types" do
     config = Bookie::Config.new('snapshot/default.json')
-    config.verify_type("abc", "test", String)
-    expect { config.verify_type("abc", "test", Fixnum) }.to raise_error(TypeError, 'Invalid data type String for JSON field "test": Fixnum expected')
+    config.verify_type('abc', 'test', String)
+    expect { config.verify_type('abc', 'test', Fixnum) }.to raise_error(TypeError, 'Invalid data type String for JSON field "test": Fixnum expected')
   end
 
   it "sets correct defaults" do

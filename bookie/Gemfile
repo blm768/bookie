@@ -4,7 +4,8 @@ gemspec
 
 group :development do
   gem 'bundler'
-  gem 'byebug'
+  gem 'byebug', require: false
+  gem 'guard', require: false
   gem 'mysql2'
 end
 

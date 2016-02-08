@@ -2,6 +2,7 @@ require 'spec_helper'
 
 module Helpers
   #Used for the "chooses the correct systems" examples
+  #TODO: just use DummySender?
   def redefine_each_job(sender)
     def sender.each_job(filename)
       [0, 1001].each do |offset|
@@ -20,18 +21,17 @@ module Helpers
 end
 
 class JobStub
-  attr_accessor :user_name
+  attr_accessor :user_id, :user_name
   attr_accessor :command_name
-  attr_accessor :start_time
-  attr_accessor :wall_time
-  attr_accessor :cpu_time
-  attr_accessor :memory
+  attr_accessor :start_time, :wall_time
+  attr_accessor :cpu_time, :memory
   attr_accessor :exit_code
 
   include Bookie::ModelHelpers
 
   def self.from_job(job)
     stub = self.new
+    stub.user_id = job.user.id
     stub.user_name = job.user.name
     stub.command_name = job.command_name
     stub.start_time = job.start_time
@@ -41,14 +41,23 @@ class JobStub
     stub.exit_code = job.exit_code
     stub
   end
+
+  def self.from_hash(hash)
+    stub = self.new
+    hash.each_pair do |key, value|
+      stub.send("#{key}=", value)
+    end
+    stub
+  end
 end
 
 describe Bookie::Sender do
   before(:all) do
-    begin_transaction
     fields = {
       :name => test_config.hostname,
-      :system_type => Bookie::Sender.new(test_config).system_type,
+      #TODO: just pull the value from the config?
+      #That way, we can eliminate the need to (re)define the system_type method.
+      :system_type => new_dummy_sender(test_config).system_type,
       :cores => test_config.cores,
       :memory => test_config.memory,
     }
@@ -68,11 +77,9 @@ describe Bookie::Sender do
     @sys_dummy.save!
   end
 
-  after(:all) do
-    rollback_transaction
-  end
+  #This implicitly tests the ability to load the correct sender plugin.
+  let(:sender) { new_dummy_sender(test_config) }
 
-  let(:sender) { Bookie::Sender.new(test_config) }
   before(:each) do
     Bookie::Database::Job.delete_all
   end
@@ -88,7 +95,7 @@ describe Bookie::Sender do
   it "correctly sends jobs" do
     config = test_config.clone
     config.excluded_users = Set.new
-    sender.send_data('snapshot/torque_large')
+    sender.send_data('dummy')
     jobs = Job.includes(:system)
     jobs.each do |job|
       expect(job.system.name).to eql config.hostname
@@ -97,10 +104,10 @@ describe Bookie::Sender do
   end
 
   it "refuses to send jobs when jobs already have been sent from a file" do
-    sender.send_data('snapshot/torque_large')
+    sender.send_data('dummy')
     expect {
-      sender.send_data('snapshot/torque_large')
-    }.to raise_error("Jobs already exist in the database for 'snapshot/torque_large'.")
+      sender.send_data('dummy')
+    }.to raise_error("Jobs already exist in the database for 'dummy'.")
   end
 
   it "correctly handles empty files" do
@@ -109,17 +116,12 @@ describe Bookie::Sender do
     sender.send_data('/dev/null')
   end
 
-  it "handles missing files" do
-    expect { sender.send_data('snapshot/abc') }.to raise_error("File 'snapshot/abc' does not exist.")
-  end
-
   it "chooses the correct systems" do
-    sender = Bookie::Sender.new(test_config)
+    sender = new_dummy_sender(test_config)
 
     redefine_each_job(sender)
 
-    #The filename is just a dummy argument.
-    sender.send_data('snapshot/pacct')
+    sender.send_data('dummy')
 
     jobs = Bookie::Database::Job.by_system_name(test_config.hostname).order(:end_time).to_a
     expect(jobs[0].system).to eql @sys_1
@@ -149,18 +151,18 @@ describe Bookie::Sender do
   end
 
   it "deletes cached summaries that overlap the new jobs" do
-    sender.send_data('snapshot/torque_large')
+    sender.send_data('dummy')
     time_min = Bookie::Database::Job.order(:start_time).first.start_time
     time_max = Bookie::Database::Job.order('end_time DESC').first.end_time
     Bookie::Database::Job.delete_all
     sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
-    sender.send_data('snapshot/torque_large')
+    sender.send_data('dummy')
   end
 
   describe "#clear_summaries" do
     it "deletes cached summaries" do
-      sender = Bookie::Sender.new(test_config)
-      sender.send_data('snapshot/torque_large')
+      sender = new_dummy_sender(test_config)
+      sender.send_data('dummy')
 
       user = Bookie::Database::User.first
       date_start = Date.new(2012) - 2
@@ -196,9 +198,9 @@ describe Bookie::Sender do
 
   describe "#undo_send" do
     it "removes the correct entries" do
-      sender.send_data('snapshot/torque_large')
+      sender.send_data('dummy')
       sender.send_data('snapshot/torque')
-      sender.undo_send('snapshot/torque_large')
+      sender.undo_send('dummy')
 
       expect(Bookie::Database::Job.count).to eql 1
       job = Bookie::Database::Job.first
@@ -210,12 +212,12 @@ describe Bookie::Sender do
     end
 
     it "switches systems if needed" do
-      sender = Bookie::Sender.new(test_config)
+      sender = new_dummy_sender(test_config)
 
+      #TODO: don't do this!
       redefine_each_job(sender)
 
-      #The filename is just a dummy argument.
-      sender.send_data('snapshot/pacct')
+      sender.send_data('dummy')
 
       def sender.duplicate(job, system)
         #The returned object needs a #delete method.
@@ -225,44 +227,41 @@ describe Bookie::Sender do
 
       Bookie::Database::System.expects(:find_current).returns(@sys_1).twice
 
-      sender.undo_send('snapshot/pacct')
+      sender.undo_send('dummy')
     end
 
     it "deletes cached summaries in the affected range" do
-      sender.send_data('snapshot/torque_large')
+      sender.send_data('dummy')
       time_min = Bookie::Database::Job.order(:start_time).first.start_time
       time_max = Bookie::Database::Job.order('end_time DESC').first.end_time
       sender.expects(:clear_summaries).with(time_min.to_date, time_max.to_date)
-      sender.undo_send('snapshot/torque_large')
+      sender.undo_send('dummy')
     end
   end
 end
 
 describe Bookie::ModelHelpers do
-  before(:all) do
-    @job = JobStub.new
-    @job.user_name = "root"
-    @job.command_name =  "vi"
-    @job.start_time = Time.new
-    @job.wall_time = 3
-    @job.cpu_time = 2
-    @job.memory = 300
+  let(:job) do
+    job = JobStub.new
+    job.user_name = "root"
+    job.command_name =  "vi"
+    job.start_time = Time.new
+    job.wall_time = 3
+    job.cpu_time = 2
+    job.memory = 300
+    job
   end
 
   it "correctly converts jobs to records" do
     Bookie::Database::Job.stubs(:new).returns(JobStub.new)
-    djob = @job.to_record
-    expect(djob.command_name).to eql @job.command_name
-    expect(djob.start_time).to eql @job.start_time
-    expect(djob.end_time).to eql @job.start_time + @job.wall_time
-    expect(djob.wall_time).to eql @job.wall_time
-    expect(djob.cpu_time).to eql @job.cpu_time
-    expect(djob.memory).to eql @job.memory
-    expect(djob.exit_code).to eql @job.exit_code
+    record = job.to_record
+    [:command_name, :start_time, :end_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
+      expect(record.send(field)).to eql job.send(field)
+    end
   end
 
   it "correctly calculates end time" do
-    expect(@job.end_time).to eql @job.start_time + @job.wall_time
+    expect(job.end_time).to eql job.start_time + job.wall_time
   end
 end
 

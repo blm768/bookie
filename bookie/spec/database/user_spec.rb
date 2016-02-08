@@ -10,35 +10,38 @@ describe Bookie::Database::User do
   describe "#find_or_create" do
     it "creates the user if needed" do
       Bookie::Database::User.expects(:"create!").twice
-      user = Bookie::Database::User.find_or_create!('me')
-      user = Bookie::Database::User.find_or_create!('me', {})
+      user = Bookie::Database::User.find_or_create!(1, 'me')
+      user = Bookie::Database::User.find_or_create!(1, 'me', {})
     end
 
     it "returns the cached user if one exists" do
-      user = Bookie::Database::User.find_by(name: 'root')
-      known_users = {'root' => user}
-      expect(Bookie::Database::User.find_or_create!('root', known_users)).to equal user
+      user = Bookie::Database::User.find_by(id: 1, name: 'root')
+      known_users = {1 => user}
+      expect(Bookie::Database::User.find_or_create!(1, 'root', known_users)).to equal user
     end
 
     it "queries the database when this user is not cached" do
-      user = Bookie::Database::User.find_by!(name: 'root')
+      user = Bookie::Database::User.find_by!(id: '1', name: 'root')
       known_users = {}
       Bookie::Database::User.expects(:find_by).returns(user).twice
       Bookie::Database::User.expects(:"create!").never
-      expect(Bookie::Database::User.find_or_create!('root', known_users)).to eql user
-      expect(Bookie::Database::User.find_or_create!('root', nil)).to eql user
-      expect(known_users).to include(user.name)
+      expect(Bookie::Database::User.find_or_create!(user.id, user.name, known_users)).to eql user
+      expect(Bookie::Database::User.find_or_create!(user.id, user.name, nil)).to eql user
+      expect(known_users).to include(user.id)
     end
   end
 
   it "validates fields" do
-    expect(Bookie::Database::User.new(name: 'test').valid?).to eql true
+    expect(Bookie::Database::User.new(id: 1, name: 'test').valid?).to eql true
 
     #Check for null/empty fields
-    user = Bookie::Database::User.new(name: nil)
+    user = Bookie::Database::User.new(id: 1, name: nil)
     expect(user.valid?).to eql false
 
-    user = Bookie::Database::User.new(name: '')
+    user = Bookie::Database::User.new(id: 1, name: '')
+    expect(user.valid?).to eql false
+
+    user = Bookie::Database::User.new(id: nil, name: 'test')
     expect(user.valid?).to eql false
   end
 end

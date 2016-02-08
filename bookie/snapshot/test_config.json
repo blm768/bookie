@@ -6,7 +6,7 @@
   "Username"      : "blm768",
   "Password"      : "test",
   "Excluded users": ["root"],
-  "System type"   : "torque_cluster",
+  "System type"   : "dummy",
   "Hostname"      : "localhost",
   "Cores"         : 8,
   "Memory"        : 8000000
