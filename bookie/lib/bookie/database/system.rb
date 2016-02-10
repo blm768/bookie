@@ -7,30 +7,18 @@ module Bookie
   module Database
     ##
     #A system on the network
+    #
+    #TODO: support changing a system's type? (...or remove it entirely...)
     class System < ActiveRecord::Base
-      ##
-      #Raised when a system's specifications are different from those of the active system in the database
-      SystemConflictError = Class.new(RuntimeError)
-
       has_many :jobs
+      has_many :system_capacities
       belongs_to :system_type
 
       ##
-      #Finds all systems that are active (i.e. all systems with NULL values for end_time)
+      #Finds all systems that are active (i.e. all systems with NULL values
+      #for the end_time of their last capacity entry)
       def self.active
-        where('systems.end_time IS NULL')
-      end
-
-      ##
-      #Filters by name
-      def self.by_name(name)
-        where('systems.name = ?', name)
-      end
-
-      ##
-      #Filters by system type
-      def self.by_system_type(sys_type)
-        where('systems.system_type_id = ?', sys_type.id)
+        joins(:system_capacity).where('end_time IS NULL')
       end
 
       ##
@@ -45,31 +33,17 @@ module Bookie
       end
 
       ##
-      #Finds the current system for a given sender and time
+      #Finds a system by hostname, creating it if it doesn't exist
       #
-      #This method also checks that this system's specifications in the local configuration are the same as those in
-      #the database and raises an error if they are different.
-      #
-      #TODO: don't do the above?
-      #
-      #TODO: decouple from Sender class.
-      def self.find_current(sender, time = nil)
-        time ||= Time.now
-        config = sender.config
+      #If <tt>known_systems</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
+      def self.find_or_create!(hostname, system_type, known_systems = nil)
+        #Determine if the system must be added to/retrieved from the database.
+        system = known_systems[hostname] if known_systems
+        return system if system
 
-        system = by_name(config.hostname).where('systems.start_time <= :time AND (:time <= systems.end_time OR systems.end_time IS NULL)', :time => time).first
-        if system
-          mismatch = (system.cores != config.cores) || (system.memory != config.memory)
-          #Note that this uses the Sender's field, not the config's. They're different types.
-          mismatch ||= sender.system_type != system.system_type
-          if mismatch then
-            raise SystemConflictError.new("The specifications on record for '#{name}' do not match this system's specifications.
-Please make sure that all previous systems with this hostname have been marked as decommissioned.")
-          end
-        else
-          #TODO: use find! instead of where() and let the caller prettify the message?
-          raise "There is no system with hostname '#{config.hostname}' that was recorded as active at #{time}."
-        end
+        system = Bookie::Database::System.find(hostname)
+        user ||= Bookie::Database::User.create!(hostname: hostname, system_type: system_type)
+        known_systems[hostname] = system if known_systems
 
         system
       end
@@ -145,25 +119,28 @@ Please make sure that all previous systems with this hostname have been marked a
         }
       end
 
+      #TODO: doc and test if used.
+      def current_capacity
+        SystemCapacity.where(system_id: self.id).order('start_time DESC').first
+      end
+
       ##
-      #Decommissions the given system, setting its end time to <tt>end_time</tt>
-      #
-      #This should be called any time a system is brought down or its specifications are changed.
-      def decommission(end_time)
-        self.end_time = end_time
-        self.save!
+      #Returns whether this system is "active" (i.e. it has a current capacity entry)
+      def active?
+        cap = current_capacity
+        if cap then cap.end_time == nil else false end
       end
 
-      validates_presence_of :name, :cores, :memory, :system_type, :start_time
-
-      validates_each :cores, :memory do |record, attr, value|
-        record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
+      ##
+      #Marks this system as decommissioned
+      def decommission!(end_time)
+        cap = current_capacity
+        return unless cap
+        cap.end_time = end_time
+        cap.save!
       end
 
-      validates_each :end_time do |record, attr, value|
-        record.errors.add(attr, 'must be at or after start time') if value && value < record.start_time
-      end
+      validates_presence_of :name, :system_type
     end
-
   end
 end

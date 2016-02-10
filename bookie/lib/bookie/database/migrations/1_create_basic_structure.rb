@@ -13,15 +13,20 @@ class CreateBasicStructure < ActiveRecord::Migration
     create_table :systems do |t|
       t.string :name, null: false
       t.references :system_type, null: false
+
+      t.index :name, unique: true
+      t.index :system_type_id
+    end
+
+    create_table :system_capacities do |t|
+      t.references :system, null: false
       t.datetime :start_time, null: false
       t.datetime :end_time
       t.integer :cores, null: false
       t.integer :memory, null: false, limit: 8
 
-      t.index [:name, :end_time], unique: true
-      t.index :start_time
-      t.index :end_time
-      t.index :system_type_id
+      t.index :system
+      t.index [:start_time, :end_time], unique: true
     end
 
     create_table :system_types do |t|

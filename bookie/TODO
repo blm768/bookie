@@ -6,6 +6,7 @@ First priority:
 
 Later:
 - Connect to users DB or LDAP?
+- Make a generic find_or_create method?
 
 Testing:
 - Test executables somehow? (and integrate with Travis CI)!

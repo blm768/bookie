@@ -97,35 +97,45 @@ module Helpers
     ]
 
     systems = []
-    system_names = ['test1', 'test1', 'test2', 'test3']
-    system_names.each_with_index do |name, i|
+    ['test1', 'test2', 'test3'].each_with_index do |name, i|
       system = Bookie::Database::System.create!(
-        :name => name,
-        :system_type => system_types[i % 2],
-        :start_time => BASE_TIME + (10.hours * i),
-        :cores => 2,
-        :memory => 1000000
+        name: name,
+        system_type: system_types[i % 2]
+      )
+
+      capacity = Bookie::Database::SystemCapacity.create!(
+        system: system,
+        start_time: BASE_TIME + (10.hours * i),
+        cores: 2,
+        memory: 1000000
       )
       systems << system
     end
-    systems[0].end_time = systems[1].start_time
-    systems[0].save!
 
-    40.times do |i|
-      job = Bookie::Database::Job.new
-      job.user = users[i % users.length]
-      job.system = systems[i / 10]
-      if i & 1 == 0
-        job.command_name = 'vi'
-      else
-        job.command_name = 'emacs'
+    #Give the first system two capacity entries.
+    systems[0].decommission!(systems[1].current_capacity.start_time)
+    capacity = systems[2].current_capacity.clone
+    capacity.system = systems[0]
+    capacity.save!
+
+    SystemCapacity.find_each do |capacity|
+      system = capacity.system
+      10.times do |i|
+        job = Bookie::Database::Job.new
+        job.user = users[i % users.length]
+        job.system = system
+        if i & 1 == 0
+          job.command_name = 'vi'
+        else
+          job.command_name = 'emacs'
+        end
+        job.start_time = capacity.start_time + i.hours
+        job.wall_time = 1.hours
+        job.cpu_time = 100
+        job.memory = 200
+        job.exit_code = i & 1
+        job.save!
       end
-      job.start_time = BASE_TIME + i.hours
-      job.wall_time = 1.hours
-      job.cpu_time = 100
-      job.memory = 200
-      job.exit_code = i & 1
-      job.save!
     end
   end
 

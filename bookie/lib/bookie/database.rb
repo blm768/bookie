@@ -7,6 +7,7 @@ require 'bookie/database/job'
 require 'bookie/database/job_summary'
 require 'bookie/database/system'
 require 'bookie/database/system_type'
+require 'bookie/database/system_capacity'
 require 'bookie/database/user'
 
 module Bookie
