@@ -6,7 +6,8 @@ First priority:
 
 Later:
 - Connect to users DB or LDAP?
-- Make a generic find_or_create method?
+- Make a generic find_or_create! method?
+  - Make sure that all find_or_create methods have exclamation marks!
 
 Testing:
 - Test executables somehow? (and integrate with Travis CI)!

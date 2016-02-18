@@ -51,9 +51,11 @@ module Bookie
       #See Bookie::Database::MEMORY_STAT_TYPE for possible values.
       #
       #Based on http://www.kensodev.com/2012/05/08/the-simplest-enum-you-will-ever-find-for-your-activerecord-models/
+      #
+      #TODO: use nil as :unknown?
       def memory_stat_type
         type_code = read_attribute(:memory_stat_type)
-        raise 'Memory stat type must not be nil' if type_code == nil
+        return nil if type_code == nil
         type = MEMORY_STAT_TYPE_INVERSE[type_code]
         raise "Unrecognized memory stat type code #{type_code}" unless type
         type
@@ -64,7 +66,10 @@ module Bookie
       #
       #<tt>type</tt> should be a symbol.
       def memory_stat_type=(type)
-        raise 'Memory stat type must not be nil' if type == nil
+        if type == nil
+          write_attribute(:memory_stat_type, nil)
+          return
+        end
         type_code = MEMORY_STAT_TYPE[type]
         raise "Unrecognized memory stat type '#{type}'" unless type_code
         write_attribute(:memory_stat_type, type_code)

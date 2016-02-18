@@ -1,13 +1,15 @@
 require 'spec_helper'
 
 describe Range do
+  #TODO: unit test '#exclusive'
+
   describe "#normalized" do
     it "correctly normalizes" do
       expect((1 .. 2).normalized).to eql(1 .. 2)
       expect((1 .. 1).normalized).to eql(1 .. 1)
       expect((1 ... 1).normalized).to eql(1 ... 1)
       expect((1 .. 0).normalized).to eql(1 ... 1)
-      expect((1 ... 0).normalized).to eql( 1 ... 1 )
+      expect((1 ... 0).normalized).to eql(1 ... 1)
     end
   end
 

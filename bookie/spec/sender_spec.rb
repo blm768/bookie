@@ -53,28 +53,38 @@ end
 
 describe Bookie::Sender do
   before(:all) do
-    fields = {
-      :name => test_config.hostname,
-      #TODO: just pull the value from the config?
-      #That way, we can eliminate the need to (re)define the system_type method.
-      :system_type => new_dummy_sender(test_config).system_type,
+    cap_fields = {
       :cores => test_config.cores,
       :memory => test_config.memory,
     }
     #TODO: replace with let()?
-    @sys_1 = Bookie::Database::System.new(fields)
-    @sys_1.start_time = base_time
-    @sys_1.end_time = base_time + 1000
-    @sys_1.save!
-    @sys_2 = Bookie::Database::System.new(fields)
-    @sys_2.start_time = base_time + 1001
-    @sys_2.end_time = nil
-    @sys_2.save!
+    #TODO: just pull the system_type value from the config?
+    #That way, we can eliminate the need to (re)define the system_type method.
+    @sys_1 = Bookie::Database::System.create!(
+      :name => test_config.hostname,
+      :system_type => new_dummy_sender(test_config).system_type,
+    )
 
-    fields[:name] = 'dummy'
-    @sys_dummy = Bookie::Database::System.new(fields)
-    @sys_dummy.start_time = base_time
+    cap_1 = Bookie::Database::SystemCapacity.create!(
+      system: @sys_1,
+      start_time: base_time,
+      end_time: base_time + 1000,
+      cores: test_config.cores,
+      memory: test_config.memory
+    )
+    cap_2 = cap_1.clone
+    cap_2.start_time = base_time + 1001
+    cap_2.end_time = nil
+    cap_2.save!
+
+    #TODO: create a system with no capacity entries?
+    @sys_dummy = @sys_1.clone
+    @sys_dummy.name = 'dummy'
     @sys_dummy.save!
+    cap_dummy = cap_1.clone
+    cap_1.system = @sys_dummy
+    cap_dummy.start_time = base_time
+    cap_dummy.save!
   end
 
   #This implicitly tests the ability to load the correct sender plugin.
@@ -209,25 +219,6 @@ describe Bookie::Sender do
       job2 = Bookie::Database::Job.first
       job2.id = job.id
       expect(job2).to eql job
-    end
-
-    it "switches systems if needed" do
-      sender = new_dummy_sender(test_config)
-
-      #TODO: don't do this!
-      redefine_each_job(sender)
-
-      sender.send_data('dummy')
-
-      def sender.duplicate(job, system)
-        #The returned object needs a #delete method.
-        job.expects(:delete)
-        job
-      end
-
-      Bookie::Database::System.expects(:find_current).returns(@sys_1).twice
-
-      sender.undo_send('dummy')
     end
 
     it "deletes cached summaries in the affected range" do

@@ -30,6 +30,7 @@ describe Bookie::Database::SystemType do
     SystemType.find_or_create!('test', :avg)
   end
 
+  #TODO: make error messages better?
   it "raises an error if the existing type has the wrong memory stat type" do
     systype = SystemType.create!(:name => 'test', :memory_stat_type => :max)
     begin
@@ -57,12 +58,14 @@ describe Bookie::Database::SystemType do
 
   it "validates fields" do
     systype = SystemType.new(:name => 'test')
-    expect { systype.valid? }.to raise_error('Memory stat type must not be nil')
+    expect(systype.valid?).to eql false
+
     systype.memory_stat_type = :unknown
     expect(systype.valid?).to eql true
-    systype.name = nil
-    expect(systype.valid?).to eql false
-    systype.name = ''
-    expect(systype.valid?).to eql false
+
+    [nil, ''].each do |value|
+      systype.name = value
+      expect(systype.valid?).to eql false
+    end
   end
 end

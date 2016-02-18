@@ -22,17 +22,18 @@ module Bookie
     ##
     #Sends job data from the given file to the database server
     def send_data(filename)
-      system = nil
+      system = Bookie::Database::System.find_or_create!(config.hostname, system_type)
       known_users = {}
+      #Used to clear out cached summaries
       time_min, time_max = nil
 
-      #Grab data from the first job:
+      #Check for duplicates.
       each_job(filename) do |job|
         next if filtered?(job)
-        system = Bookie::Database::System.find_current(self, job.end_time)
         raise "Jobs already exist in the database for '#{filename}'." if duplicate(job, system)
         time_min = job.start_time
         time_max = job.end_time
+        #Just use the first job in the file.
         break
       end
 
@@ -42,22 +43,17 @@ module Bookie
       #Send the job data:
       each_job(filename) do |job|
         next if filtered?(job)
+
         model = job.to_record
         time_min = (model.start_time < time_min) ? model.start_time : time_min
         time_max = (model.end_time > time_max) ? model.end_time : time_max
-        #To consider: handle files that don't have jobs sorted by end time?
-        #To consider: this should rarely happen in real life. Remove test?
-        #(This situation can only arise if log files from different versions of the system are concatenated before sending.)
-        if system.end_time && model.end_time > system.end_time
-          system = Database::System.find_current(self, model.end_time)
-        end
-        user = Bookie::Database::User.find_or_create!(
+
+        model.system = system
+        model.user = Bookie::Database::User.find_or_create!(
           job.user_id,
           job.user_name,
           known_users
         )
-        model.system = system
-        model.user = user
         model.save!
       end
 
@@ -98,6 +94,7 @@ module Bookie
         model.delete
       end
 
+      #TODO: warn if this range isn't completely covered by SystemCapacity entries.
       clear_summaries(time_min.to_date, time_max.to_date)
     end
 
@@ -118,6 +115,7 @@ module Bookie
     #Finds the first job that is a duplicate of the provided job
     def duplicate(job, system)
       #TODO: don't use by_user_name (for anything...)
+      #We should be using user_id here now anyway.
       system.jobs.where({
           :start_time => job.start_time,
           :wall_time => job.wall_time,

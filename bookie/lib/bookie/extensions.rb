@@ -25,11 +25,13 @@ class Range
       Range.new(self.begin, self.end + 1, true)
     end
   end
-  
+
   ##
   #Returns whether the range is empty
   #
   #A range is empty if end < begin or if begin == end and exclude_end? is true.
+  #
+  #TODO: handle infinite values?
   def empty?
     if exclude_end?
       self.end <= self.begin
