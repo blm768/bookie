@@ -11,11 +11,11 @@ module Bookie
     #Creates a new Formatter object
     #
     #<tt>type</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
+    #TODO: just take the formatter module directly?
     #
     #===Examples
-    #  config = Bookie::Config.new('config.json')
     #  #Uses the spreadsheet formatter from 'bookie/formatters/spreadsheet'
-    #  formatter = Bookie::Formatter::Formatter.new(config, :spreadsheet)
+    #  formatter = Bookie::Formatter::Formatter.new(:spreadsheet, 'test.xls')
     def initialize(type, filename = nil)
       #Needed for symbol arguments
       type = type.to_s
@@ -45,32 +45,29 @@ module Bookie
       ]
 
     ##
-    #Prints a summary of <tt>jobs</tt> and <tt>systems</tt> to <tt>io</tt>, using cached data from <tt>summaries</tt>
-    #
-    #Use start_time and end_time to filter the jobs by a time range.
+    #Prints a summary of <tt>jobs</tt> and <tt>system_capacities</tt> to using cached data
+    #from <tt>summaries</tt> during the given time_range
     #
     #It is probably not a good idea to apply any time-based filters to the arguments beforehand.
     #
-    #Both <tt>jobs</tt>, <tt>summaries</tt>, and <tt>systems</tt> should be either models or ActiveRecord::Relation objects.
-    #
-    #Returns the summaries for <tt>jobs</tt> and <tt>systems</tt>
-    def print_summary(jobs, summaries, systems, time_range = nil)
+    #Returns the summaries for <tt>jobs</tt> and <tt>system_capacities</tt>
+    def print_summary(jobs, summaries, system_capacities, time_range = nil)
       jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
       num_jobs = jobs_summary[:num_jobs]
-      systems_summary = systems.summary(time_range)
+      caps_summary = system_capacities.summary(time_range)
       cpu_time = jobs_summary[:cpu_time]
-      avail_cpu_time = systems_summary[:avail_cpu_time]
+      avail_cpu_time = caps_summary[:avail_cpu_time]
       memory_time = jobs_summary[:memory_time]
-      avail_memory_time = systems_summary[:avail_memory_time]
+      avail_memory_time = caps_summary[:avail_memory_time]
       successful = (num_jobs == 0) ? 0.0 : Float(jobs_summary[:successful]) / num_jobs
 
       field_values = [
         num_jobs,
         Formatter.format_duration(cpu_time),
         '%.4f%%' % (successful * 100),
-        Formatter.format_duration(systems_summary[:avail_cpu_time]),
+        Formatter.format_duration(caps_summary[:avail_cpu_time]),
         if avail_cpu_time == 0 then '0.0000%' else '%.4f%%' % (Float(cpu_time) / avail_cpu_time * 100) end,
-        "#{Integer(systems_summary[:avail_memory_avg])} kb",
+        "#{Integer(caps_summary[:avail_memory_avg])} kb",
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
       do_print_summary(field_values)
