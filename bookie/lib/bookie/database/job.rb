@@ -95,6 +95,8 @@ module Bookie
 
       ##
       #Finds all jobs that overlap the edges of the given time range
+      #
+      #TODO: remove.
       def self.overlapping_edges(time_range)
         if time_range.empty?
           self.none
@@ -133,7 +135,7 @@ module Bookie
             #Any jobs that are completely within the time range can
             #be summarized as-is.
             jobs_within = jobs.within_time_range(time_range)
-            #TODO: optimize into one query?
+            #TODO: optimize into one query? (using pluck() with an SQL fragment?)
             num_jobs += jobs_within.count
             successful += jobs_within.where(:exit_code => 0).count
             cpu_time += jobs_within.sum(:cpu_time)

@@ -11,9 +11,4 @@ doc/
 lib/bundler/man
 pkg
 spec/reports
-test/tmp
-test/version_tmp
-tmp
-*.sqlite
-snapshot/*_generated
 

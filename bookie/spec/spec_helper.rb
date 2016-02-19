@@ -14,8 +14,6 @@ require 'mocha/api'
 
 require 'bookie'
 
-require 'sender_helper'
-
 class IOMock
   def initialize
     @buf = ""
@@ -53,13 +51,12 @@ module Helpers
   #TODO: move to another helper file?
   def create_summaries(obj, base_time)
     base_start = base_time
-    base_end   = base_time + 40.hours
+    base_end   = base_time + 30.hours
     summaries = {
       :all => obj.summary,
       :all_constrained => obj.summary(base_start ... base_end),
       :wide => obj.summary(base_start - 1.hours ... base_end + 1.hours),
-      #TODO: push this farther forward?
-      :clipped => obj.summary(base_start + 30.minutes ... base_start + 25.hours),
+      :clipped => obj.summary(base_start + 5.hours ... base_start + 25.hours),
       :empty => obj.summary(base_start ... base_start),
     }
 
@@ -80,7 +77,7 @@ module Helpers
   #Create test database
   def self.generate_database
     users = []
-    user_names = ['root', 'test', 'blm', 'blm768']
+    user_names = ['root', 'test', 'test2', 'blm']
     user_names.each_with_index do |name, i|
       users << Bookie::Database::User.create!(id: i + 1, name: name)
     end
@@ -114,7 +111,7 @@ module Helpers
 
     #Give the first system two capacity entries.
     systems[0].decommission!(systems[1].current_capacity.start_time)
-    capacity = systems[2].current_capacity.clone
+    capacity = systems[2].current_capacity.dup
     capacity.system = systems[0]
     capacity.save!
 
@@ -162,7 +159,6 @@ end
 
 RSpec.configure do |config|
   config.include Helpers
-  config.include SenderHelpers
 
   config.mock_with(:mocha)
 

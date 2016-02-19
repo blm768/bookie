@@ -201,8 +201,7 @@ describe Bookie::Database::JobSummary do
       #TODO: split into a context?
       JobSummary.transaction(:requires_new => true) do
         System.active.each do |sys|
-          sys.end_time = base_time + 2.days
-          sys.save!
+          sys.decommission!(base_time + 2.days)
         end
         check_time_bounds
         raise ActiveRecord::Rollback

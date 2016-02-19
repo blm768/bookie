@@ -26,7 +26,7 @@ class CreateBasicStructure < ActiveRecord::Migration
       t.integer :memory, null: false, limit: 8
 
       t.index :system
-      t.index [:start_time, :end_time], unique: true
+      t.index [:start_time, :end_time]
     end
 
     create_table :system_types do |t|

@@ -6,17 +6,31 @@ describe Bookie::Database::SystemCapacity do
   #TODO: create a common example.
   describe "#by_time_range" do
     #TODO: handle infinities.
-    #TODO: create an Interval class? Use the range_extd gem?
-    it "correctly filters by time range" do
-      range_counts = {
-        (base_time ... base_time + 20.hours + 1) => 3,
-        (base_time + 1 ... base_time + 20.hours) => 2,
-        (base_time ... base_time) => 0,
-        (base_time .. base_time + 20.hours) => 3,
-        (base_time .. base_time) => 1
-      }
-      range_counts.each_pair do |range, count|
-        expect(SystemCapacity.by_time_range(range).count).to eql count
+    context "with inclusive time ranges" do
+      it "correctly filters by time range" do
+        range_counts = {
+          (base_time .. base_time + 20.hours) => 4,
+          (base_time + 1 .. base_time + 20.hours) => 4,
+          (base_time + 21.hours .. base_time + 30.hours) => 3,
+          (base_time .. base_time) => 1
+        }
+        range_counts.each_pair do |range, count|
+          expect(SystemCapacity.by_time_range(range).count).to eql count
+        end
+      end
+    end
+
+    context "with exclusive time ranges" do
+      it "correctly filters by time range" do
+        range_counts = {
+          (base_time ... base_time + 20.hours + 1) => 4,
+          (base_time + 1 ... base_time + 20.hours) => 2,
+          (base_time + 21.hours ... base_time + 30.hours) => 3,
+          (base_time ... base_time) => 0,
+        }
+        range_counts.each_pair do |range, count|
+          expect(SystemCapacity.by_time_range(range).count).to eql count
+        end
       end
     end
 
@@ -34,7 +48,8 @@ describe Bookie::Database::SystemCapacity do
     before(:each) do
       #Take note of this; the calculations for the expected values in these
       #tests are based on this value of Time.now.
-      Time.expects(:now).returns(base_time + 40.hours).at_least_once
+      #TODO: fix this hackiness?
+      Time.expects(:now).returns(base_time + 30.hours).at_least_once
     end
 
     let(:summary) { create_summaries(SystemCapacity, base_time) }
@@ -43,37 +58,38 @@ describe Bookie::Database::SystemCapacity do
     #All systems should have the same amount of memory.
     let(:memory_per_system) { SystemCapacity.first.memory }
     let(:cores_per_system) { SystemCapacity.first.cores }
-    #The first system was only up for 10 hours; the others were not decommissioned.
+    #The first system was up for 10 hours, down for 10, and up for another 10. The others were not decommissioned.
     #TODO: calculate from the database?
-    let(:total_wall_time) { (10 + 30 + 20 + 10).hours }
+    let(:total_wall_time) { (10 + 10 + 30).hours }
     let(:total_memory_time) { total_wall_time * memory_per_system }
 
-    context "when some systems are active" do
+    context "when systems are active" do
       it "produces correct summaries" do
         expect(summary[:all]).to eql({
-          :num_systems => 4,
+          :num_systems => 3,
           :avail_cpu_time => total_wall_time * cores_per_system,
           :avail_memory_time => total_wall_time * memory_per_system,
-          :avail_memory_avg => Float(total_memory_time) / 40.hours,
+          :avail_memory_avg => Float(total_memory_time) / 30.hours,
         })
 
         expect(summary[:all_constrained]).to eql(summary[:all])
 
-        clipped_wall_time = (10 + 15 + 5).hours - 30.minutes
+        #The clipped summary cuts 5 hours off each side.
+        clipped_wall_time = (5 + 10 + 15).hours
         expect(summary[:clipped]).to eql({
           :num_systems => 3,
           :avail_cpu_time => clipped_wall_time * cores_per_system,
           :avail_memory_time => clipped_wall_time * memory_per_system,
-          :avail_memory_avg => Float(clipped_wall_time * memory_per_system) / (25.hours - 30.minutes),
+          :avail_memory_avg => Float(clipped_wall_time * memory_per_system) / (20.hours),
         })
 
         #One extra hour of wall time for each active system
         wide_wall_time = total_wall_time + 3.hours
         expect(summary_wide).to eql({
-          :num_systems => 4,
+          :num_systems => 3,
           :avail_cpu_time => wide_wall_time * cores_per_system,
           :avail_memory_time => memory_per_system * wide_wall_time,
-          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / 42.hours,
+          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / 32.hours,
         })
 
         expect(summary[:empty]).to eql({
@@ -87,12 +103,10 @@ describe Bookie::Database::SystemCapacity do
 
     context "when no systems are active" do
       it "produces correct summaries" do
-        SystemCapacity.find_each do |cap|
-          unless cap.end_time
-            #Only works because of the mock in the before(:all) block
-            cap.end_time = Time.now
-            cap.save!
-          end
+        SystemCapacity.where(end_time: nil).find_each do |cap|
+          #Only works because of the mock in the before(:all) block
+          cap.end_time = Time.now
+          cap.save!
         end
 
         s1 = SystemCapacity.summary()
@@ -100,7 +114,7 @@ describe Bookie::Database::SystemCapacity do
 
         s1 = SystemCapacity.summary(base_time ... Time.now + 1.hour)
         s2 = summary[:all].dup
-        s2[:avail_memory_avg] = Float(total_memory_time) / 41.hours
+        s2[:avail_memory_avg] = Float(total_memory_time) / 31.hours
         expect(s1).to eql s2
       end
     end

@@ -20,8 +20,10 @@ module Bookie
       end
 
       #TODO: doc and unit test.
+      #TODO: remove?
+      #TODO: make these methods into scopes?
       def self.current
-        self.where('system_capacities.end_time IS NULL')
+        self.where(end_time: nil)
       end
 
       ##
@@ -32,11 +34,9 @@ module Bookie
           return capacities.none
         end
 
-        time_range = time_range.exclusive
-
         #TODO: use #finite?
         if time_range.first != -Float::INFINITY then
-          #To consider: use a UNION?
+          #TODO: remove some raw SQL when Rails 5 introduces an "or" on relations?
           capacities = capacities.where(
             '? < system_capacities.end_time OR system_capacities.end_time IS NULL',
             time_range.first
@@ -44,9 +44,9 @@ module Bookie
         end
         if time_range.last != Float::INFINITY then
           if time_range.exclude_end? then
-            capacities = capacities.where('system_capacities.start_time < ?', time_range.last)
+            capacities = capacities.where('? > system_capacities.start_time', time_range.last)
           else
-            capacities = capacities.where('system_capacities.start_time <= ?', time_range.last)
+            capacities = capacities.where('? >= system_capacities.start_time', time_range.last)
           end
         end
 

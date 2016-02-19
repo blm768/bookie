@@ -20,6 +20,7 @@ module Bookie
       #Finds a user by id, creating it if it doesn't exist
       #
       #If <tt>known_users</tt> is provided, it will be used as a cache to reduce the number of database lookups needed.
+      #TODO: use first_or_create instead.
       def self.find_or_create!(id, name, known_users = nil)
         #Determine if the user must be added to/retrieved from the database.
         user = known_users[id] if known_users
