@@ -24,7 +24,10 @@ module Bookie
     ##
     #Sends job data from the given file to the database server
     def send_data(filename)
-      known_users = {}
+      users_by_id = Hash.new do |h, id|
+        h[id] = Database::User.find(id)
+      end
+
       #Used to clear out cached summaries
       time_min, time_max = nil
 
@@ -50,11 +53,12 @@ module Bookie
         time_max = (model.end_time > time_max) ? model.end_time : time_max
 
         model.system = system
-        model.user = Bookie::Database::User.find_or_create!(
-          job.user_id,
-          job.user_name,
-          known_users
-        )
+
+        #Either find the user or create it.
+        model.user = users_by_id[job.user_id] || begin
+          users_by_id[job.user_id] = Database::User.create!(id: job.user_id, name: job.user_name)
+        end
+
         model.save!
       end
 

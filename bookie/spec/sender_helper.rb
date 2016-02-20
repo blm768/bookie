@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 module SenderHelpers
   class JobStub
     attr_accessor :user_id, :user_name
@@ -31,10 +33,12 @@ module SenderHelpers
   end
 
   module DummySender
+    NUM_JOBS = 20
+
     def each_job(filename)
-      20.times do |i|
+      NUM_JOBS.times do |i|
         #TODO: add some variety...
-        yield JobStub.from_hash(command_name: 'vi', user_id: 2, start_time: Time.at(1349679573) + i.minutes,
+        yield JobStub.from_hash(command_name: 'vi', user_id: 2, start_time: Helpers.base_time + i.minutes,
             exit_code: 0, cpu_time: 63, memory: 139776, wall_time: 67)
       end
     end

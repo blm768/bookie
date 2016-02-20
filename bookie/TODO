@@ -1,13 +1,12 @@
 First priority:
-- Add user/group IDs
+- Add user IDs
 - Optimize summarization stuff.
   - Put all the sums in one query.
 - Filter out 0-time jobs (use Ruby config w/ block?)
 
 Later:
 - Connect to users DB or LDAP?
-- Make a generic find_or_create! method?
-  - Make sure that all find_or_create methods have exclamation marks!
+- Remove find_or_create methods.
 
 Testing:
 - Test executables somehow? (and integrate with Travis CI)!
@@ -32,7 +31,7 @@ Make units more independent.
 Make unit test success more independent.
 Fix memory specification issue
 Specify dependency versions
-Replace Mocha with rspec-mocks? 
+Replace Mocha with rspec-mocks?
 Set up guard-rspec gem for testing?
 
 Data consistency considerations:

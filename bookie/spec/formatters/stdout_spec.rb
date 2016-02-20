@@ -34,7 +34,7 @@ eos
 
   it "correctly formats summaries" do
     Time.expects(:now).returns(base_time + 40.hours).at_least_once
-    formatter.print_summary(Job, JobSummary, System)
+    formatter.print_summary(Job, JobSummary, SystemCapacity)
     formatter.flush
     expect(io_mock.buf).to eql <<-eos
 Number of jobs:               40

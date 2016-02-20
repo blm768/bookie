@@ -71,7 +71,7 @@ describe Bookie::Sender do
     jobs.each do |job|
       expect(job.system.name).to eql config.hostname
     end
-    expect(jobs.length).to eql 100
+    expect(jobs.length).to eql DummySender::NUM_JOBS
   end
 
   it "refuses to send jobs when jobs already have been sent from a file" do

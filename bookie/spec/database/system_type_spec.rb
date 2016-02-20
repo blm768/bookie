@@ -14,7 +14,7 @@ describe Bookie::Database::SystemType do
     end
 
     it "rejects unrecognized memory stat type codes" do
-      systype.write_attribute(:memory_stat_type, 10000)
+      systype.send(:write_attribute, :memory_stat_type, 10000)
       expect { systype.memory_stat_type }.to raise_error("Unrecognized memory stat type code 10000")
     end
 
