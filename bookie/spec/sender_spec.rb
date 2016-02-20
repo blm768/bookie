@@ -125,17 +125,14 @@ describe Bookie::Sender do
       sender.send_data('dummy')
 
       user = Bookie::Database::User.first
-      date_start = Date.new(2012) - 2
+      date_start = base_time.to_date - 2
       date_end = date_start + 4
       (date_start .. date_end).each do |date|
         [sys_1, sys_dummy].each do |system|
           Bookie::Database::JobSummary.create!(
-            date: date,
-            system: system,
-            user: user,
-            command_name: 'vi',
-            cpu_time: 1,
-            memory_time: 100
+            date: date, system: system,
+            user: user, command_name: 'vi',
+            cpu_time: 1, memory_time: 100
           )
         end
       end
@@ -143,7 +140,7 @@ describe Bookie::Sender do
       sender.send(:clear_summaries, date_start + 1, date_end - 1)
 
       sums = Bookie::Database::JobSummary.all.to_a
-      expect(sums.length).to eql 9
+      expect(sums.length).to eql 7
       sums.each do |sum|
         #Since there are no jobs for sys_dummy, its summaries should be left intact.
         unless sum.system == sys_dummy
@@ -158,8 +155,9 @@ describe Bookie::Sender do
 
   describe "#undo_send" do
     it "removes the correct entries" do
+      sender_short = new_dummy_sender(test_config, ShortDummySender)
       sender.send_data('dummy')
-      sender.send_data('snapshot/torque')
+      sender_short.send_data('dummy2')
       sender.undo_send('dummy')
 
       expect(Bookie::Database::Job.count).to eql 1

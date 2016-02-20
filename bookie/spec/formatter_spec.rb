@@ -6,7 +6,6 @@ module Bookie
       attr_reader :mock_field_values
 
       def open(filename)
-
       end
 
       def do_print_summary(field_values)

@@ -1,17 +1,22 @@
 require 'spec_helper'
+require 'formatter_helper'
 
 require 'bookie/formatters/comma_dump'
 
 include Bookie
 include Bookie::Database
 
+include FormatterHelpers
+
 describe Bookie::Formatters::CommaDump do
   let(:io_mock) { IOMock.new }
-  before(:each) do
-    File.expects(:open).at_least(0).returns(io_mock)
-  end
   let(:formatter) { Bookie::Formatter.new(:comma_dump, 'test.csv') }
 
+  before(:each) do
+    File.stubs(:open).returns(io_mock)
+  end
+
+  #TODO: remove this test?
   it "correctly opens files" do
     File.expects(:open).with('test.csv')
     Bookie::Formatter.new(:comma_dump, 'test.csv')
@@ -43,9 +48,9 @@ eos
   end
 
   it "correctly quotes values" do
-    formatter = Formatters::CommaDump
-    expect(formatter.quote("test")).to eql '"test"'
-    expect(formatter.quote('"test"')).to eql '"""test"""'
-    expect(formatter.quote(0)).to eql '"0"'
+    quote = Formatters::CommaDump.method(:quote)
+    expect(quote.call("test")).to eql '"test"'
+    expect(quote.call('"test"')).to eql '"""test"""'
+    expect(quote.call(0)).to eql '"0"'
   end
 end

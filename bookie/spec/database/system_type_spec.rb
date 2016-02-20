@@ -8,7 +8,7 @@ describe Bookie::Database::SystemType do
 
     it "correctly maps memory stat type codes to symbols" do
       SystemType::MEMORY_STAT_TYPE.each_pair do |symbol, code|
-        systype.set_attribute(:memory_stat_type, code)
+        systype.send(:write_attribute, :memory_stat_type, code)
         expect(systype.memory_stat_type).to eql symbol
       end
     end

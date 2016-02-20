@@ -17,76 +17,6 @@ module Bookie
       belongs_to :system
 
       ##
-      #Filters by date
-      def self.by_date(date)
-        where('job_summaries.date = ?', date)
-      end
-
-      ##
-      #Filters by a date range
-      def self.by_date_range(range)
-        range = range.normalized
-        if range.exclude_end?
-          where('? <= job_summaries.date AND job_summaries.date < ?', range.begin, range.end)
-        else
-          where('? <= job_summaries.date AND job_summaries.date <= ?', range.begin, range.end)
-        end
-      end
-
-      ##
-      #Filters by user
-      def self.by_user(user)
-        where('job_summaries.user_id = ?', user.id)
-      end
-
-      ##
-      #Filters by user name
-      def self.by_user_name(name)
-        joins(:user).where('users.name = ?', name)
-      end
-
-      ##
-      #Filters by group
-      def self.by_group(group)
-        joins(:user).where('users.group_id = ?', group.id)
-      end
-
-      ##
-      #Filters by group name
-      def self.by_group_name(name)
-        group = Group.where(:name => name).first
-        if group
-          by_group(group)
-        else
-          self.none
-        end
-      end
-
-      ##
-      #Filters by system
-      def self.by_system(system)
-        where('job_summaries.system_id = ?', system.id)
-      end
-
-      ##
-      #Filters by system name
-      def self.by_system_name(name)
-        joins(:system).where('systems.name = ?', name)
-      end
-
-      ##
-      #Filters by system type
-      def self.by_system_type(type)
-        joins(:system).where('systems.system_type_id = ?', type.id)
-      end
-
-      ##
-      #Filters by command name
-      def self.by_command_name(cmd)
-        where('job_summaries.command_name = ?', cmd)
-      end
-
-      ##
       #Create cached summaries for the given date
       #
       #The date is interpreted as being in UTC.
@@ -147,8 +77,8 @@ module Bookie
       #- [<tt>:jobs</tt>] the jobs on which the summary should operate
       #
       #When filtering, the same filters must be applied to both the Jobs and the JobSummaries. For example:
-      # jobs = Bookie::Database::Job.by_user_name('root')
-      # summaries = Bookie::Database::Job.by_user_name('root')
+      # jobs = Bookie::Database::Job.merge(Bookie::Database::User.where(name: 'root'))
+      # jobs = Bookie::Database::JobSummary.merge(Bookie::Database::User.where(name: 'root'))
       # puts summaries.summary(:jobs => jobs)
       #
       # TODO: unit-test that summaries are created on UTC date boundaries?
@@ -162,7 +92,7 @@ module Bookie
           if start_time && end_time
             time_range = start_time .. end_time
           else
-            time_range = Time.new ... Time.new
+            time_range = Time.at(0) ... Time.at(0)
           end
         end
 
@@ -185,7 +115,7 @@ module Bookie
 
         jobs_in_range = jobs.by_time_range(time_range)
         num_jobs = jobs_in_range.count
-        successful = jobs_in_range.where('jobs.exit_code = 0').count
+        successful = jobs_in_range.where(exit_code: 0).count
         cpu_time = 0
         memory_time = 0
 
@@ -210,7 +140,7 @@ module Bookie
 
         #Now we can process the cached summaries.
         unscoped = self.unscoped
-        summaries = by_date_range(date_range).order(:date).to_a
+        summaries = where(date: date_range).order(:date).to_a
         index = 0
         date_range.each do |date|
           new_index = index
@@ -223,11 +153,11 @@ module Bookie
           end
           #Did we actually process any summaries?
           #If not, have _any_ summaries been created for this day?
-          if new_index == index && !(unscoped.by_date(date).any?)
+          if new_index == index && !(unscoped.where(date: date).any?)
             #Nope. Create the summaries.
             unscoped.summarize(date)
             #TODO: what if a Sender deletes the summaries right before this?
-            self.by_date(date).each do |sum|
+            self.where(date: date).each do |sum|
               cpu_time += sum.cpu_time
               memory_time += sum.memory_time
             end

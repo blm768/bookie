@@ -27,45 +27,6 @@ module Bookie
         return start_time + wall_time
       end
 
-      def end_time=(time)
-        self.wall_time = (time - start_time)
-      end
-
-      #To consider: disable #end_time= ?
-
-      def self.by_user(user)
-        where('jobs.user_id = ?', user.id)
-      end
-
-      ##
-      #Filters by user name
-      #TODO: remove!
-      def self.by_user_name(user_name)
-        joins(:user).where('users.name = ?', user_name)
-      end
-
-      def self.by_system(system)
-        where('jobs.system_id = ?', system.id)
-      end
-
-      ##
-      #Filters by system name
-      def self.by_system_name(system_name)
-        joins(:system).where('systems.name = ?', system_name)
-      end
-
-      ##
-      #Filters by system type
-      def self.by_system_type(system_type)
-        joins(:system).where('systems.system_type_id = ?', system_type.id)
-      end
-
-      ##
-      #Filters by command name
-      def self.by_command_name(c_name)
-        where('jobs.command_name = ?', c_name)
-      end
-
       ##
       #Finds all jobs that were running at some point in a given time range
       def self.by_time_range(time_range)
@@ -94,20 +55,6 @@ module Bookie
       end
 
       ##
-      #Finds all jobs that overlap the edges of the given time range
-      #
-      #TODO: remove.
-      def self.overlapping_edges(time_range)
-        if time_range.empty?
-          self.none
-        else
-          time_range = time_range.exclusive
-          query_str = ['begin', 'end'].map{ |edge| "(jobs.start_time < :#{edge} AND jobs.end_time > :#{edge})" }.join(" OR ")
-          where(query_str, {:begin => time_range.begin, :end => time_range.end})
-        end
-      end
-
-      ##
       #Produces a summary of the jobs in the given time interval
       #
       #Returns a hash with the following fields:
@@ -119,6 +66,8 @@ module Bookie
       #This method should probably not be chained with other queries that filter by start/end time.
       #It also doesn't work with the limit() method.
       #
+      #TODO: adjust.
+      #TODO: is end_time considered inclusive or exclusive?
       #The time_range parameter is always treated as if time_range.exclude_end? is true.
       def self.summary(time_range = nil)
         jobs = self
@@ -143,21 +92,25 @@ module Bookie
 
             #Any jobs that overlap an edge of the time range
             #must be clipped.
-            jobs_overlapped = jobs.overlapping_edges(time_range)
-            jobs_overlapped.find_each do |job|
-              start_time = [job.start_time, time_range.begin].max
-              end_time = [job.end_time, time_range.end].min
-              clipped_wall_time = end_time.to_i - start_time.to_i
-              if job.wall_time != 0
+            [time_range.first, time_range.last].each do |time|
+              jobs_overlapped = jobs.where('jobs.start_time < :1 AND :1 < jobs.end_time', time)
+              jobs_overlapped.find_each do |job|
+                num_jobs += 1
+                successful += 1 if job.exit_code == 0
+
+                next if job.wall_time == 0
+
+                start_time = [job.start_time, time_range.begin].max
+                end_time = [job.end_time, time_range.end].min
+                clipped_wall_time = end_time.to_i - start_time.to_i
                 cpu_time += Float(job.cpu_time * clipped_wall_time) / job.wall_time
                 memory_time += job.memory * clipped_wall_time
               end
-              num_jobs += 1
-              successful += 1 if job.exit_code == 0
             end
           end
         else
           #There's no time_range constraint; just summarize everything.
+          #TODO: eliminate redundancy with the other code path?
           num_jobs = jobs.count
           successful = jobs.where(:exit_code => 0).count
           cpu_time = jobs.sum(:cpu_time)
@@ -176,20 +129,11 @@ module Bookie
         write_attribute(:end_time, end_time)
       end
 
-      before_update do
-        write_attribute(:end_time, end_time)
-      end
-
       validates_presence_of :user, :system, :cpu_time,
-        :start_time, :wall_time, :memory, :exit_code
+        :start_time, :wall_time, :memory, :exit_code, :command_name
 
-      validates_each :command_name do |record, attr, value|
-        record.errors.add(attr, 'must not be nil') if value == nil
-      end
-
-      validates_each :cpu_time, :wall_time, :memory do |record, attr, value|
-        record.errors.add(attr, 'must be a non-negative integer') unless value && value >= 0
-      end
+      #TODO: validate integral type?
+      validates :cpu_time, :wall_time, :memory,  numericality: { greater_than_or_equal_to: 0 }
     end
   end
 end

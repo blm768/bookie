@@ -1,6 +1,9 @@
 require 'spec_helper'
+require 'database/summary_helper'
 
 include Bookie::Database
+
+include SummaryHelpers
 
 RSpec::Matchers.define :be_job_within_time_range do |time_range|
   match do |job|
@@ -14,88 +17,19 @@ RSpec::Matchers.define :be_job_within_time_range do |time_range|
 end
 
 describe Bookie::Database::Job do
-  it "correctly sets end times" do
-    Job.find_each do |job|
-      expect(job.end_time).to eql job.start_time + job.wall_time
-      expect(job.end_time).to eql job.read_attribute(:end_time)
+  describe "#end_time" do
+    it "correctly calculates end time" do
+      Job.find_each do |job|
+        expect(job.end_time).to eql job.start_time + job.wall_time
+      end
     end
 
-    #Test the update hook.
-    job = Job.first
-    job.start_time -= 1
-    job.save!
-    expect(job.end_time).to eql job.read_attribute(:end_time)
-  end
-
-  describe "#end_time=" do
-    it "correctly adjusts time values" do
+    it "updates the model attribute" do
       job = Job.first
-      old_end_time = job.end_time
-      job.end_time -= 1
-      #We use #to_i because directly subtracting Time objects produces
-      #floating-point numbers.
-      expect(job.wall_time).to eql(job.end_time.to_i - job.start_time.to_i)
-      expect(job.end_time).to eql(old_end_time - 1)
+      job.wall_time -= 1
+      job.save!
+      expect(job.read_attribute(:end_time)).to eql job.start_time + job.wall_time
     end
-  end
-
-  it "correctly filters by user" do
-    user = User.by_name('test').order(:id).first
-    jobs = Job.by_user(user).to_a
-    jobs.each do |job|
-      expect(job.user).to eql user
-    end
-    expect(jobs.length).to eql 10
-  end
-
-  it "correctly filters by user name" do
-    #TODO: simplify?
-    jobs = Job.by_user_name('root').to_a
-    expect(jobs.length).to eql 10
-    expect(jobs[0].user.name).to eql "root"
-    jobs = Job.by_user_name('test').order(:end_time).to_a
-    expect(jobs.length).to eql 10
-    jobs.each do |job|
-      expect(job.user.name).to eql 'test'
-    end
-    jobs = Job.by_user_name('user').to_a
-    expect(jobs.length).to eql 0
-  end
-
-  it "correctly filters by system" do
-    sys = System.first
-    jobs = Job.by_system(sys)
-    expect(jobs.length).to eql 10
-    jobs.each do |job|
-      expect(job.system).to eql sys
-    end
-  end
-
-  it "correctly filters by system name" do
-    jobs = Job.by_system_name('test1')
-    expect(jobs.length).to eql 20
-    jobs = Job.by_system_name('test2')
-    expect(jobs.length).to eql 10
-    jobs = Job.by_system_name('test3')
-    expect(jobs.length).to eql 10
-    jobs = Job.by_system_name('test4')
-    expect(jobs.length).to eql 0
-  end
-
-  it "correctly filters by system type" do
-    sys_type = SystemType.find_by(name: 'Standalone')
-    jobs = Job.by_system_type(sys_type)
-    expect(jobs.length).to eql 20
-    sys_type = SystemType.find_by(name: 'TORQUE cluster')
-    jobs = Job.by_system_type(sys_type)
-    expect(jobs.length).to eql 20
-  end
-
-  it "correctly filters by command name" do
-    jobs = Job.by_command_name('vi')
-    expect(jobs.length).to eql 20
-    jobs = Job.by_command_name('emacs')
-    expect(jobs.length).to eql 20
   end
 
   describe "#by_time_range" do
@@ -149,59 +83,6 @@ describe Bookie::Database::Job do
       it "finds no jobs" do
         jobs = Job.within_time_range(base_start ... base_start)
         expect(jobs.count).to eql(0)
-      end
-    end
-  end
-
-  describe "overlapping_edges" do
-    let(:base_start) { base_time }
-    let(:base_end) { base_time + 3600 }
-
-    context "with exclusive ranges" do
-      it "finds jobs that overlap the edges" do
-        #Overlapping beginning
-        jobs = Job.overlapping_edges(base_start + 1 ... base_end)
-        expect(jobs.count).to eql 1
-        expect(jobs.first.start_time).to eql base_time
-
-        #Overlapping end
-        jobs = Job.overlapping_edges(base_start ... base_end - 1)
-        expect(jobs.count).to eql 1
-        expect(jobs.first.start_time).to eql base_time
-
-        #One job overlapping both
-        jobs = Job.overlapping_edges(base_start + 1 ... base_end - 1)
-        expect(jobs.count).to eql 1
-        expect(jobs.first.start_time).to eql base_time
-
-        #Two jobs overlapping the endpoints
-        jobs = Job.overlapping_edges(base_end - 1 ... base_end + 1)
-        expect(jobs.count).to eql 2
-
-        #Not overlapping any endpoints
-        jobs = Job.overlapping_edges(base_start ... base_end)
-        expect(jobs.count).to eql 0
-      end
-    end
-
-    context "with inclusive ranges" do
-      it "finds jobs that overlap the edges" do
-        #This is more pared-down because inclusive and exclusive ranges mostly
-        #share the same codepath.
-        jobs = Job.overlapping_edges(base_start .. base_end)
-        expect(jobs.count).to eql 1
-
-        jobs = Job.overlapping_edges(base_start .. base_start)
-        expect(jobs.count).to eql 1
-      end
-    end
-
-    context "with empty ranges" do
-      it "finds no jobs" do
-        jobs = Job.overlapping_edges(base_start + 1 ... base_start + 1)
-        expect(jobs.count).to eql 0
-        jobs = Job.overlapping_edges(base_start + 1 .. base_start)
-        expect(jobs.count).to eql 0
       end
     end
   end

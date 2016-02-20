@@ -121,22 +121,21 @@ module Bookie
     ##
     #Finds the first job that is a duplicate of the provided job
     def duplicate(job)
-      #TODO: don't use by_user_name (for anything...)
-      #We should be using user_id here now anyway.
       system.jobs.where({
           :start_time => job.start_time,
           :wall_time => job.wall_time,
           :command_name => job.command_name,
+          :user_id => job.user_id,
           :cpu_time => job.cpu_time,
           :memory => job.memory,
           :exit_code => job.exit_code
-        }).by_user_name(job.user_name).first
+        }).first
     end
 
     #Used internally by #send_data and #undo_send
     def clear_summaries(date_min, date_max)
       system_id = Database::System.find_by(name: @config.hostname).id
-      Database::JobSummary.where(system_id: system_id).where('date >= ? AND date <= ?', date_min, date_max).delete_all
+      Database::JobSummary.where(system_id: system_id).where('? <= date AND date <= ?', date_min, date_max).delete_all
     end
     private :clear_summaries
   end

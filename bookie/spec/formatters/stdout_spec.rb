@@ -1,17 +1,22 @@
 require 'spec_helper'
+require 'formatter_helper'
 
 require 'bookie/formatters/stdout'
 
 include Bookie
 include Bookie::Database
 
+include FormatterHelpers
+
 describe Bookie::Formatters::Stdout do
   let(:io_mock) { IOMock.new }
-  before(:each) do
-    File.expects(:open).at_least(0).returns(io_mock)
-  end
   let(:formatter) { Formatter.new(:stdout, 'mock.out') }
 
+  before(:each) do
+    File.stubs(:open).returns(io_mock)
+  end
+
+  #TODO: remove this test?
   it "correctly opens files" do
     f = Bookie::Formatter.new(:stdout)
     expect(f.instance_variable_get(:'@io')).to eql STDOUT
@@ -32,6 +37,7 @@ eos
     end
   end
 
+  #TODO: stub out the database and summarization stuff.
   it "correctly formats summaries" do
     Time.expects(:now).returns(base_time + 40.hours).at_least_once
     formatter.print_summary(Job, JobSummary, SystemCapacity)
