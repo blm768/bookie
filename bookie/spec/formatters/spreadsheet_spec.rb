@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'formatter_helper'
 
 require 'bookie/formatters/spreadsheet'
 
@@ -76,8 +77,7 @@ describe Bookie::Formatters::Spreadsheet do
   end
 
   it "correctly formats summaries" do
-    Time.expects(:now).returns(base_time + 40.hours).at_least_once
-    formatter.print_summary(Job, JobSummary, System)
+    formatter.print_summary(FormatterHelpers::JOB_SUMMARY, FormatterHelpers::SYSTEM_CAPACITY_SUMMARY)
     w = mock_workbook.worksheet('Summary')
     expect(w.column(0).width).to_not eql nil
     expect(w.mock_rows).to eql([

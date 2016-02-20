@@ -45,31 +45,27 @@ module Bookie
       ]
 
     ##
-    #Prints a summary of <tt>jobs</tt> and <tt>system_capacities</tt> to using cached data
-    #from <tt>summaries</tt> during the given time_range
+    #Prints info from the summary results <code>job_summary</code> and <code>system_capacity_summary</code>
     #
-    #It is probably not a good idea to apply any time-based filters to the arguments beforehand.
-    #
-    #Returns the summaries for <tt>jobs</tt> and <tt>system_capacities</tt>
-    def print_summary(jobs, summaries, system_capacities, time_range = nil)
-      jobs_summary = summaries.summary(:jobs => jobs, :range => time_range)
-      num_jobs = jobs_summary[:num_jobs]
-      caps_summary = system_capacities.summary(time_range)
-      cpu_time = jobs_summary[:cpu_time]
-      avail_cpu_time = caps_summary[:avail_cpu_time]
-      memory_time = jobs_summary[:memory_time]
-      avail_memory_time = caps_summary[:avail_memory_time]
-      successful = (num_jobs == 0) ? 0.0 : Float(jobs_summary[:successful]) / num_jobs
+    #TODO: refactor!
+    def print_summary(job_summary, system_capacity_summary)
+      num_jobs = job_summary[:num_jobs]
+      cpu_time = job_summary[:cpu_time]
+      avail_cpu_time = system_capacity_summary[:avail_cpu_time]
+      memory_time = job_summary[:memory_time]
+      avail_memory_time = system_capacity_summary[:avail_memory_time]
+      successful = (num_jobs == 0) ? 0.0 : Float(job_summary[:successful]) / num_jobs
 
       field_values = [
         num_jobs,
         Formatter.format_duration(cpu_time),
         '%.4f%%' % (successful * 100),
-        Formatter.format_duration(caps_summary[:avail_cpu_time]),
+        Formatter.format_duration(avail_cpu_time),
         if avail_cpu_time == 0 then '0.0000%' else '%.4f%%' % (Float(cpu_time) / avail_cpu_time * 100) end,
-        "#{Integer(caps_summary[:avail_memory_avg])} kb",
+        "#{Integer(system_capacity_summary[:avail_memory_avg])} kb",
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
+
       do_print_summary(field_values)
     end
 
@@ -97,7 +93,7 @@ module Bookie
     #call-seq:
     #  fields_for_each_job(jobs) { |fields| ... }
     #
-    #<tt>jobs</tt> should be an ActiveRecord model or relation.
+    #<code>jobs</code> should be an ActiveRecord model or relation.
     #
     #===Examples
     #  formatter.fields_for_each_job(jobs) do |fields|

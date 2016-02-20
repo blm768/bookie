@@ -26,40 +26,31 @@ describe Bookie::Database::JobSummary do
     end
   end
 
-  describe "#by_date_range" do
-    it "correctly filters by date range" do
-      d = Date.new(2012)
-      sums = JobSummary
-      expect(sums.by_date_range(d .. d).count).to eql sums.where(date: d).count
-      expect(sums.by_date_range(d ... d).count).to eql 0
-      expect(sums.by_date_range(d + 1 .. d).count).to eql 0
-      expect(sums.by_date_range(d .. d + 1).count).to eql sums.where(date: d .. d + 1).count
-      expect(sums.by_date_range(d ... d + 1).count).to eql sums.where(date: d).count
-    end
-  end
-
   describe "#summarize" do
     before(:each) do
       JobSummary.delete_all
     end
 
     it "produces correct summaries" do
-      d = Date.new(2012)
-      range = base_time ... base_time + 1.days
-      JobSummary.summarize(d)
+      time_min = base_time
+      time_max = base_time + 1.days
+      date = base_time.to_date
+
+      JobSummary.summarize(date)
+
       sums = JobSummary.all.to_a
       found_sums = Set.new
       sums.each do |sum|
-        expect(sum.date).to eql Date.new(2012)
+        expect(sum.date).to eql date
         jobs = Job.where(user: sum.user, system: sum.system, command_name: sum.command_name)
-        sum_2 = jobs.summary(range)
+        sum_2 = jobs.summary(time_min, time_max)
         [:cpu_time, :memory_time].each do |field|
           expect(sum.send(field)).to eql(sum_2[field])
         end
         found_sums.add([sum.user.id, sum.system.id, sum.command_name])
       end
       #Is it catching all of the combinations of categories?
-      Job.by_time_range(range).uniq.pluck(:user_id, :system_id, :command_name).each do |values|
+      Job.by_time_range(time_min, time_max).uniq.pluck(:user_id, :system_id, :command_name).each do |values|
         expect(found_sums.include?(values)).to eql true
       end
     end
@@ -101,28 +92,22 @@ describe Bookie::Database::JobSummary do
         offsets.each do |offset_begin|
           offsets.each do |offset_end|
             [true, false].each do |exclude_end|
-              time_range = Range.new(base_time + offset_begin, base_time + num_days.days + offset_end, exclude_end)
-              sum1 = JobSummary.summary(:range => time_range)
-              sum2 = Job.summary(time_range)
+              time_min = base_time + offset_begin
+              time_max = base_time + num_days.days + offset_end
+              sum1 = JobSummary.summary(Job, time_min, time_max)
+              sum2 = Job.summary(time_min, time_max)
               expect(sum1).to eql(sum2)
             end
           end
         end
       end
-      expect(JobSummary.summary(:range => Time.new ... Time.new)).to eql empty_summary
+      #TODO: split into a context.
+      expect(JobSummary.summary(Job, base_time, base_time)).to eql empty_summary
     end
 
-    it "distinguishes between inclusive and exclusive ranges" do
-      Summary = JobSummary
-      sum_inclusive Summary.summary(:range => (base_time .. base_time + 1.days + 2.hours))
-      sum_exclusive = Summary.summary(:range => (base_time ... base_time + 1.days + 2.hours))
-      [:num_jobs, :successful].each do |field|
-        expect(sum_inclusive[field]).to eql(sum_exclusive[field] + 1)
-      end
-    end
-
+    #TODO: refactor?
     def check_time_bounds
-      expect(JobSummary.summary).to eql(Job.summary)
+      expect(JobSummary.summary(Job, nil, nil)).to eql(Job.summary(nil, nil))
       expect(JobSummary.minimum(:date)).to eql(base_time.to_date)
       expect(JobSummary.maximum(:date)).to eql(Time.now.utc.to_date - 1)
     end
@@ -154,31 +139,29 @@ describe Bookie::Database::JobSummary do
     end
 
     it "correctly handles filtered summaries" do
-      filters = {user_name: 'test', command_name: 'vi'}
+      filters = {user_id: 1, command_name: 'vi'}
       filters.each_pair do |filter, value|
         jobs = Job.where(filter => value)
-        sum1 = JobSummary.send(filter => value).summary(jobs: jobs)
-        sum2 = jobs.summary
+        sum1 = JobSummary.where(filter => value).summary(jobs, nil, nil)
+        sum2 = jobs.summary(nil, nil)
         expect(sum1).to eql(sum2)
       end
     end
 
     it "correctly handles inverted ranges" do
       t = base_time
-      expect(JobSummary.summary(:range => t .. t - 1)).to eql empty_summary
+      expect(JobSummary.summary(Job, t,  t - 1)).to eql empty_summary
     end
 
     it "caches summaries" do
       JobSummary.expects(:summarize)
-      range = base_time ... base_time + 1.days
-      JobSummary.summary(:range => range)
+      JobSummary.summary(Job, base_time, base_time + 1.days)
     end
 
     it "uses the cached summaries" do
-      JobSummary.summary
+      JobSummary.summary(Job, nil, nil)
       Job.expects(:summary).never
-      range = base_time ... base_time + 1.days
-      JobSummary.summary(:range => range)
+      JobSummary.summary(Job, base_time, base_time + 1.days)
     end
   end
 

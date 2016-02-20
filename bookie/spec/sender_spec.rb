@@ -85,7 +85,7 @@ describe Bookie::Sender do
     empty_sender = new_dummy_sender(test_config, EmptyDummySender)
     Bookie::Database::Job.any_instance.expects(:'save!').never
     ActiveRecord::Relation.any_instance.expects(:'delete_all').never
-    sender.send_data('dummy')
+    empty_sender.send_data('dummy')
   end
 
   it "correctly finds duplicates" do
@@ -147,7 +147,7 @@ describe Bookie::Sender do
           expect((date_start + 1 .. date_end - 1).cover?(sum.date)).to eql false
         end
       end
-      sums = Bookie::Database::JobSummary.by_date(Date.new(2012))
+      sums = Bookie::Database::JobSummary.where(date: Date.new(2012))
       expect(sums.count).to eql 1
       expect(sums.first.system).to eql sys_dummy
     end

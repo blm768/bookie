@@ -34,8 +34,7 @@ eos
   end
 
   it "correctly formats summaries" do
-    Time.expects(:now).returns(base_time + 40.hours).at_least_once
-    formatter.print_summary(Job, JobSummary, System)
+    formatter.print_summary(FormatterHelpers::JOB_SUMMARY, FormatterHelpers::SYSTEM_CAPACITY_SUMMARY)
     expect(io_mock.buf).to eql <<-eos
 "Number of jobs", "40"
 "Total CPU time", "0 weeks, 0 days, 01:06:40"

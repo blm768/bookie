@@ -27,6 +27,8 @@ Cleanup:
 - Make sure all source files have the required "require"s
 - Replace Mocha with rspec-mocks?
 - Fix memory specification issue
+- Replace <tt> tags in docs with <code>?
+- Remove spreadsheet formatter?
 
 Expansion:
 - Use concurrency control?

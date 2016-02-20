@@ -5,41 +5,27 @@ include Bookie::Database
 describe Bookie::Database::SystemCapacity do
   #TODO: create a common example.
   describe "#by_time_range" do
-    #TODO: handle infinities.
-    context "with inclusive time ranges" do
-      it "correctly filters by time range" do
-        range_counts = {
-          (base_time .. base_time + 20.hours) => 4,
-          (base_time + 1 .. base_time + 20.hours) => 4,
-          (base_time + 21.hours .. base_time + 30.hours) => 3,
-          (base_time .. base_time) => 1
-        }
-        range_counts.each_pair do |range, count|
-          expect(SystemCapacity.by_time_range(range).count).to eql count
-        end
+    #TODO: handle nils.
+
+    it "correctly filters by time range" do
+      range_counts = {
+        (base_time ... base_time + 20.hours + 1) => 4,
+        (base_time + 1 ... base_time + 20.hours) => 2,
+        (base_time + 21.hours ... base_time + 30.hours) => 3,
+        (base_time ... base_time) => 0,
+      }
+      range_counts.each_pair do |range, count|
+        expect(SystemCapacity.by_time_range(range.first, range.last).count).to eql count
       end
     end
 
-    context "with exclusive time ranges" do
-      it "correctly filters by time range" do
-        range_counts = {
-          (base_time ... base_time + 20.hours + 1) => 4,
-          (base_time + 1 ... base_time + 20.hours) => 2,
-          (base_time + 21.hours ... base_time + 30.hours) => 3,
-          (base_time ... base_time) => 0,
-        }
-        range_counts.each_pair do |range, count|
-          expect(SystemCapacity.by_time_range(range).count).to eql count
+
+    context "with empty/inverted ranges" do
+      it "returns an empty summary" do
+        (-1 .. 0).each do |offset|
+          systems = SystemCapacity.by_time_range(base_time, base_time + offset)
+          expect(systems.count).to eql 0
         end
-      end
-    end
-
-    #TODO: split inclusive/exclusive range tests
-
-    it "correctly handles empty/inverted ranges" do
-      (-1 .. 0).each do |offset|
-        systems = SystemCapacity.by_time_range(base_time ... base_time + offset)
-        expect(systems.count).to eql 0
       end
     end
   end
@@ -53,7 +39,6 @@ describe Bookie::Database::SystemCapacity do
     end
 
     let(:summary) { create_summaries(SystemCapacity, base_time) }
-    let(:summary_wide) { SystemCapacity.summary(base_time - 1.hours ... Time.now + 1.hours) }
 
     #All systems should have the same amount of memory.
     let(:memory_per_system) { SystemCapacity.first.memory }
@@ -64,6 +49,7 @@ describe Bookie::Database::SystemCapacity do
     let(:total_memory_time) { total_wall_time * memory_per_system }
 
     context "when systems are active" do
+      #TODO: split into contexts.
       it "produces correct summaries" do
         expect(summary[:all]).to eql({
           :num_systems => 3,
@@ -72,6 +58,7 @@ describe Bookie::Database::SystemCapacity do
           :avail_memory_avg => Float(total_memory_time) / 30.hours,
         })
 
+        #TODO: split into another example/context?
         expect(summary[:all_constrained]).to eql(summary[:all])
 
         #The clipped summary cuts 5 hours off each side.
@@ -85,7 +72,7 @@ describe Bookie::Database::SystemCapacity do
 
         #One extra hour of wall time for each active system
         wide_wall_time = total_wall_time + 3.hours
-        expect(summary_wide).to eql({
+        expect(summary[:wide]).to eql({
           :num_systems => 3,
           :avail_cpu_time => wide_wall_time * cores_per_system,
           :avail_memory_time => memory_per_system * wide_wall_time,
@@ -109,20 +96,22 @@ describe Bookie::Database::SystemCapacity do
           cap.save!
         end
 
-        s1 = SystemCapacity.summary()
+        s1 = SystemCapacity.summary(nil, nil)
         expect(s1).to eql summary[:all]
 
-        s1 = SystemCapacity.summary(base_time ... Time.now + 1.hour)
+        s1 = SystemCapacity.summary(base_time, Time.now + 1.hour)
         s2 = summary[:all].dup
         s2[:avail_memory_avg] = Float(total_memory_time) / 31.hours
         expect(s1).to eql s2
       end
     end
 
-    it "correctly handles inverted ranges" do
-      t = base_time
-      expect(SystemCapacity.summary(t ... t - 1)).to eql summary[:empty]
-      expect(SystemCapacity.summary(t .. t - 1)).to eql summary[:empty]
+    context "with empty/inverted ranges" do
+      it "returns an empty summary" do
+        [0, -1].each do |offset|
+          expect(SystemCapacity.summary(base_time, base_time + offset)).to eql summary[:empty]
+        end
+      end
     end
   end
 

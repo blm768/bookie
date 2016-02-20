@@ -1,5 +1,7 @@
 require 'spec_helper'
+require 'formatter_helper'
 
+#TODO: move into a helper module?
 module Bookie
   module Formatters
     module Mock
@@ -62,13 +64,11 @@ describe Bookie::Formatter do
     end
   end
 
-  #TODO: mock out summary results.
   describe "#print_summary" do
+    #TODO: break into contexts
     it "prints the correct summary fields" do
       with_utc do
-        Time.expects(:now).returns(base_time + 40.hours).at_least_once
-
-        formatter.print_summary(jobs, summaries, capacities)
+        formatter.print_summary(FormatterHelpers::JOB_SUMMARY, FormatterHelpers::SYSTEM_CAPACITY_SUMMARY)
         formatter.flush
         expect(formatter.mock_field_values).to eql [
           40, "0 weeks, 0 days, 01:06:40", "50.0000%",
@@ -76,12 +76,7 @@ describe Bookie::Formatter do
           "1750000 kb", "0.0114%"
         ]
 
-        capacities.expects(:summary).returns(
-          :avail_cpu_time => 0,
-          :avail_memory_time => 0,
-          :avail_memory_avg => 0
-        )
-        formatter.print_summary(jobs, summaries, capacities, base_time ... base_time)
+        formatter.print_summary(FormatterHelpers::JOB_SUMMARY_EMPTY, FormatterHelpers::SYSTEM_CAPACITY_SUMMARY_EMPTY)
         formatter.flush
         expect(formatter.mock_field_values).to eql [
           0, "0 weeks, 0 days, 00:00:00", "0.0000%",

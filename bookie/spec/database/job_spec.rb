@@ -5,14 +5,11 @@ include Bookie::Database
 
 include SummaryHelpers
 
+#TODO: remove?
 RSpec::Matchers.define :be_job_within_time_range do |time_range|
   match do |job|
     expect(time_range).to cover(job.start_time)
-    #This check is required because of a peculiarity of #within_time_range;
-    #jobs with an end_time one second beyond the last value in the range
-    #are still included (intentionally).
-    range_extended = Range.new(time_range.begin, time_range.end + 1, time_range.exclude_end?)
-    expect(range_extended).to cover(job.end_time)
+    expect(time_range).to cover(job.end_time)
   end
 end
 
@@ -36,28 +33,19 @@ describe Bookie::Database::Job do
     let(:base_start) { base_time + 1.hours }
     let(:base_end) { base_start + 2.hours }
 
-    it "filters by inclusive time range" do
-      jobs = Job.by_time_range(base_start ... base_end + 1)
+    it "filters by time range" do
+      jobs = Job.by_time_range(base_start + 1, base_end)
       expect(jobs.count).to eql 3
-      jobs = Job.by_time_range(base_start + 1 ... base_end)
+      jobs = Job.by_time_range(base_start, base_end - 1)
       expect(jobs.count).to eql 2
-      jobs = Job.by_time_range(base_start ... base_start)
-      expect(jobs.length).to eql 0
-    end
-
-    it "filters by exclusive time range" do
-      jobs = Job.by_time_range(base_start + 1 .. base_end)
-      expect(jobs.count).to eql 3
-      jobs = Job.by_time_range(base_start .. base_end - 1)
-      expect(jobs.count).to eql 2
-      jobs = Job.by_time_range(base_start .. base_start)
+      jobs = Job.by_time_range(base_start, base_start)
       expect(jobs.count).to eql 1
     end
 
     context "with an empty range" do
       it "finds no jobs" do
         (-1 .. 0).each do |offset|
-          jobs = Job.by_time_range(base_start ... base_start + offset)
+          jobs = Job.by_time_range(base_start, base_start + offset)
           expect(jobs.count).to eql 0
         end
       end
@@ -68,21 +56,29 @@ describe Bookie::Database::Job do
     let(:base_start) { base_time + 1.hours + 1 }
     let(:base_end) { base_time + 5.hours - 1 }
 
-    it "finds jobs within the range" do
-      [true, false].each do |exclude_end|
-        time_range = Range.new(base_start, base_end, exclude_end)
-        jobs = Job.within_time_range(time_range)
-        expect(jobs.count).to eql (exclude_end ? 2 : 3)
+    #TODO: add these contexts to other tests.
+    context "with open ranges" do
+      it "finds jobs within the range" do
+        expect(Job.within_time_range(nil, nil).count).to eql Job.count
+        expect(Job.within_time_range(base_time + 2.hours, nil).count).to eql Job.count - 2
+        expect(Job.within_time_range(nil, base_time + 2).count).to eql 2
+      end
+    end
+
+    context "with a closed range" do
+      it "finds jobs within the range" do
+        jobs = Job.within_time_range(base_start, base_end)
+        expect(jobs.count).to eql 2
         jobs.each do |job|
-          expect(job).to be_job_within_time_range(time_range)
+          expect(job).to be_job_within_time_range(base_start ... base_end)
         end
       end
     end
 
     context "with an empty range" do
       it "finds no jobs" do
-        jobs = Job.within_time_range(base_start ... base_start)
-        expect(jobs.count).to eql(0)
+        jobs = Job.within_time_range(base_start, base_start)
+        expect(jobs.count).to eql 0
       end
     end
   end
@@ -104,54 +100,46 @@ describe Bookie::Database::Job do
       expect(summary[:wide]).to eql(summary[:all])
 
       expect(summary[:all_filtered]).to eql({
-        :num_jobs => count / 2,
-        :successful => 20,
-        :cpu_time => count * 100 / 2,
-        :memory_time => count * 100 * 1.hour,
+        num_jobs: count / 2,
+        successful: 20,
+        cpu_time: count * 100 / 2,
+        memory_time: count * 100 * 1.hour,
       })
 
       num_clipped_jobs = summary[:clipped][:num_jobs]
       expect(summary[:clipped]).to eql({
-        :num_jobs => 25,
-        :cpu_time => num_clipped_jobs * 100 - 50,
+        num_jobs: 25,
+        cpu_time: num_clipped_jobs * 100 - 50,
         #TODO: this seems off. Why?
-        :memory_time => num_clipped_jobs * 200 * 3600 - 100 * 3600,
-        :successful => num_clipped_jobs / 2 + 1,
+        memory_time: num_clipped_jobs * 200 * 3600 - 100 * 3600,
+        successful: num_clipped_jobs / 2 + 1,
       })
     end
 
     it "correctly handles summaries of empty sets" do
       expect(summary[:empty]).to eql({
-          :num_jobs => 0,
-          :cpu_time => 0,
-          :memory_time => 0,
-          :successful => 0,
+          num_jobs: 0,
+          cpu_time: 0,
+          memory_time: 0,
+          successful: 0,
         })
     end
 
-    it "correctly handles inverted ranges" do
-      expect(Job.summary(Time.now() ... Time.now() - 1)).to eql summary[:empty]
-      expect(Job.summary(Time.now() .. Time.now() - 1)).to eql summary[:empty]
-    end
-
-    it "distinguishes between inclusive and exclusive ranges" do
-      sum = Job.summary(base_time ... base_time + 3600)
-      expect(sum[:num_jobs]).to eql 1
-      sum = Job.summary(base_time .. base_time + 3600)
-      expect(sum[:num_jobs]).to eql 2
+    context "with empty/inverted ranges" do
+      it "returns an empty summary" do
+        [0, -1].each do |offset|
+          expect(Job.summary(base_time, base_time + offset)).to eql summary[:empty]
+        end
+      end
     end
   end
 
   it "validates fields" do
     fields = {
-      :user => User.first,
-      :system => System.first,
-      :command_name => '',
-      :cpu_time => 100,
-      :start_time => base_time,
-      :wall_time => 1000,
-      :memory => 10000,
-      :exit_code => 0
+      user: User.first, system: System.first,
+      command_name: '', exit_code: 0,
+      cpu_time: 100, memory: 10000,
+      start_time: base_time, wall_time: 1000
     }
 
     job = Job.new(fields)

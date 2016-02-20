@@ -15,39 +15,34 @@ module Bookie
       validates :start_time, presence: true
 
       #TODO: validate that this time range does not cover any other capacity's range for this system.
+      #TODO: validate that only one entry per system is "current".
       validates_each :end_time do |record, attr, value|
         record.errors.add(attr, 'must be at or after start time') if value && value < record.start_time
       end
 
       #TODO: doc and unit test.
       #TODO: remove?
-      #TODO: make these methods into scopes?
       def self.current
         self.where(end_time: nil)
       end
 
       ##
       #Finds all SystemCapacity records overlapping the given time range
-      def self.by_time_range(time_range)
-        capacities = self
-        if time_range.empty? then
-          return capacities.none
-        end
+      #
+      #time_min and/or time_max may be nil, which represents infinity.
+      def self.by_time_range(time_min, time_max)
+        return self.none if time_min && time_max && time_max <= time_min
 
-        #TODO: use #finite?
-        if time_range.first != -Float::INFINITY then
-          #TODO: remove some raw SQL when Rails 5 introduces an "or" on relations?
+        capacities = self
+
+        if time_min then
           capacities = capacities.where(
             '? < system_capacities.end_time OR system_capacities.end_time IS NULL',
-            time_range.first
+            time_min
           )
         end
-        if time_range.last != Float::INFINITY then
-          if time_range.exclude_end? then
-            capacities = capacities.where('? > system_capacities.start_time', time_range.last)
-          else
-            capacities = capacities.where('? >= system_capacities.start_time', time_range.last)
-          end
+        if time_max then
+          capacities = capacities.where('? > system_capacities.start_time', time_max)
         end
 
         capacities
@@ -62,8 +57,9 @@ module Bookie
       #- [<tt>:avail_memory_time</tt>] the total amount of memory-time available (in kilobyte-seconds)
       #- [<tt>:avail_memory_avg</tt>] the average amount of memory available (in kilobytes)
       #
-      #To consider: include the start/end times for the summary (especially if they aren't provided as arguments)?
-      def self.summary(time_range = nil)
+      #TODO: include the start/end times for the summary (especially if they aren't provided as arguments)?
+      #TODO: use those in combined summary stuff.
+      def self.summary(time_min, time_max)
         current_time = Time.now
 
         system_ids = Set.new
@@ -72,27 +68,15 @@ module Bookie
 
         #Find all the SystemCapacities within the time range.
         capacities = self
-        if time_range
-          time_range = time_range.exclusive.normalized
-          capacities = capacities.by_time_range(time_range)
-        end
+        capacities = capacities.by_time_range(time_min, time_max)
 
         capacities.find_each do |capacity|
           start_time = capacity.start_time
-          end_time = capacity.end_time
-          #Is there a time range constraint?
-          if time_range
-            #If so, trim start_time and end_time to fit within the range.
-            start_time = [start_time, time_range.first].max
-            if end_time
-              end_time = [end_time, time_range.last].min
-            else
-              end_time ||= time_range.last
-            end
-          else
-            #No time range constraint.
-            end_time ||= current_time
-          end
+          end_time = capacity.end_time || current_time
+          #Trim start_time and end_time to fit within the range.
+          start_time = [start_time, time_min].max if time_min
+          end_time = [end_time, time_max].min if time_max
+
           wall_time = end_time.to_i - start_time.to_i
 
           system_ids.add(capacity.system_id)
@@ -100,23 +84,22 @@ module Bookie
           avail_memory_time += capacity.memory * wall_time
         end
 
-        #TODO: move some of this logic up so it's clearer?
-        #Maybe use infinities in the Range?
-        time_span = 0
-        if time_range
-          time_span = time_range.last - time_range.first
-        else
-          time_min = self.minimum(:start_time)
-          #Is there actually a minimum start time?
-          #(In other words, are there any system capacity entries in the database?)
-          if time_min
-            if self.current.any?
-              time_max = current_time
-            else
-              time_max = self.maximum(:end_time)
-            end
-            time_span = time_max - time_min
+        #If time_min or time_max wasn't provided, find a reasonable value.
+        #TODO: re-think this logic?
+        time_min ||= self.minimum(:start_time)
+        unless time_max
+          if self.current.any?
+            time_max = current_time
+          else
+            time_max = self.maximum(:end_time)
           end
+        end
+
+        time_span = 0
+        #Is there actually a minimum start time?
+        #(In other words, are there any system capacity entries in the database?)
+        if time_min
+          time_span = time_max - time_min
         end
 
         #TODO: replace avail_memory_avg with time_span and/or a time range?

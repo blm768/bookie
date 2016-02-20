@@ -26,8 +26,8 @@ module Bookie
         jobs = Job
         unscoped = self.unscoped
         time_min = date.to_utc_time
-        time_range = time_min ... time_min + 1.days
-        day_jobs = jobs.by_time_range(time_range)
+        time_max = time_min + 1.days
+        day_jobs = jobs.by_time_range(time_min, time_max)
 
         #Find the unique combinations of values for some of the jobs' attributes.
         value_sets = day_jobs.uniq.pluck(:user_id, :system_id, :command_name)
@@ -36,14 +36,14 @@ module Bookie
           user = User.select(:id).first
           system = System.select(:id).first
           #If there are no users or no systems, we can't create the dummy summary, so just return.
-          #To consider: figure out how to create the dummy summary anyway?
           return unless user && system
           #Create a dummy summary so summary() doesn't keep trying to create one.
+          #TODO: figure out where this method comes from...
           sum = unscoped.find_or_initialize_by(
-            :date => date,
-            :user_id => user.id,
-            :system_id => system.id,
-            :command_name => ''
+            date: date,
+            user_id: user.id,
+            system_id: system.id,
+            command_name: ''
           )
           sum.cpu_time = 0
           sum.memory_time = 0
@@ -51,16 +51,16 @@ module Bookie
         else
           value_sets.each do |set|
             summary_jobs = jobs.where(
-              :user_id => set[0],
-              :system_id => set[1],
-              :command_name => set[2]
+              user_id: set[0],
+              system_id: set[1],
+              command_name: set[2]
             )
-            summary = summary_jobs.summary(time_range)
+            summary = summary_jobs.summary(time_min, time_max)
             sum = unscoped.find_or_initialize_by(
-              :date => date,
-              :user_id => set[0],
-              :system_id => set[1],
-              :command_name => set[2]
+              date: date,
+              user_id: set[0],
+              system_id: set[1],
+              command_name: set[2]
             )
             sum.cpu_time = summary[:cpu_time]
             sum.memory_time = summary[:memory_time]
@@ -72,71 +72,61 @@ module Bookie
       ##
       #Returns a summary of jobs in the database
       #
-      #The following options are supported:
-      #- [<tt>:range</tt>] restricts the summary to a specific time interval (specified as a Range of Time objects)
-      #- [<tt>:jobs</tt>] the jobs on which the summary should operate
-      #
       #When filtering, the same filters must be applied to both the Jobs and the JobSummaries. For example:
       # jobs = Bookie::Database::Job.merge(Bookie::Database::User.where(name: 'root'))
       # jobs = Bookie::Database::JobSummary.merge(Bookie::Database::User.where(name: 'root'))
-      # puts summaries.summary(:jobs => jobs)
+      # puts summaries.summary(jobs, nil, nil)
       #
       # TODO: unit-test that summaries are created on UTC date boundaries?
-      def self.summary(opts = {})
-        jobs = opts[:jobs] || Job
-        time_range = opts[:range]
+      # TODO: doc better?
+      def self.summary(jobs, time_min, time_max)
+        time_min ||= jobs.minimum(:start_time)
+        time_max ||= jobs.maximum(:end_time)
 
-        unless time_range
-          start_time = jobs.minimum(:start_time)
-          end_time = jobs.maximum(:end_time)
-          if start_time && end_time
-            time_range = start_time .. end_time
-          else
-            time_range = Time.at(0) ... Time.at(0)
-          end
+        #Are there actually any jobs?
+        unless time_min && time_max
+          time_min = time_max = Time.at(0)
         end
 
-        time_range = time_range.normalized
-
-        date_begin = time_range.begin.utc.to_date
-        rounded_date_begin = false
-        #Round date_begin up.
-        if date_begin.to_utc_time < time_range.begin
-          date_begin += 1
-          rounded_date_begin = true
+        date_min = time_min.utc.to_date
+        rounded_date_min = false
+        #Round date_min up.
+        if date_min.to_utc_time < time_min
+          date_min += 1
+          rounded_date_min = true
         end
-        date_end = time_range.end.utc.to_date
+        date_max = time_max.utc.to_date
 
         #Is the interval large enough to cover any cached summaries?
-        if date_begin >= date_end
+        unless date_min < date_max
           #Nope; just return a regular summary.
-          return jobs.summary(time_range)
+          return jobs.summary(time_min, time_max)
         end
 
-        jobs_in_range = jobs.by_time_range(time_range)
+        jobs_in_range = jobs.by_time_range(time_min, time_max)
+        #TODO: avoid these queries somehow?
         num_jobs = jobs_in_range.count
         successful = jobs_in_range.where(exit_code: 0).count
         cpu_time = 0
         memory_time = 0
 
-        #To consider: check if num_jobs is zero so we can skip all this?
-        if rounded_date_begin
+        #TODO: check if num_jobs is zero so we can skip all this?
+        if rounded_date_min
           #We need to get a summary for the chunk up to the first whole day.
-          summary = jobs.summary(time_range.begin ... date_begin.to_utc_time)
+          summary = jobs.summary(time_min, date_min.to_utc_time)
           cpu_time += summary[:cpu_time]
           memory_time += summary[:memory_time]
         end
 
-        date_end_time = date_end.to_utc_time
-        if time_range.cover?(date_end_time)
+        date_max_time = date_max.to_utc_time
+        if date_max_time < time_max
           #We need to get a summary for the chunk after the last whole day.
-          range = Range.new(date_end_time, time_range.end, time_range.exclude_end?)
-          summary = jobs.summary(range)
+          summary = jobs.summary(date_max_time, time_max)
           cpu_time += summary[:cpu_time]
           memory_time += summary[:memory_time]
         end
 
-        date_range = date_begin ... date_end
+        date_range = date_min ... date_max
 
         #Now we can process the cached summaries.
         unscoped = self.unscoped
@@ -166,10 +156,10 @@ module Bookie
         end
 
         {
-          :num_jobs => num_jobs,
-          :successful => successful,
-          :cpu_time => cpu_time,
-          :memory_time => memory_time,
+          num_jobs: num_jobs,
+          successful: successful,
+          cpu_time: cpu_time,
+          memory_time: memory_time,
         }
       end
 
