@@ -39,7 +39,7 @@ module SenderHelpers
       NUM_JOBS.times do |i|
         #TODO: add some variety...
         yield JobStub.from_hash(command_name: 'vi', user_id: 2, start_time: Helpers::BASE_TIME + i.minutes,
-            exit_code: 0, cpu_time: 63, memory: 139776, wall_time: 67)
+           cpu_time: 63,  wall_time: 67, memory: 139776, exit_code: 0)
       end
     end
 

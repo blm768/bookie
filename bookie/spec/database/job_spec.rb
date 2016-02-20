@@ -30,16 +30,16 @@ describe Bookie::Database::Job do
   end
 
   describe "#by_time_range" do
-    let(:base_start) { base_time + 1.hours }
-    let(:base_end) { base_start + 2.hours }
+    let(:base_start) { base_time + 1.hours + 1 }
+    let(:base_end) { base_time + 5.hours - 1 }
 
-    it "filters by time range" do
-      jobs = Job.by_time_range(base_start + 1, base_end)
-      expect(jobs.count).to eql 3
-      jobs = Job.by_time_range(base_start, base_end - 1)
-      expect(jobs.count).to eql 2
-      jobs = Job.by_time_range(base_start, base_start)
-      expect(jobs.count).to eql 1
+    context "with a closed range" do
+      it "filters by time range" do
+        jobs = Job.by_time_range(base_start + 2.hours, base_end)
+        expect(jobs.count).to eql 2
+        jobs = Job.by_time_range(base_start + 1, base_end)
+        expect(jobs.count).to eql 4
+      end
     end
 
     context "with an empty range" do
@@ -60,8 +60,8 @@ describe Bookie::Database::Job do
     context "with open ranges" do
       it "finds jobs within the range" do
         expect(Job.within_time_range(nil, nil).count).to eql Job.count
-        expect(Job.within_time_range(base_time + 2.hours, nil).count).to eql Job.count - 2
-        expect(Job.within_time_range(nil, base_time + 2).count).to eql 2
+        expect(Job.within_time_range(base_start, nil).count).to eql Job.count - 1
+        expect(Job.within_time_range(nil, base_end).count).to eql 4
       end
     end
 

@@ -122,13 +122,13 @@ module Bookie
     #Finds the first job that is a duplicate of the provided job
     def duplicate(job)
       system.jobs.where({
-          :start_time => job.start_time,
-          :wall_time => job.wall_time,
-          :command_name => job.command_name,
-          :user_id => job.user_id,
-          :cpu_time => job.cpu_time,
-          :memory => job.memory,
-          :exit_code => job.exit_code
+          command_name: job.command_name,
+          user_id: job.user_id,
+          start_time: job.start_time,
+          wall_time: job.wall_time,
+          cpu_time: job.cpu_time,
+          memory: job.memory,
+          exit_code: job.exit_code
         }).first
     end
 

@@ -36,10 +36,11 @@ module Bookie
 
         jobs = self
         if time_min then
-          jobs = jobs.where('jobs.end_time > ?', time_max)
+          #TODO: how to handle zero-wall-time jobs at the beginning of the range?
+          jobs = jobs.where('jobs.end_time > ?', time_min)
         end
         if time_max then
-          jobs = jobs.where('jobs.start_time <= ?', time_min)
+          jobs = jobs.where('jobs.start_time < ?', time_max)
         end
 
         jobs

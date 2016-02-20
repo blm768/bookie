@@ -29,6 +29,7 @@ Cleanup:
 - Fix memory specification issue
 - Replace <tt> tags in docs with <code>?
 - Remove spreadsheet formatter?
+- Rename "snapshot" directory?
 
 Expansion:
 - Use concurrency control?

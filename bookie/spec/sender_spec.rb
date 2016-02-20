@@ -54,59 +54,65 @@ describe Bookie::Sender do
     new_dummy_sender(test_config)
   end
 
-
-  it "correctly filters jobs" do
-    job = JobStub.new
-    job.user_name = "root"
-    expect(sender.filtered?(job)).to eql true
-    job.user_name = "test"
-    expect(sender.filtered?(job)).to eql false
-  end
-
-  it "correctly sends jobs" do
-    config = test_config.clone
-    config.excluded_users = Set.new
-    sender.send_data('dummy')
-    jobs = Job.includes(:system)
-    jobs.each do |job|
-      expect(job.system.name).to eql config.hostname
+  describe "#filtered?" do
+    it "correctly filters jobs" do
+      job = JobStub.new
+      job.user_name = "root"
+      expect(sender.filtered?(job)).to eql true
+      job.user_name = "test"
+      expect(sender.filtered?(job)).to eql false
     end
-    expect(jobs.length).to eql DummySender::NUM_JOBS
   end
 
-  it "refuses to send jobs when jobs already have been sent from a file" do
-    sender.send_data('dummy')
-    expect {
+  describe "#send" do
+    #TODO: check for the #filtered? check?
+    it "correctly sends jobs" do
+      config = test_config.clone
+      config.excluded_users = Set.new
       sender.send_data('dummy')
-    }.to raise_error("Jobs already exist in the database for 'dummy'.")
-  end
-
-  it "correctly handles empty files" do
-    empty_sender = new_dummy_sender(test_config, EmptyDummySender)
-    Bookie::Database::Job.any_instance.expects(:'save!').never
-    ActiveRecord::Relation.any_instance.expects(:'delete_all').never
-    empty_sender.send_data('dummy')
-  end
-
-  it "correctly finds duplicates" do
-    sender.send_data('snapshot/torque')
-    job = Bookie::Database::Job.first
-    stub = JobStub.from_job(job)
-    #The job's system should be sys_2.
-    #Just to make sure this test doesn't break later, I'll check it.
-    #TODO: restore?
-    #expect(expect(job.system).to eql sys_2
-    #expect(sender.duplicate(stub, sys_1)).to eql nil
-    expect(sender.duplicate(stub)).to eql job
-    [:user_name, :command_name, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
-      old_val = stub.send(field)
-      if old_val.is_a?(String)
-        stub.send("#{field}=", 'string')
-      else
-        stub.send("#{field}=", old_val + 1)
+      jobs = Job.includes(:system)
+      jobs.each do |job|
+        expect(job.system.name).to eql config.hostname
       end
+      expect(jobs.length).to eql DummySender::NUM_JOBS
+    end
+
+    it "refuses to send jobs when jobs already have been sent from a file" do
+      sender.send_data('dummy')
+      expect {
+        sender.send_data('dummy')
+      }.to raise_error("Jobs already exist in the database for 'dummy'.")
+    end
+
+    it "correctly handles empty files" do
+      empty_sender = new_dummy_sender(test_config, EmptyDummySender)
+      Bookie::Database::Job.any_instance.expects(:'save!').never
+      ActiveRecord::Relation.any_instance.expects(:'delete_all').never
+      empty_sender.send_data('dummy')
+    end
+  end
+
+  describe "#duplicate" do
+    #TODO: split up?
+    it "correctly finds duplicates" do
+      sender.send_data('dummy')
+      job = Bookie::Database::Job.first
+      stub = JobStub.from_job(job)
+      expect(sender.duplicate(stub)).to eql job
+
+      stub_changed = stub.dup
+      stub_changed.command_name = 'string'
+      expect(sender.duplicate(stub_changed)).to eql nil
+
+      [:user_id, :start_time, :wall_time, :cpu_time, :memory, :exit_code].each do |field|
+        stub_changed = stub.dup
+        stub_changed.send("#{field}=", stub.send(field) + 1)
+        expect(sender.duplicate(stub_changed)).to eql nil
+      end
+
+      #A sender for another system won't detect a duplicate for this one.
+      sender.stubs(:system).returns(Bookie::Database::System.find(2))
       expect(sender.duplicate(stub)).to eql nil
-      stub.send("#{field}=", old_val)
     end
   end
 
@@ -163,7 +169,7 @@ describe Bookie::Sender do
       expect(Bookie::Database::Job.count).to eql 1
       job = Bookie::Database::Job.first
       Bookie::Database::Job.delete_all
-      sender.send_data('snapshot/torque')
+      sender.send_data('dummy')
       job2 = Bookie::Database::Job.first
       job2.id = job.id
       expect(job2).to eql job

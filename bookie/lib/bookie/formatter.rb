@@ -11,7 +11,7 @@ module Bookie
     #Creates a new Formatter object
     #
     #<tt>type</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
-    #TODO: just take the formatter module directly?
+    #TODO: just subclass Formatter and be done with it.
     #
     #===Examples
     #  #Uses the spreadsheet formatter from 'bookie/formatters/spreadsheet'
