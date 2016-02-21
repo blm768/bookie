@@ -31,7 +31,9 @@ module Helpers
   end
 
   #Create test database
+  #TODO: move to a different helper file?
   def self.generate_database
+    #TODO: move "magic constants" out of here?
     users = []
     user_names = ['root', 'test', 'test2', 'blm']
     user_names.each_with_index do |name, i|

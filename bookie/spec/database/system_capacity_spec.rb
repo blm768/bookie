@@ -38,7 +38,7 @@ describe Bookie::Database::SystemCapacity do
       Time.expects(:now).returns(base_time + 30.hours).at_least_once
     end
 
-    let(:summary) { create_summaries(SystemCapacity, base_time) }
+    let(:summary) { create_summaries(SystemCapacity) }
 
     #All systems should have the same amount of memory.
     let(:memory_per_system) { SystemCapacity.first.memory }
@@ -61,22 +61,20 @@ describe Bookie::Database::SystemCapacity do
         #TODO: split into another example/context?
         expect(summary[:all_constrained]).to eql(summary[:all])
 
-        #The clipped summary cuts 5 hours off each side.
-        clipped_wall_time = (5 + 10 + 15).hours
+        clipped_wall_time = total_wall_time - 4 * SummaryHelpers::CLIP_MARGIN
         expect(summary[:clipped]).to eql({
-          :num_systems => 3,
-          :avail_cpu_time => clipped_wall_time * cores_per_system,
-          :avail_memory_time => clipped_wall_time * memory_per_system,
-          :avail_memory_avg => Float(clipped_wall_time * memory_per_system) / (20.hours),
+          num_systems: 3,
+          avail_cpu_time: clipped_wall_time * cores_per_system,
+          avail_memory_time: clipped_wall_time * memory_per_system,
+          avail_memory_avg: Float(memory_per_system * clipped_wall_time) / SummaryHelpers::CLIPPED_TIME_INTERVAL
         })
 
-        #One extra hour of wall time for each active system
-        wide_wall_time = total_wall_time + 3.hours
+        wide_wall_time = total_wall_time + 3 * SummaryHelpers::WIDE_MARGIN
         expect(summary[:wide]).to eql({
           :num_systems => 3,
-          :avail_cpu_time => wide_wall_time * cores_per_system,
+          :avail_cpu_time => cores_per_system * wide_wall_time,
           :avail_memory_time => memory_per_system * wide_wall_time,
-          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / 32.hours,
+          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / SummaryHelpers::WIDE_TIME_INTERVAL
         })
 
         expect(summary[:empty]).to eql({

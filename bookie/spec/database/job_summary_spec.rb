@@ -7,7 +7,7 @@ include Bookie::Database
 describe Bookie::Database::JobSummary do
   #TODO: only do this for the finder methods.
   before(:all) do
-    d = Date.new(2012)
+    d = Helpers::BASE_TIME.to_date
     User.find_each do |user|
       System.find_each do |system|
         ['vi', 'emacs'].each do |command_name|
@@ -109,13 +109,12 @@ describe Bookie::Database::JobSummary do
     def check_time_bounds
       expect(JobSummary.summary(Job, nil, nil)).to eql(Job.summary(nil, nil))
       expect(JobSummary.minimum(:date)).to eql(base_time.to_date)
-      expect(JobSummary.maximum(:date)).to eql(Time.now.utc.to_date - 1)
+      expect(JobSummary.maximum(:date)).to eql(Job.maximum(:end_time).to_date)
     end
 
     it "correctly finds the default time bounds" do
-      Time.expects(:now).at_least(0).returns(base_time + 2.days)
       job = Job.order('end_time DESC').first
-      job.end_time = Time.now
+      job.end_time = base_time + 2.days + 1
       job.save!
       check_time_bounds
       JobSummary.delete_all

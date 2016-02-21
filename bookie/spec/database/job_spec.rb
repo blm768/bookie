@@ -60,7 +60,6 @@ describe Bookie::Database::Job do
     context "with a closed range" do
       it "finds jobs within the range" do
         jobs = Job.within_time_range(base_start, base_end)
-        puts Job.within_time_range(base_time, base_time + 30.hours).to_sql
         expect(jobs.count).to eql 2
         jobs.each do |job|
           [job.start_time, job.end_time].each do |time|
@@ -80,16 +79,23 @@ describe Bookie::Database::Job do
 
   describe "#summary" do
     let(:count) { Job.count }
-    let(:summary) { create_summaries(Job, base_time) }
+    let(:summary) { create_summaries(Job) }
     let(:summary_filtered) { Job.where(command_name: 'vi').summary(base_time, base_time + 30.hours) }
 
+    #All jobs in the testing database should have the same amount of wall time, CPU time, and memory usage.
+    let(:wall_time_per_job) { Job.first.wall_time }
+    let(:cpu_time_per_job) { Job.first.cpu_time }
+    let(:memory_per_job) { Job.first.memory }
+    let(:memory_time_per_job) { memory_per_job * wall_time_per_job }
+
     #TODO: test the case where a job extends on both sides of the summary range?
+    #TODO: break into contexts.
     it "produces correct summary totals" do
       expect(summary[:all]).to eql({
-        :num_jobs => count,
-        :successful => 20,
-        :cpu_time => count * 100,
-        :memory_time => count * 200 * 1.hour,
+        num_jobs: count,
+        successful: 20,
+        cpu_time: count * cpu_time_per_job,
+        memory_time: count * memory_time_per_job
       })
 
       expect(summary[:all_constrained]).to eql(summary[:all])
@@ -98,25 +104,24 @@ describe Bookie::Database::Job do
       expect(summary_filtered).to eql({
         num_jobs: count / 2,
         successful: 20,
-        cpu_time: count * 100 / 2,
-        memory_time: count * 100 * 1.hour,
+        cpu_time: count * cpu_time_per_job / 2,
+        memory_time: count / 2 * memory_time_per_job
       })
 
+      #1 + 1/2 jobs are clipped from the beginning; 2 + 2/2 are clipped from the end.
       expect(summary[:clipped]).to eql({
-        num_jobs: 40,
-        cpu_time: 39 * 100,
-        memory_time: 39 * 200 * 1.hour,
-        successful: 40 / 2,
+        num_jobs: count - 3,
+        successful: Job.where(exit_code: 0).count - 1,
+        cpu_time: (count - 4) * cpu_time_per_job - cpu_time_per_job / 2,
+        memory_time: (count - 4) * memory_time_per_job - memory_time_per_job / 2
       })
     end
 
-    it "correctly handles summaries of empty sets" do
-      expect(summary[:empty]).to eql({
-          num_jobs: 0,
-          cpu_time: 0,
-          memory_time: 0,
-          successful: 0,
-        })
+    context "with an empty time range" do
+      it { expect(summary[:empty]).to eql({
+          num_jobs: 0, successful: 0,
+          cpu_time: 0, memory_time: 0
+        }) }
     end
 
     context "with empty/inverted ranges" do
