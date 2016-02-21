@@ -5,14 +5,6 @@ include Bookie::Database
 
 include SummaryHelpers
 
-#TODO: remove?
-RSpec::Matchers.define :be_job_within_time_range do |time_range|
-  match do |job|
-    expect(time_range).to cover(job.start_time)
-    expect(time_range).to cover(job.end_time)
-  end
-end
-
 describe Bookie::Database::Job do
   describe "#end_time" do
     it "correctly calculates end time" do
@@ -60,7 +52,7 @@ describe Bookie::Database::Job do
     context "with open ranges" do
       it "finds jobs within the range" do
         expect(Job.within_time_range(nil, nil).count).to eql Job.count
-        expect(Job.within_time_range(base_start, nil).count).to eql Job.count - 1
+        expect(Job.within_time_range(base_start, nil).count).to eql Job.count - 2
         expect(Job.within_time_range(nil, base_end).count).to eql 4
       end
     end
@@ -68,9 +60,12 @@ describe Bookie::Database::Job do
     context "with a closed range" do
       it "finds jobs within the range" do
         jobs = Job.within_time_range(base_start, base_end)
+        puts Job.within_time_range(base_time, base_time + 30.hours).to_sql
         expect(jobs.count).to eql 2
         jobs.each do |job|
-          expect(job).to be_job_within_time_range(base_start ... base_end)
+          [job.start_time, job.end_time].each do |time|
+            expect(base_start ... base_end).to cover(job.start_time)
+          end
         end
       end
     end
@@ -86,6 +81,7 @@ describe Bookie::Database::Job do
   describe "#summary" do
     let(:count) { Job.count }
     let(:summary) { create_summaries(Job, base_time) }
+    let(:summary_filtered) { Job.where(command_name: 'vi').summary(base_time, base_time + 30.hours) }
 
     #TODO: test the case where a job extends on both sides of the summary range?
     it "produces correct summary totals" do
@@ -99,20 +95,18 @@ describe Bookie::Database::Job do
       expect(summary[:all_constrained]).to eql(summary[:all])
       expect(summary[:wide]).to eql(summary[:all])
 
-      expect(summary[:all_filtered]).to eql({
+      expect(summary_filtered).to eql({
         num_jobs: count / 2,
         successful: 20,
         cpu_time: count * 100 / 2,
         memory_time: count * 100 * 1.hour,
       })
 
-      num_clipped_jobs = summary[:clipped][:num_jobs]
       expect(summary[:clipped]).to eql({
-        num_jobs: 25,
-        cpu_time: num_clipped_jobs * 100 - 50,
-        #TODO: this seems off. Why?
-        memory_time: num_clipped_jobs * 200 * 3600 - 100 * 3600,
-        successful: num_clipped_jobs / 2 + 1,
+        num_jobs: 40,
+        cpu_time: 39 * 100,
+        memory_time: 39 * 200 * 1.hour,
+        successful: 40 / 2,
       })
     end
 

@@ -105,6 +105,7 @@ module Bookie
 
         jobs_in_range = jobs.by_time_range(time_min, time_max)
         #TODO: avoid these queries somehow?
+        #(Add num_jobs_started and num_jobs_ended fields?)
         num_jobs = jobs_in_range.count
         successful = jobs_in_range.where(exit_code: 0).count
         cpu_time = 0

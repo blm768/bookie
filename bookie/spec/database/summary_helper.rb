@@ -7,7 +7,7 @@ module SummaryHelpers
       :all => obj.summary(nil, nil),
       :all_constrained => obj.summary(base_start, base_end),
       :wide => obj.summary(base_start - 1.hours, base_end + 1.hours),
-      :clipped => obj.summary(base_start + 5.hours, base_start + 25.hours),
+      :clipped => obj.summary(base_start + 30.minutes, base_end - 30.minutes),
       :empty => obj.summary(base_start, base_start),
     }
 
