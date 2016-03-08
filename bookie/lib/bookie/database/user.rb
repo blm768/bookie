@@ -1,8 +1,5 @@
 require 'active_record'
 
-require 'bookie/database/lock.rb'
-require 'bookie/database/group.rb'
-
 module Bookie::Database
   ##
   #Model for a user

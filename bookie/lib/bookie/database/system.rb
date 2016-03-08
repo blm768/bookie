@@ -1,6 +1,5 @@
 require 'active_record'
 
-require 'bookie/database/lock.rb'
 require 'bookie/database/system_type.rb'
 
 module Bookie::Database
