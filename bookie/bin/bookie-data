@@ -18,7 +18,7 @@ system_type_filter = nil
 
 #Printing options
 include_details = false
-details_per_page = nil
+details_per_page = DEFAULT_DETAILS_PER_PAGE
 details_page = 1
 
 output_type = :stdout
@@ -43,7 +43,6 @@ opts = OptionParser.new do |opts|
       exit 1
     end
     include_details = true
-    details_per_page ||= DEFAULT_DETAILS_PER_PAGE
     details_page = page_num
   end
 
