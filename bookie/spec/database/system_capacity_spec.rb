@@ -43,7 +43,7 @@ describe Bookie::Database::SystemCapacity do
     #The first system was up for 10 hours, down for 10, and up again. The others were not decommissioned.
     let(:constrained_wall_time) { (10 + 10 + 30).hours }
     let(:wide_wall_time) { constrained_wall_time + 3 * SummaryHelpers::WIDE_MARGIN }
-    let(:constrained_memory_time) { total_wall_time * memory_per_system }
+    let(:constrained_memory_time) { constrained_wall_time * memory_per_system }
     let(:wide_memory_time) { wide_wall_time * memory_per_system }
 
 
@@ -54,13 +54,18 @@ describe Bookie::Database::SystemCapacity do
           num_systems: 3,
           avail_cpu_time: wide_wall_time * cores_per_system,
           avail_memory_time: wide_wall_time * memory_per_system,
-          avail_memory_avg: Float(wide_memory_time) / 30.hours,
+          avail_memory_avg: Float(wide_memory_time) / 31.hours,
         })
 
         #TODO: split into another example/context?
-        expect(summary[:all_constrained]).to eql(summary[:all])
+        expect(summary[:all_constrained]).to eql(
+          num_systems: 3,
+          avail_cpu_time: constrained_wall_time * cores_per_system,
+          avail_memory_time: constrained_wall_time * memory_per_system,
+          avail_memory_avg: Float(constrained_memory_time) / SummaryHelpers::BASE_INTERVAL
+        )
 
-        clipped_wall_time = total_wall_time - 4 * SummaryHelpers::CLIP_MARGIN
+        clipped_wall_time = constrained_wall_time - 4 * SummaryHelpers::CLIP_MARGIN
         expect(summary[:clipped]).to eql({
           num_systems: 3,
           avail_cpu_time: clipped_wall_time * cores_per_system,
@@ -68,7 +73,6 @@ describe Bookie::Database::SystemCapacity do
           avail_memory_avg: Float(memory_per_system * clipped_wall_time) / SummaryHelpers::CLIPPED_TIME_INTERVAL
         })
 
-        wide_wall_time = total_wall_time + 3 * SummaryHelpers::WIDE_MARGIN
         expect(summary[:wide]).to eql({
           num_systems: 3,
           avail_cpu_time: cores_per_system * wide_wall_time,
