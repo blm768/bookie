@@ -84,11 +84,18 @@ module Bookie::Database
       #Any jobs that are completely within the time range can
       #be summarized as-is.
       jobs_within = jobs.within_time_range(time_min, time_max)
-      #TODO: optimize into one query? (using pluck() with an SQL fragment?)
-      num_jobs += jobs_within.count
+      fields_within = jobs_within.select(
+        'COUNT(*) as num_jobs,
+        SUM(jobs.cpu_time) as cpu_time,
+        SUM(jobs.memory * jobs.wall_time) as memory_time'
+      ).first
+      #Did we actually pick up any jobs?
+      if fields_within && fields_within.num_jobs > 0 then
+        num_jobs += fields_within.num_jobs
+        cpu_time += fields_within.cpu_time
+        memory_time += fields_within.memory_time
+      end
       successful += jobs_within.where(:exit_code => 0).count
-      cpu_time += jobs_within.sum(:cpu_time)
-      memory_time += jobs_within.sum('jobs.memory * jobs.wall_time')
 
       #Any jobs that overlap an one or both edges of the time range
       #must be clipped.

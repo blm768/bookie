@@ -91,13 +91,11 @@ describe Bookie::Database::JobSummary do
       1.upto(3) do |num_days|
         offsets.each do |offset_begin|
           offsets.each do |offset_end|
-            [true, false].each do |exclude_end|
-              time_min = base_time + offset_begin
-              time_max = base_time + num_days.days + offset_end
-              sum1 = JobSummary.summary(Job, time_min, time_max)
-              sum2 = Job.summary(time_min, time_max)
-              expect(sum1).to eql(sum2)
-            end
+            time_min = base_time + offset_begin
+            time_max = base_time + num_days.days + offset_end
+            sum1 = JobSummary.summary(Job, time_min, time_max)
+            sum2 = Job.summary(time_min, time_max)
+            expect(sum1).to eql(sum2)
           end
         end
       end
