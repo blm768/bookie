@@ -107,19 +107,19 @@ describe Bookie::Database::JobSummary do
     def check_time_bounds
       expect(JobSummary.summary(Job, nil, nil)).to eql(Job.summary(nil, nil))
       expect(JobSummary.minimum(:date)).to eql(base_time.to_date)
-      expect(JobSummary.maximum(:date)).to eql(Job.maximum(:end_time).to_date)
+      expect(JobSummary.maximum(:date)).to eql(Job.maximum(:end_time).to_date - 1)
     end
 
     it "correctly finds the default time bounds" do
       job = Job.order('end_time DESC').first
-      job.end_time = base_time + 2.days + 1
+      job.end_time = base_time + 3.days + 1
       job.save!
       check_time_bounds
       JobSummary.delete_all
 
       #Check the case where all systems are decommissioned.
       #TODO: split into a context?
-      JobSummary.transaction(:requires_new => true) do
+      JobSummary.transaction(requires_new: true) do
         System.active.each do |sys|
           sys.decommission!(base_time + 2.days)
         end
@@ -130,7 +130,7 @@ describe Bookie::Database::JobSummary do
       #Check the case where there are no jobs.
       #TODO: split into a context?
       Job.delete_all
-      sum = JobSummary.summary
+      sum = JobSummary.summary(Job, nil, nil)
       expect(sum).to eql empty_summary
       expect(JobSummary.any?).to eql false
     end
