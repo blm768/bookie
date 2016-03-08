@@ -117,9 +117,9 @@ if command_filter then
 end
 
 if user_filter then
-  #TODO: update.
-  jobs = jobs.by_user_name(user_filter)
-  job_summaries = job_summaries.by_user_name(user_filter)
+  user = User.find(name: user_filter)
+  jobs = jobs.where(user: user)
+  job_summaries = job_summaries.where(user: user)
 end
 
 if system_filter then

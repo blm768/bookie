@@ -1,11 +1,9 @@
 First priority:
-- Add user IDs
-- Optimize summarization stuff.
-  - Put all the sums in one query.
 - Filter out 0-time jobs (use Ruby config w/ block?)
 - Update executables.
 
 Later:
+- Optimize summarization stuff.
 - Connect to users DB or LDAP?
 
 Testing:
@@ -14,7 +12,7 @@ Testing:
 
 Optimization:
 - Use bulk inserts?
-- Wrap send jobs in a transaction?
+- Wrap send/summarize operations in a transaction?
 
 Cleanup:
 - Specify dependency versions
