@@ -9,7 +9,7 @@ DEFAULT_DETAILS_PER_PAGE = 20
 config_filename = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
 
 #Data options
-time_range = nil
+time_min, time_max = nil
 #TODO: make into a Hash?
 command_filter = nil
 user_filter = nil
@@ -73,7 +73,8 @@ opts = OptionParser.new do |opts|
   end
 
   opts.on('-r', '--time BEGIN,END', Array, "filter by a time range") do |t|
-    time_range = Time.parse(t[0]) ... Time.parse(t[1])
+    time_min = Time.parse(t[0])
+    time_max = Time.parse(t[1])
   end
 
   opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME",
@@ -130,17 +131,19 @@ end
 if system_type_filter then
   type = Bookie::Database::SystemType.find_by_name(system_type_filter)
   unless type
-      STDERR.puts "unknown system type '#{system_type_filter}'"
-      exit 1
+    STDERR.puts "unknown system type '#{system_type_filter}'"
+    exit 1
   end
   jobs = jobs.by_system_type(type)
   summaries = summaries.by_system_type(type)
   systems = systems.by_system_type(type)
 end
 
-formatter = Bookie::Formatter.new(output_type, filename)
+jobs_summary = summaries.summary(jobs, time_min, time_max)
+systems_summary = systems.summary(time_min, time_max)
 
-formatter.print_summary(jobs, summaries, systems, time_range)
+formatter = Bookie::Formatter.new(output_type, filename)
+formatter.print_summary(jobs_summary, systems_summary)
 
 if include_details
   #TODO: include separator or blank line.
