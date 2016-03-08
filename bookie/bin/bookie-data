@@ -108,38 +108,42 @@ config = Bookie::Config.new(config_filename)
 config.connect
 
 jobs = Bookie::Database::Job
-summaries = Bookie::Database::JobSummary
-systems = Bookie::Database::System
+job_summaries = Bookie::Database::JobSummary
+system_capacities = Bookie::Database::SystemCapacity
 
 if command_filter then
-    jobs = jobs.by_command_name(command_filter)
-    summaries = summaries.by_command_name(command_filter)
+    jobs = jobs.where(command_name: command_filter)
+    job_summaries = job_summaries.where(command_name: command_filter)
 end
 
 if user_filter then
+  #TODO: update.
   jobs = jobs.by_user_name(user_filter)
-  summaries = summaries.by_user_name(user_filter)
+  job_summaries = job_summaries.by_user_name(user_filter)
 end
 
 if system_filter then
-  jobs = jobs.by_system_name(system_filter)
-  summaries = summaries.by_system_name(system_filter)
-  systems = systems.by_name(system_filter)
+  system = Bookie::Database::System.find!(name: system_filter)
+  jobs = jobs.where(system: system)
+  job_summaries = job_summaries.where(system: system)
+  system_capacities = system_capacities.where(system: system)
 end
 
 if system_type_filter then
-  type = Bookie::Database::SystemType.find_by_name(system_type_filter)
+  type = Bookie::Database::SystemType.find(name: system_type_filter)
   unless type
     STDERR.puts "unknown system type '#{system_type_filter}'"
     exit 1
   end
-  jobs = jobs.by_system_type(type)
-  summaries = summaries.by_system_type(type)
-  systems = systems.by_system_type(type)
+  #TODO: test.
+  systems = Bookie::Database::System.where(system_type: type)
+  jobs = jobs.joins(:system).merge(systems)
+  job_summaries = job_summaries.joins(:system).merge(systems)
+  system_capacities = system_capacities.joins(:system).merge(systems)
 end
 
-jobs_summary = summaries.summary(jobs, time_min, time_max)
-systems_summary = systems.summary(time_min, time_max)
+jobs_summary = job_summaries.summary(jobs, time_min, time_max)
+systems_summary = system_capacities.summary(time_min, time_max)
 
 formatter = Bookie::Formatter.new(output_type, filename)
 formatter.print_summary(jobs_summary, systems_summary)
