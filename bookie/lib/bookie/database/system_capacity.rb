@@ -103,10 +103,10 @@ module Bookie::Database
 
       #TODO: replace avail_memory_avg with time_span and/or a time range?
       {
-        :num_systems => system_ids.length,
-        :avail_cpu_time => avail_cpu_time,
-        :avail_memory_time => avail_memory_time,
-        :avail_memory_avg => if time_span == 0 then 0.0 else Float(avail_memory_time) / time_span end,
+        num_systems: system_ids.length,
+        avail_cpu_time: avail_cpu_time,
+        avail_memory_time: avail_memory_time,
+        avail_memory_avg: if time_span == 0 then 0.0 else Float(avail_memory_time) / time_span end,
       }
     end
   end

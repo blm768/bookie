@@ -32,10 +32,7 @@ describe Bookie::Database::SystemCapacity do
 
   describe "#summary" do
     before(:each) do
-      #Take note of this; the calculations for the expected values in these
-      #tests are based on this value of Time.now.
-      #TODO: fix this hackiness?
-      Time.expects(:now).returns(base_time + 30.hours).at_least_once
+      Time.stubs(:now).returns(SummaryHelpers::BASE_END + SummaryHelpers::WIDE_MARGIN)
     end
 
     let(:summary) { create_summaries(SystemCapacity) }
@@ -43,19 +40,21 @@ describe Bookie::Database::SystemCapacity do
     #All systems should have the same amount of memory.
     let(:memory_per_system) { SystemCapacity.first.memory }
     let(:cores_per_system) { SystemCapacity.first.cores }
-    #The first system was up for 10 hours, down for 10, and up for another 10. The others were not decommissioned.
-    #TODO: calculate from the database?
-    let(:total_wall_time) { (10 + 10 + 30).hours }
-    let(:total_memory_time) { total_wall_time * memory_per_system }
+    #The first system was up for 10 hours, down for 10, and up again. The others were not decommissioned.
+    let(:constrained_wall_time) { (10 + 10 + 30).hours }
+    let(:wide_wall_time) { constrained_wall_time + 3 * SummaryHelpers::WIDE_MARGIN }
+    let(:constrained_memory_time) { total_wall_time * memory_per_system }
+    let(:wide_memory_time) { wide_wall_time * memory_per_system }
+
 
     context "when systems are active" do
       #TODO: split into contexts.
       it "produces correct summaries" do
         expect(summary[:all]).to eql({
-          :num_systems => 3,
-          :avail_cpu_time => total_wall_time * cores_per_system,
-          :avail_memory_time => total_wall_time * memory_per_system,
-          :avail_memory_avg => Float(total_memory_time) / 30.hours,
+          num_systems: 3,
+          avail_cpu_time: wide_wall_time * cores_per_system,
+          avail_memory_time: wide_wall_time * memory_per_system,
+          avail_memory_avg: Float(wide_memory_time) / 30.hours,
         })
 
         #TODO: split into another example/context?
@@ -71,17 +70,17 @@ describe Bookie::Database::SystemCapacity do
 
         wide_wall_time = total_wall_time + 3 * SummaryHelpers::WIDE_MARGIN
         expect(summary[:wide]).to eql({
-          :num_systems => 3,
-          :avail_cpu_time => cores_per_system * wide_wall_time,
-          :avail_memory_time => memory_per_system * wide_wall_time,
-          :avail_memory_avg => Float(wide_wall_time * memory_per_system) / SummaryHelpers::WIDE_TIME_INTERVAL
+          num_systems: 3,
+          avail_cpu_time: cores_per_system * wide_wall_time,
+          avail_memory_time: memory_per_system * wide_wall_time,
+          avail_memory_avg: Float(wide_wall_time * memory_per_system) / SummaryHelpers::WIDE_TIME_INTERVAL
         })
 
         expect(summary[:empty]).to eql({
-          :num_systems => 0,
-          :avail_cpu_time => 0,
-          :avail_memory_time => 0,
-          :avail_memory_avg => 0.0,
+          num_systems: 0,
+          avail_cpu_time: 0,
+          avail_memory_time: 0,
+          avail_memory_avg: 0.0,
         })
       end
     end
@@ -97,9 +96,10 @@ describe Bookie::Database::SystemCapacity do
         s1 = SystemCapacity.summary(nil, nil)
         expect(s1).to eql summary[:all]
 
-        s1 = SystemCapacity.summary(base_time, Time.now + 1.hour)
+        s1 = SystemCapacity.summary(base_time, Time.now + SummaryHelpers::WIDE_MARGIN)
         s2 = summary[:all].dup
-        s2[:avail_memory_avg] = Float(total_memory_time) / 31.hours
+        time_interval = SummaryHelpers::BASE_INTERVAL + SummaryHelpers::WIDE_MARGIN * 2
+        s2[:avail_memory_avg] = Float(wide_memory_time) / time_interval
         expect(s1).to eql s2
       end
     end
