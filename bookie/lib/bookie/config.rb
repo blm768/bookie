@@ -4,98 +4,104 @@ require 'logger'
 require 'set'
 
 module Bookie
-  ##
-  #Holds database configuration, etc. for Bookie components
-  class Config
-    #The database type
-    #
-    #Corresponds to ActiveRecord database adapter name
-    attr_accessor :db_type
-    #The database server's hostname
-    attr_accessor :server
-    #The database server's port
-    #
-    #If nil, use the default port.
-    attr_accessor :port
-    #The name of the database to use
-    attr_accessor :database
-    #The username for the database
-    attr_accessor :username
-    #The password for the database
-    attr_accessor :password
-    #A set containing the names of users to be excluded
-    attr_accessor :excluded_users
-    #The system type
-    attr_accessor :system_type
-    #The system's hostname
-    attr_accessor :hostname
-    #The number of cores on the system
-    attr_accessor :cores
-    #The RAM (in KB) in the system
-    attr_accessor :memory
-       
+   #Loosely based on https://corcoran.io/2013/09/04/simple-pattern-ruby-dsl/
+   module ConfigClass
+    attr_reader :validators
+    attr_writer :builder_class
+
     ##
-    #Creates a new Config object using values from the provided JSON file
-    def initialize(filename)
-      file = File.open(filename)
-      data = JSON::parse(file.read)
-      file.close
-      
-      @db_type = data['Database type']
-      verify_type(@db_type, 'Database type', String)
-      
-      @server = data['Server']
-      verify_type(@server, 'Server', String)
-      @port = data['Port']
-      verify_type(@port, 'Port', Integer) unless @port == nil
-      
-      @database = data['Database']
-      verify_type(@database, 'Database', String)
-      @username = data['Username']
-      verify_type(@username, 'Username', String)
-      @password = data['Password']
-      verify_type(@password, 'Password', String)
-      
-      excluded_users_array = data['Excluded users'] || []
-      verify_type(excluded_users_array, 'Excluded users', Array)
-      @excluded_users = Set.new(excluded_users_array)
-      
-      @system_type = data['System type']
-      verify_type(@system_type, 'System type', String)
-      
-      @hostname = data['Hostname']
-      verify_type(@hostname, 'Hostname', String)
-      
-      @cores = data['Cores']
-      verify_type(@cores, 'Cores', Integer)
-      
-      @memory = data['Memory']
-      verify_type(@memory, 'Memory', Integer)
+    #Returns the builder class
+    #
+    #If a block is given, it is evaluated within the context of the builder class.
+    def builder_class(&block)
+      @builder_class.instance_eval(&block) if block_given?
+      @builder_class
     end
-    
-    #Verifies that a field is of the correct type, raising an error if the type does not match
-    def verify_type(value, name, type)
-      if value == nil
-        raise "Field \"#{name}\" must have a non-null value."
+
+    def self.extended(other_module)
+      other_module.include(InstanceMethods)
+
+      other_module.builder_class = Class.new do
+        define_method(:initialize) do
+          @config = other_module.new
+        end
+
+        attr_reader :config
+
+        def self.property_writer(name)
+          writer_name = "#{name}=".intern
+          define_method(name) do |value|
+            @config.send(writer_name, value)
+          end
+        end
       end
-      raise TypeError.new("Invalid data type #{value.class} for JSON field \"#{name}\": #{type} expected") unless value.class <= type
     end
-    
-    #Connects to the database specified in the configuration file
-    def connect()
-      #To consider: disable colorized logging?
-      #To consider: create config option for this?
-      #ActiveRecord::Base.logger = Logger.new(STDERR)
-      #ActiveRecord::Base.logger.level = Logger::WARN
-      ActiveRecord::Base.time_zone_aware_attributes = true
-      ActiveRecord::Base.default_timezone = :utc
-      ActiveRecord::Base.establish_connection(
-        :adapter  => self.db_type,
-        :database => self.database,
-        :username => self.username,
-        :password => self.password,
-        :host     => self.server,
-        :port     => self.port)
+
+    def build(&block)
+      builder = builder_class.new
+      builder.instance_eval(&block)
+      builder.config
+    end
+
+    def build_from_string(text, filename = '')
+      builder = builder_class.new
+      builder.instance_eval(text, filename)
+      builder.config
+    end
+
+    def load(file)
+      build_from_string(file.read, file.path)
+    end
+
+    def validate_self(&block)
+      @validators ||= []
+      @validators.push(block)
+    end
+
+    ##
+    #Creates a configuration property
+    #
+    #Options:
+    # - type: the property's type
+    # - allow_nil: allow nil values (default is <tt>false</tt> if type is specified, <tt>true</tt> otherwise)
+    # - create_proxy: create a proxy setter method in the builder class (default is <tt>true</tt>)
+    def property(name, options = nil)
+      options ||= {}
+      writer_name = "#{name}=".intern
+      var_name = "@#{name}".intern
+
+      attr_accessor(name)
+
+      type = options[:type]
+      allow_nil = options[:allow_nil]
+      if type then
+        allow_nil = false if allow_nil.nil?
+        validate_self do
+          value_class = self.send(name).class
+          next if allow_nil && value_class <= NilClass
+          raise TypeError.new("Invalid type #{value_class} for field '#{name}': #{type} expected") unless value_class <= type
+        end
+      else
+        allow_nil = true if allow_nil.nil?
+        if not allow_nil then
+          validate_self do
+            raise TypeError.new("Field '#{name}' must not be nil") if self.send(name).nil?
+          end
+        end
+      end
+
+      create_proxy = options[:create_proxy]
+      create_proxy = true if create_proxy.nil?
+      builder_class.property_writer(name) if create_proxy
+    end
+
+    module InstanceMethods
+      #TODO: accumulate validation errors and display them all at once?
+      def validate!
+        self.class.validators.each do |validator|
+          self.instance_eval(&validator)
+        end
+      end
     end
   end
 end

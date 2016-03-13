@@ -103,16 +103,12 @@ module Helpers
     ENV['TZ'] = prev
   end
 
-  def test_config
-    Helpers.test_config
+  def db_config
+    Helpers.db_config
   end
 
-  def self.test_config
-    @test_config
-  end
-
-  def self.test_config=(config)
-    @test_config = config
+  class << self
+    attr_accessor :db_config
   end
 end
 
@@ -122,8 +118,8 @@ RSpec.configure do |config|
   config.mock_with(:mocha)
 
   config.before(:suite) do
-    Helpers.test_config = Bookie::Config.new('snapshot/test_config.json')
-    Helpers.test_config.connect
+    Helpers.db_config = Bookie::Database::Config.load(File.open('snapshot/db_config.rb', 'rb'))
+    Helpers.db_config.connect
 
     ActiveRecord::Migration.verbose = false
     Bookie::Database.migrate

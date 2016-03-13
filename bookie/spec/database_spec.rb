@@ -10,9 +10,7 @@ describe Bookie::Database do
   #The other database-related tests implicitly test the success of the migrations,
   #so we'll ignore that aspect here.
 
-  it "has a migration directory which exists" do
-    expect(Dir.exist?(MIGRATIONS_PATH))
-  end
+  it { expect(Dir.exist?(MIGRATIONS_PATH)) }
 
   describe '#latest_version' do
     it { expect(Bookie::Database::latest_version).to eql LATEST_MIGRATION }
@@ -39,6 +37,15 @@ describe Bookie::Database do
     it "picks the current version as the default" do
       ActiveRecord::Migrator.expects(:migrate).with(MIGRATIONS_PATH, LATEST_MIGRATION)
       Bookie::Database.migrate
+    end
+  end
+
+  describe Bookie::Database::Config do
+    it "connects to the database" do
+      ActiveRecord::Base.expects(:establish_connection)
+      db_config.connect
+      expect(ActiveRecord::Base.time_zone_aware_attributes).to eql true
+      expect(ActiveRecord::Base.default_timezone).to eql :utc
     end
   end
 end

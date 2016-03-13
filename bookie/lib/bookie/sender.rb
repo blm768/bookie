@@ -4,6 +4,39 @@ require 'date'
 
 module Bookie
   ##
+  #Contains configuration settings for Sender objects
+  #TODO: unit test anything?
+  class SenderConfig
+    extend ConfigClass
+
+    ##
+    #A closure used to filter jobs to be sent
+    #
+    #It should return <tt>true</tt> if a job is to be sent and <tt>false</tt> otherwise
+    property :job_filter, type: Proc, allow_nil: true, create_proxy: false
+
+    builder_class do
+      define_method(:filter_jobs) do |&block|
+        config.job_filter = block
+      end
+    end
+
+    ##
+    #The system type
+    property :system_type, type: String
+
+    ##
+    #The system's hostname
+    property :hostname, type: String
+
+    #TODO: remove these?
+    #The number of cores on the system
+    property :cores, type: Integer
+    #The RAM (in KB) in the system
+    property :memory, type: Integer
+  end
+
+  ##
   #An object that sends data to the database
   class Sender
     attr_reader :config
@@ -11,7 +44,7 @@ module Bookie
     ##
     #Creates a new Sender
     #
-    #<tt>config</tt> should be an instance of Bookie::Config.
+    #<tt>config</tt> should be an instance of Bookie::Sender::Config.
     def initialize(config)
       @config = config
 
@@ -86,8 +119,9 @@ module Bookie
       each_job(filename) do |job|
         next if filtered?(job)
         #TODO: optimize this operation?
-        #(It should be possible to delete all of the jobs with end times between those of the first and last jobs of the file (exclusive),
-        #but jobs with end times matching those of the first/last jobs in the file might be from an earlier or later file, not this one.
+        #(It should be possible to delete all of the jobs with end times between those of the first and last jobs
+        #of the file (exclusive), but jobs with end times matching those of the first/last jobs in the file might
+        #be from an earlier or later file, not this one.
         #This assumes that the files all have jobs sorted by end time.
         #TODO: note how many jobs were deleted?
         model = duplicate(job)
@@ -115,7 +149,11 @@ module Bookie
     #Returns whether a job should be filtered from the results
     #
     def filtered?(job)
-      @config.excluded_users.include?job.user_name
+      if @config.job_filter then
+        not @config.job_filter.call(job)
+      else
+        false
+      end
     end
 
     ##

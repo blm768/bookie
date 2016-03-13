@@ -14,8 +14,8 @@ module Bookie
 end
 
 describe Bookie::Senders::Standalone do
-  let(:config) { Bookie::Config.new('snapshot/pacct_test_config.json') }
-  let(:sender) { Bookie::Sender.new(config) }
+  let(:sender_config) { Bookie::SenderConfig.load(File.open('snapshot/pacct_sender_config.rb')) }
+  let(:sender) { Bookie::Sender.new(sender_config) }
 
   it "correctly yields jobs" do
     sender.each_job('snapshot/pacct') do |job|

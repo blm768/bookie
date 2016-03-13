@@ -9,20 +9,22 @@ describe Bookie::Sender do
     Bookie::Database::Job.delete_all
   end
 
+  let(:sender_config) { Bookie::SenderConfig.load(File.open('snapshot/sender_config.rb')) }
+
   let(:sys_1) do
     #TODO: just pull the system_type value from the config?
     #That way, we can eliminate the need to (re)define the system_type method.
     sys_1 = Bookie::Database::System.create!(
-      :name => test_config.hostname,
-      :system_type => new_dummy_sender(test_config).system_type,
+      name: sender_config.hostname,
+      system_type: new_dummy_sender(sender_config).system_type,
     )
 
     cap_1 = Bookie::Database::SystemCapacity.create!(
       system: sys_1,
       start_time: base_time,
       end_time: base_time + 1000,
-      cores: test_config.cores,
-      memory: test_config.memory
+      cores: sender_config.cores,
+      memory: sender_config.memory
     )
     cap_2 = cap_1.dup
     cap_2.start_time = base_time + 1001
@@ -51,7 +53,7 @@ describe Bookie::Sender do
     sys_1
     sys_dummy
 
-    new_dummy_sender(test_config)
+    new_dummy_sender(sender_config)
   end
 
   describe "#filtered?" do
@@ -67,8 +69,8 @@ describe Bookie::Sender do
   describe "#send" do
     #TODO: check for the #filtered? check?
     it "correctly sends jobs" do
-      config = test_config.clone
-      config.excluded_users = Set.new
+      config = sender_config.clone
+      config.job_filter = nil
       sender.send_data('dummy')
       jobs = Job.includes(:system)
       jobs.each do |job|
@@ -85,7 +87,7 @@ describe Bookie::Sender do
     end
 
     it "correctly handles empty files" do
-      empty_sender = new_dummy_sender(test_config, EmptyDummySender)
+      empty_sender = new_dummy_sender(sender_config, EmptyDummySender)
       Bookie::Database::Job.any_instance.expects(:'save!').never
       ActiveRecord::Relation.any_instance.expects(:'delete_all').never
       empty_sender.send_data('dummy')
@@ -161,7 +163,7 @@ describe Bookie::Sender do
 
   describe "#undo_send" do
     it "removes the correct entries" do
-      sender_short = new_dummy_sender(test_config, ShortDummySender)
+      sender_short = new_dummy_sender(sender_config, ShortDummySender)
       sender.send_data('dummy')
       sender_short.send_data('dummy2')
       sender.undo_send('dummy')
