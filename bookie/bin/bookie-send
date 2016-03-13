@@ -4,7 +4,8 @@ require 'optparse'
 
 require 'bookie/sender'
 
-config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
+db_config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/db_config.rb'
+sender_config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/sender_config.rb'
 will_create = false
 will_decommission = false
 will_undo = false
@@ -15,8 +16,12 @@ system_end_time = nil
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-send [data-file] [options]"
 
-  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
-    config_file = file
+  opts.on('-c', '--config FILE', String, "use the given database configuration file") do |file|
+    db_config_file = file
+  end
+
+  opts.on('-s', '--sender-config FILE', String, "use the given sender configuration file") do |file|
+    sender_config_file = file
   end
 
   opts.on('-u', '--undo', String, "undo a previous send operation (file must be specified)") do
@@ -50,8 +55,9 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-config = Bookie::Config.new(config_file)
+db_config = Bookie::Database::Config.load(File.open(db_config_file))
 config.connect
+sender_config = Bookie::SenderConfig.load(File.open(sender_config_file))
 
 filename = ARGV[0]
 unless filename || will_create || will_decommission
@@ -60,7 +66,7 @@ unless filename || will_create || will_decommission
 end
 
 if filename
-  sender = Bookie::Sender.new(config)
+  sender = Bookie::Sender.new(sender_config)
   if will_undo
     sender.undo_send(filename)
   else
@@ -69,7 +75,7 @@ if filename
 end
 
 if will_decommission
-  system_hostname ||= config.hostname
+  system_hostname ||= sender_config.hostname
   system_end_time ||= Time.now
   Bookie::Database::Lock[:systems].synchronize do
     system = Bookie::Database::System.active_systems.where(:name => system_hostname).first
@@ -99,7 +105,7 @@ end
 if will_create
   system_start_time ||= Time.now
   Bookie::Database::Lock[:systems].synchronize do
-    system = Bookie::Database::System.active_systems.where(:name => config.hostname).first
+    system = Bookie::Database::System.active_systems.where(name: sender_config.hostname).first
     if system
       stderr.puts "An active system is already in the database with hostname '#{config.hostname}'."
       exit 1

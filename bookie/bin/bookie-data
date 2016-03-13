@@ -104,7 +104,7 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-config = Bookie::Config.new(config_filename)
+config = Bookie::Database::Config.load(File.open(config_filename))
 config.connect
 
 jobs = Bookie::Database::Job

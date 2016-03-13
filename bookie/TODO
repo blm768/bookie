@@ -1,5 +1,6 @@
 First priority:
 - Filter out 0-time jobs (use Ruby config w/ block?)
+  - Update docs?
 - Update executables.
 
 Later:
@@ -15,6 +16,7 @@ Optimization:
 - Wrap send/summarize operations in a transaction?
 
 Cleanup:
+- Remove spreadsheet gem
 - Specify dependency versions
 - Remove find_or_create methods.
 - Replace by_* methods with a "find_all_by()" method? (or just "where"...)

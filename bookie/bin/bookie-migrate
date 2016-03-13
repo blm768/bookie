@@ -32,7 +32,7 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-config = Bookie::Config.new(config_file)
+config = Bookie::Database::Config.load(File.open(config_file))
 config.connect
 
 target_version ||= Bookie::Database.latest_version
