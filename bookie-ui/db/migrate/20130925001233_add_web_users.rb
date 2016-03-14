@@ -7,7 +7,7 @@ class AddWebUsers < ActiveRecord::Migration
       t.string :reset_key_hash
       t.datetime :reset_sent_at
 
-      t.index :email, :unique => true
+      t.index :email, unique: true
     end
   end
 end

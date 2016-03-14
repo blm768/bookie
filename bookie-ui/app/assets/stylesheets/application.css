@@ -10,7 +10,7 @@
  *
  *= require_self
  *= require 'navigation.css.scss'
- *= require jquery.ui.datepicker
+ *= require jquery-ui/datepicker
  */
 
 /*------------------------*/
