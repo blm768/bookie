@@ -43,7 +43,7 @@ module Bookie
     ##
     #Contains database-related configuration options
     class Config
-      extend ConfigClass
+      include ConfigClass
 
       #The database type
       #

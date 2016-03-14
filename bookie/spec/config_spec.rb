@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'active_record'
 
 class TestConfig
-  extend Bookie::ConfigClass
+  include Bookie::ConfigClass
 
   attr_accessor :valid_flag
 

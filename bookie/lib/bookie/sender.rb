@@ -7,7 +7,7 @@ module Bookie
   #Contains configuration settings for Sender objects
   #TODO: unit test anything?
   class SenderConfig
-    extend ConfigClass
+    include ConfigClass
 
     ##
     #A closure used to filter jobs to be sent

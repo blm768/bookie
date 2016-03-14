@@ -3,9 +3,23 @@ require 'json'
 require 'logger'
 require 'set'
 
-module Bookie
-   #Loosely based on https://corcoran.io/2013/09/04/simple-pattern-ruby-dsl/
-   module ConfigClass
+##
+#May be included in a class to make it support a configuration DSL
+#
+#Loosely based on https://corcoran.io/2013/09/04/simple-pattern-ruby-dsl/
+module Bookie::ConfigClass
+  #TODO: accumulate validation errors and display them all at once?
+  def validate!
+    self.class.validators.each do |validator|
+      self.instance_eval(&validator)
+    end
+  end
+
+  def self.included(other_module)
+    other_module.extend(ClassMethods)
+  end
+
+  module ClassMethods
     attr_reader :validators
     attr_writer :builder_class
 
@@ -19,8 +33,6 @@ module Bookie
     end
 
     def self.extended(other_module)
-      other_module.include(InstanceMethods)
-
       other_module.builder_class = Class.new do
         define_method(:initialize) do
           @config = other_module.new
@@ -93,15 +105,6 @@ module Bookie
       create_proxy = options[:create_proxy]
       create_proxy = true if create_proxy.nil?
       builder_class.property_writer(name) if create_proxy
-    end
-
-    module InstanceMethods
-      #TODO: accumulate validation errors and display them all at once?
-      def validate!
-        self.class.validators.each do |validator|
-          self.instance_eval(&validator)
-        end
-      end
     end
   end
 end
