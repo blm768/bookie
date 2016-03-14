@@ -16,9 +16,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Bookie::VERSION
 
-  gem.add_dependency('activerecord')
-  gem.add_dependency('json')
-  gem.add_dependency('pacct')
-  gem.add_dependency('spreadsheet')
+  gem.add_dependency('activerecord', '~> 4.2')
+  gem.add_dependency('json', '~> 1.8')
+  gem.add_dependency('pacct', '>= 0.8.4')
 end
 

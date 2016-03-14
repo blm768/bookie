@@ -76,18 +76,9 @@ opts = OptionParser.new do |opts|
     time_max = Time.parse(t[1])
   end
 
-  opts.on('-o', '--output-file FILENAME', "send formatted output to FILENAME",
-    "Output format is inferred from the filename extension.") do |output_filename|
+  opts.on('-o', '--output-file FILENAME', "send CSV formatted output to FILENAME") do |output_filename|
     filename = output_filename
-    case filename
-    when /\.xls$/
-      output_type = :spreadsheet
-    when /\.csv$/
       output_type = :comma_dump
-    else
-      STDERR.puts "unrecognized output file extension"
-      exit 1
-    end
   end
 
   opts.on_tail('-h', '--help', "Show this message") do
