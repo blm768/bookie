@@ -15,7 +15,7 @@
   <h1><%= yield :heading %></h1>
 </div>
 
-<%= render :partial => "shared/navbar" %>
+<%= render partial: "shared/navbar" %>
 
 <div id="messages">
   <% flash.each do |category, text| %>

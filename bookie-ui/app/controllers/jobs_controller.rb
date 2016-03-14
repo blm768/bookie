@@ -4,39 +4,42 @@ class JobsController < ApplicationController
   before_filter :require_login
 
   JOBS_PER_PAGE = 20
-  
+
   FILTERS = {
-    :system => :text,
-    :user => :text,
-    :group => :text,
-    :system_type => :text,
-    :command_name => :text,
-    :time => :datetime_range,
+    system: :text,
+    user: :text,
+    group: :text,
+    system_type: :text,
+    command_name: :text,
+    time: :datetime_range,
   }
 
   include FilterMixin
 
   def index
-    jobs = Bookie::Database::Job.order(:end_time)
+    jobs = Bookie::Database::Job
     summaries = Bookie::Database::JobSummary
-    systems = Bookie::Database::System
-        
+    system_caps = Bookie::Database::SystemCapacity
+
     @page_num = params[:page].to_i
     @page_num = 1 unless @page_num && @page_num > 0
 
-    summary_time_range = nil
-        
+    time_min, time_max = nil
+
     #Passed to the view to make the filter form's contents persistent
     @prev_filters = []
-    
+
     @filter_errors = each_filter(FILTERS) do |type, values, valid|
       @prev_filters << [type, values]
       next unless valid
       case type
       when :system
-        jobs = jobs.by_system_name(values[0])
-        summaries = summaries.by_system_name(values[0])
-        systems = systems.by_name(values[0])
+        sys_name = values[0]
+        systems = systems.where(name: sys_name)
+        #TODO: validate that this system exists!
+        sys = systems.first
+        jobs = jobs.where(system: sys)
+        summaries = summaries.where(system: sys)
       when :user
         jobs = jobs.by_user_name(values[0])
         summaries = summaries.by_user_name(values[0])
@@ -44,28 +47,30 @@ class JobsController < ApplicationController
         jobs = jobs.by_group_name(values[0])
         summaries = summaries.by_group_name(values[0])
       when :system_type
-        sys_type = Bookie::Database::SystemType.find_by_name(values[0])
+        sys_type = Bookie::Database::SystemType.find_by(name: values[0])
         if sys_type
           jobs = jobs.by_system_type(sys_type)
           summaries = summaries.by_system_type(sys_type)
-          systems = systems.by_system_type(sys_type)
+          system_caps = system_caps.by_system_type(sys_type)
         else
           jobs = jobs.where('1=0')
           summaries = summaries.where('1=0')
-          systems = systems.where('1=0')
+          system_caps = system_caps.where('1=0')
           flash_msg_now :error, %{Unknown system type "#{values[0]}"}
         end
       when :command_name
-        jobs = jobs.by_command_name(values[0])
-        summaries = summaries.by_command_name(values[0])
+        jobs = jobs.where(command_name: values[0])
+        summaries = summaries.where(command_name: values[0])
       when :time
-        summary_time_range = parse_time_range(*values)
+        time_range = parse_time_range(*values)
+        time_min = time_range.begin
+        time_max = time_range.end
       end
     end
 
-    @jobs_summary = summaries.summary(:range => summary_time_range, :jobs => jobs)
+    @jobs_summary = summaries.summary(jobs, time_min, time_max)
 
-    @systems_summary = systems.summary(summary_time_range)
+    @systems_summary = system_caps.summary(time_min, time_max)
 
     avail_cpu_time = @systems_summary[:avail_cpu_time]
     avail_mem_time = @systems_summary[:avail_memory_time]
@@ -73,7 +78,7 @@ class JobsController < ApplicationController
       :cpu_time => avail_cpu_time == 0 ? 0.0 : @jobs_summary[:cpu_time] / avail_cpu_time,
       :memory => avail_mem_time == 0 ? 0.0 : @jobs_summary[:memory_time] / avail_mem_time,
     }
-    
+
     #To be passed to the view
     @show_details = (params[:show_details] == "true")
     if @show_details
@@ -87,7 +92,7 @@ class JobsController < ApplicationController
       @num_pages = 1 if @num_pages == 0
       @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start).includes(:user, :group, :system, :system_type).to_a
     end
-    
+
     respond_to do |format|
       format.html
       format.json
@@ -96,9 +101,6 @@ class JobsController < ApplicationController
 
   #Options available in enum-like filters (such as system type)
   def self.filter_options
-    {
-      :sys_type => Bookie::Database::SystemType.select(:name).to_a.map{ |t| t.name }
-    }
+    { sys_type: Bookie::Database::SystemType.pluck(:name) }
   end
 end
-
