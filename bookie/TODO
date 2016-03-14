@@ -16,8 +16,6 @@ Optimization:
 - Wrap send/summarize operations in a transaction?
 
 Cleanup:
-- Remove spreadsheet gem
-- Specify dependency versions
 - Remove find_or_create methods.
 - Replace by_* methods with a "find_all_by()" method? (or just "where"...)
 - Use "let" in RSpect tests?
@@ -28,7 +26,6 @@ Cleanup:
 - Replace Mocha with rspec-mocks?
 - Fix memory specification issue
 - Replace <tt> tags in docs with <code>?
-- Remove spreadsheet formatter?
 - Rename "snapshot" directory?
 
 Expansion:

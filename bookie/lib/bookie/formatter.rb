@@ -1,7 +1,6 @@
 require 'bookie/database'
 
 require 'date'
-require 'spreadsheet'
 
 module Bookie
   ##
@@ -14,8 +13,8 @@ module Bookie
     #TODO: just subclass Formatter and be done with it.
     #
     #===Examples
-    #  #Uses the spreadsheet formatter from 'bookie/formatters/spreadsheet'
-    #  formatter = Bookie::Formatter::Formatter.new(:spreadsheet, 'test.xls')
+    #  #Uses the formatter from 'bookie/formatters/csv'
+    #  formatter = Bookie::Formatter::Formatter.new(:csv, 'test.csv')
     def initialize(type, filename = nil)
       #Needed for symbol arguments
       type = type.to_s
