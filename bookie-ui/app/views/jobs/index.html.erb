@@ -1,13 +1,13 @@
 <% require 'bookie/formatter' %>
 
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag "list", :media => "all" %>
-  <%= stylesheet_link_tag "filter", :media => "all" %>
+  <%= stylesheet_link_tag 'list', media: 'all' %>
+  <%= stylesheet_link_tag 'filter', media: 'all' %>
 <% end %>
 
 <% content_for :scripts do %>
-  <%= javascript_include_tag "filter" %>
-  <%= javascript_include_tag "filter_form" %>
+  <%= javascript_include_tag 'filter' %>
+  <%= javascript_include_tag 'filter_form' %>
 <% end %>
 
 <% content_for :heading do %>Jobs<% end %>
@@ -51,7 +51,6 @@
         <tr>
           <th>Command</th>
           <th>User</th>
-          <th>Group</th>
           <th>System</th>
           <th>Start time</th>
           <th>End time</th>
@@ -64,7 +63,6 @@
           <tr>
             <td><%= job.command_name %></td>
             <td><%= job.user.name %></td>
-            <td><%= job.user.group.name %></td>
             <td><%= job.system.name %></td>
             <td><%= job.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
             <td><%= job.end_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
@@ -75,14 +73,14 @@
           </tr>
         <% end %>
       </table>
-      <%= render :partial => 'shared/pages' %>
+      <%= render partial: 'shared/pages' %>
     <% end %>
   </div>
-  
+
   <% #To consider: what to do about time zone differences in filters? %>
-  <%= render :partial => 'shared/filters', :locals => {
-    :filter_types => JobsController::FILTERS,
-    :filter_options => JobsController::filter_options,
-    :show_details => @show_details,
+  <%= render partial: 'shared/filters', locals: {
+    filter_types: JobsController::FILTERS,
+    filter_options: JobsController::filter_options,
+    show_details: @show_details,
   } %>
 </div>

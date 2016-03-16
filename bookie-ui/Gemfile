@@ -6,7 +6,7 @@ gem 'bookie_accounting', '~> 3.0'
 gem 'rails', '4.2.6'
 
 # Database adapters
-gem 'sqlite3'
+gem 'sqlite3', group: :development
 gem 'mysql2'
 
 # Use SCSS for stylesheets

@@ -1,7 +1,7 @@
 class AddWebUsers < ActiveRecord::Migration
   def change
     create_table :web_users do |t|
-      t.string :email, :null => false
+      t.string :email, null: false
       t.string :password_hash
       t.string :password_salt
       t.string :reset_key_hash

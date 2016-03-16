@@ -1,8 +1,7 @@
 <% require 'bookie/formatter' %>
 
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag "list", :media => "all" %>
-  <%= stylesheet_link_tag "filter", :media => "all" %>
+  <%= stylesheet_link_tag 'list', media: 'all' %>
   <style type="text/css">
     table {
       width: auto;
@@ -10,16 +9,7 @@
   </style>
 <% end %>
 
-<% content_for :scripts do %>
-  <%= javascript_include_tag "filter" %>
-  <%= javascript_include_tag "filter_form" %>
-<% end %>
-
 <% content_for :heading do %>Users<% end %>
-
-<%= render :partial => 'shared/filter_errors', :locals => {
-  :errors => @filter_errors
-} %>
 
 <div id="main">
   <div id="content">
@@ -27,19 +17,12 @@
       <caption>Details</caption>
       <tr>
         <th>Name</th>
-        <th>Group</th>
       </tr>
       <% @users.all.each do |user| %>
         <tr>
           <td><%= user.name %></td>
-          <td><%= user.group.name %></td>
         </tr>
       <% end %>
     </table>
   </div>
-
-  <%= render :partial => 'shared/filters', :locals => {
-    :filter_types => UsersController::FILTERS,
-    :filter_options => {},
-  } %>
 </div>

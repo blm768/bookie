@@ -13,12 +13,6 @@
 
 ActiveRecord::Schema.define(version: 20130925001233) do
 
-  create_table "groups", force: :cascade do |t|
-    t.string "name", null: false
-  end
-
-  add_index "groups", ["name"], name: "index_groups_on_name", unique: true
-
   create_table "job_summaries", force: :cascade do |t|
     t.integer "user_id",      null: false
     t.integer "system_id",    null: false
@@ -50,11 +44,16 @@ ActiveRecord::Schema.define(version: 20130925001233) do
   add_index "jobs", ["system_id"], name: "index_jobs_on_system_id"
   add_index "jobs", ["user_id"], name: "index_jobs_on_user_id"
 
-  create_table "locks", force: :cascade do |t|
-    t.string "name", null: false
+  create_table "system_capacities", force: :cascade do |t|
+    t.integer  "system_id",            null: false
+    t.datetime "start_time",           null: false
+    t.datetime "end_time"
+    t.integer  "cores",                null: false
+    t.integer  "memory",     limit: 8, null: false
   end
 
-  add_index "locks", ["name"], name: "index_locks_on_name", unique: true
+  add_index "system_capacities", ["start_time", "end_time"], name: "index_system_capacities_on_start_time_and_end_time"
+  add_index "system_capacities", ["system_id"], name: "index_system_capacities_on_system_id"
 
   create_table "system_types", force: :cascade do |t|
     t.string  "name",                       null: false
@@ -64,25 +63,18 @@ ActiveRecord::Schema.define(version: 20130925001233) do
   add_index "system_types", ["name"], name: "index_system_types_on_name", unique: true
 
   create_table "systems", force: :cascade do |t|
-    t.string   "name",                     null: false
-    t.integer  "system_type_id",           null: false
-    t.datetime "start_time",               null: false
-    t.datetime "end_time"
-    t.integer  "cores",                    null: false
-    t.integer  "memory",         limit: 8, null: false
+    t.string  "name",           null: false
+    t.integer "system_type_id", null: false
   end
 
-  add_index "systems", ["end_time"], name: "index_systems_on_end_time"
-  add_index "systems", ["name", "end_time"], name: "index_systems_on_name_and_end_time", unique: true
-  add_index "systems", ["start_time"], name: "index_systems_on_start_time"
+  add_index "systems", ["name"], name: "index_systems_on_name", unique: true
   add_index "systems", ["system_type_id"], name: "index_systems_on_system_type_id"
 
   create_table "users", force: :cascade do |t|
-    t.string  "name",     null: false
-    t.integer "group_id", null: false
+    t.string "name", null: false
   end
 
-  add_index "users", ["name", "group_id"], name: "index_users_on_name_and_group_id", unique: true
+  add_index "users", ["name"], name: "index_users_on_name", unique: true
 
   create_table "web_users", force: :cascade do |t|
     t.string   "email",          null: false

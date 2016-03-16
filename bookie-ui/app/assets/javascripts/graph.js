@@ -1,5 +1,7 @@
 // vim: ts=2:sw=2:et
 
+//TODO: rename to 'graphs.js'?
+
 //TODO: try to align data points on UTC date boundaries to make the queries faster?
 
 "use strict";
@@ -59,7 +61,7 @@ var active_request
 
 function initControls() {
   var date_inputs = $('#date_range').children('input')
-  
+
   var date = new Date(Date.now())
   //Set the date to the beginning of the month.
   date.setDate(1)
@@ -105,20 +107,20 @@ function addPlot(type) {
   plot.addClass('plot')
   plot.data('plot_type', type)
   $('#content').append(plot)
-  
+
   var type_info = plots[type]
   var series = type_info.series
   for(var i = 0; i < series.length; ++i) {
     series[i].data = []
   }
-  
+
   plot.plot(
     type_info.series,
     {
       /*lines: { show: false },
-      bars: { 
+      bars: {
         show: true,
-        //width: 
+        //width:
       },*/
       xaxis: {
         mode: 'time',
@@ -162,7 +164,7 @@ function getSummary(time_range, point_time, interval, queryParams) {
     end_time = time_range.end
   }
   var end = end_time.toISOString()
-  
+
   var paramsWithTime
   if(queryParams.length > 0) {
     paramsWithTime = queryParams + '&'
@@ -238,7 +240,7 @@ function resetPoints() {
       series[i].data = []
     }
   }
-  
+
   drawPoints()
 }
 
@@ -304,7 +306,7 @@ function onFilterChange(evt) {
   }
 
   var time_step = timeStep(time_range)
-  
+
   //Start the first request.
   var requestParams = $('#filter_form').serialize()
   getSummary(time_range, new Date(time_range.start), time_step, requestParams)

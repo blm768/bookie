@@ -8,7 +8,6 @@ class JobsController < ApplicationController
   FILTERS = {
     system: :text,
     user: :text,
-    group: :text,
     system_type: :text,
     command_name: :text,
     time: :datetime_range,
@@ -35,17 +34,13 @@ class JobsController < ApplicationController
       case type
       when :system
         sys_name = values[0]
-        systems = systems.where(name: sys_name)
         #TODO: validate that this system exists!
-        sys = systems.first
+        sys = systems.find(name: sys_name)
         jobs = jobs.where(system: sys)
         summaries = summaries.where(system: sys)
       when :user
         jobs = jobs.by_user_name(values[0])
         summaries = summaries.by_user_name(values[0])
-      when :group
-        jobs = jobs.by_group_name(values[0])
-        summaries = summaries.by_group_name(values[0])
       when :system_type
         sys_type = Bookie::Database::SystemType.find_by(name: values[0])
         if sys_type
@@ -82,8 +77,8 @@ class JobsController < ApplicationController
     #To be passed to the view
     @show_details = (params[:show_details] == "true")
     if @show_details
-      if summary_time_range
-        jobs = jobs.by_time_range_inclusive(summary_time_range)
+      if time_min
+        jobs = jobs.by_time_range_inclusive(time_min, time_max)
       end
       jobs = jobs.order(:end_time)
       @page_start = JOBS_PER_PAGE * (@page_num - 1)
