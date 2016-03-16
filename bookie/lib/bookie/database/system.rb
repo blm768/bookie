@@ -1,13 +1,11 @@
-require 'active_record'
-
-require 'bookie/database/system_type.rb'
+require 'bookie/database'
 
 module Bookie::Database
   ##
   #A system on the network
   #
   #TODO: support changing a system's type? (...or remove it entirely...)
-  class System < ActiveRecord::Base
+  class System < Model
     has_many :jobs
     has_many :system_capacities
     belongs_to :system_type

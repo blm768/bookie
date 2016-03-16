@@ -2,7 +2,7 @@ require 'active_record/migration'
 
 require 'bookie/database'
 
-class CreateBasicStructure < ActiveRecord::Migration
+class CreateBasicStructure < Bookie::Database::Migration
   def change
     create_table :users do |t|
       t.string :name, null: false

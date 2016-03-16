@@ -3,6 +3,10 @@ require 'json'
 require 'logger'
 require 'set'
 
+module Bookie
+  #Forward-declared for convenience
+end
+
 ##
 #May be included in a class to make it support a configuration DSL
 #

@@ -1,12 +1,9 @@
-require 'active_record'
-
-require 'bookie/database/user.rb'
-require 'bookie/database/system.rb'
+require 'bookie/database'
 
 module Bookie::Database
   ##
   #A system type
-  class SystemType < ActiveRecord::Base
+  class SystemType < Model
     has_many :systems
 
     validates_presence_of :name, :memory_stat_type

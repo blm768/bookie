@@ -1,11 +1,9 @@
-require 'active_record'
-
-require 'bookie/database/system'
+require 'bookie/database'
 
 module Bookie::Database
   ##
   #Represents the capacity of a system (i.e. its memory and number of CPU cores)
-  class SystemCapacity < ActiveRecord::Base
+  class SystemCapacity < Model
     belongs_to :system
 
     #TODO: unit test.

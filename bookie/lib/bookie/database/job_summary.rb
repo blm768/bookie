@@ -1,15 +1,11 @@
-require 'active_record'
-
-require 'bookie/database/job'
-require 'bookie/database/system'
-require 'bookie/database/user'
+require 'bookie/database'
 
 module Bookie::Database
   ##
   #A cached summary of Jobs in the database
   #
   #Most summary operations should be performed through this class to improve efficiency.
-  class JobSummary < ActiveRecord::Base
+  class JobSummary < Model
     self.table_name = :job_summaries
 
     belongs_to :user

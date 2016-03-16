@@ -4,7 +4,7 @@ require 'optparse'
 
 require 'bookie/database'
 
-config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
+config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/db_config.rb'
 
 target_version = nil
 
@@ -33,7 +33,8 @@ rescue OptionParser::ParseError => e
 end
 
 config = Bookie::Database::Config.load(File.open(config_file))
-config.connect
+#TODO: remove this hack once migrations work on other connections.
+config.connect(ActiveRecord::Base)
 
 target_version ||= Bookie::Database.latest_version
 current_version = ActiveRecord::Migrator.current_version
@@ -49,19 +50,19 @@ if target_version < current_version then
   puts 'Warning: target version is less than current version. The database will be rolled back.'
 end
 
-puts "Migrations may cause loss of data. Ensure that you have a current backup of your database."
-STDOUT.write "Proceed with migration? (YES/NO): "
+puts 'Migrations may cause loss of data. Ensure that you have a current backup of your database.'
+STDOUT.write 'Proceed with migration? (YES/NO): '
 response = nil
 until response
   response = STDIN.gets.chomp
   case response
-  when "YES"
+  when 'YES'
     puts "Migrating to version #{target_version}"
     Bookie::Database.migrate(target_version)
   when /^no?$/i
     exit 0
   else
-    $stdout.write "Please answer 'YES' or 'NO'. "
+    $stdout.write "Please answer 'YES' or 'NO'."
     response = nil
   end
 end

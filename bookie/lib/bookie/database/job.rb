@@ -1,12 +1,9 @@
-require 'active_record'
-
-require 'bookie/database/user.rb'
-require 'bookie/database/system.rb'
+require 'bookie/database'
 
 module Bookie::Database
   ##
   #Represents a job record
-  class Job < ActiveRecord::Base
+  class Job < Model
     belongs_to :user
     belongs_to :system
     has_one :system_type, :through => :system

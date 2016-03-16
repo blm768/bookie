@@ -119,7 +119,7 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     Helpers.db_config = Bookie::Database::Config.load(File.open('snapshot/db_config.rb', 'rb'))
-    Helpers.db_config.connect
+    Helpers.db_config.connect(ActiveRecord::Base)
 
     ActiveRecord::Migration.verbose = false
     Bookie::Database.migrate
