@@ -19,6 +19,11 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_web_user
 
+  def flash_msg_now(type, message)
+    messages = (flash.now[type] ||= [])
+    messages << message
+  end
+
   private
 
   def require_login

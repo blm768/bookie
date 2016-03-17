@@ -35,9 +35,17 @@ class JobsController < ApplicationController
       when :system
         sys_name = values[0]
         #TODO: validate that this system exists!
-        sys = systems.find(name: sys_name)
-        jobs = jobs.where(system: sys)
-        summaries = summaries.where(system: sys)
+        sys = Bookie::Database::System.where(name: sys_name).first
+        if sys then
+          jobs = jobs.where(system: sys)
+          summaries = summaries.where(system: sys)
+          system_caps = system_caps.where(system: sys)
+        else
+          jobs = jobs.where('1=0')
+          summaries = summaries.where('1=0')
+          system_caps = system_caps.where('1=0')
+          flash_msg_now :error, "Unrecognized system: #{sys_name}"
+        end
       when :user
         jobs = jobs.by_user_name(values[0])
         summaries = summaries.by_user_name(values[0])
@@ -85,7 +93,7 @@ class JobsController < ApplicationController
       num_jobs = @jobs_summary[:num_jobs]
       @num_pages = num_jobs / JOBS_PER_PAGE + ((num_jobs % JOBS_PER_PAGE) > 0 ? 1 : 0)
       @num_pages = 1 if @num_pages == 0
-      @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start).includes(:user, :group, :system, :system_type).to_a
+      @jobs = jobs.limit(JOBS_PER_PAGE).offset(@page_start).includes(:user, :system, :system_type).to_a
     end
 
     respond_to do |format|

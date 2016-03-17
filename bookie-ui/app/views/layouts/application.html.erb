@@ -18,10 +18,12 @@
 <%= render partial: "shared/navbar" %>
 
 <div id="messages">
-  <% flash.each do |category, text| %>
-    <div id="flash_<%= category %>">
-      <%= text %>
-    </div>
+  <% flash.each do |category, messages| %>
+    <ul id="flash_<%= category %>">
+      <% messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
   <% end %>
 </div>
 

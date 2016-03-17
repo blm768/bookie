@@ -38,7 +38,7 @@ class SystemsController < ApplicationController
     end
 
     #TODO: replace with working code.
-    #@systems_summary = systems.summary(summary_time_range)
+    @systems_summary = capacities.summary(time_min, time_max)
     #systems = systems.by_time_range(time_min, time_max) if time_range
     @systems = systems
   end
