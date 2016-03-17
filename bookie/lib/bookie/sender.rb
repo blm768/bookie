@@ -58,7 +58,7 @@ module Bookie
     #Sends job data from the given file to the database server
     def send_data(filename)
       users_by_id = Hash.new do |h, id|
-        h[id] = Database::User.find(id)
+        h[id] = Database::User.where(id: id).first
       end
 
       #Used to clear out cached summaries

@@ -56,7 +56,7 @@ rescue OptionParser::ParseError => e
 end
 
 db_config = Bookie::Database::Config.load(File.open(db_config_file))
-config.connect
+db_config.connect
 sender_config = Bookie::SenderConfig.load(File.open(sender_config_file))
 
 filename = ARGV[0]
@@ -102,21 +102,25 @@ if will_decommission
   end
 end
 
+#TODO: update this code.
 if will_create
   system_start_time ||= Time.now
-  Bookie::Database::Lock[:systems].synchronize do
-    system = Bookie::Database::System.active_systems.where(name: sender_config.hostname).first
+  Bookie::Database::System.transaction do
+    system = Bookie::Database::System.active.where(name: sender_config.hostname).first
     if system
-      stderr.puts "An active system is already in the database with hostname '#{config.hostname}'."
+      stderr.puts "A system is already in the database with hostname '#{config.hostname}'."
       exit 1
     end
+    system = Bookie::Database::System.create!(
+      name: sender_config.hostname,
+      system_type: Bookie::Sender.new(sender_config).system_type,
+    )
+    Bookie::Database::SystemCapacity.create!(
+      system: system,
+      start_time: system_start_time,
+      end_time: nil,
+      cores: sender_config.cores,
+      memory: sender_config.memory
+    )
   end
-  Bookie::Database::System.create!(
-    :name => config.hostname,
-    :system_type => Bookie::Sender.new(config).system_type,
-    :start_time => system_start_time,
-    :end_time => nil,
-    :cores => config.cores,
-    :memory => config.memory
-  )
 end

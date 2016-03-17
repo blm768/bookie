@@ -207,6 +207,8 @@ describe Bookie::ModelHelpers do
     end
   end
 
+  it "creates users when necessary"
+
   it "correctly calculates end time" do
     expect(job.end_time).to eql job.start_time + job.wall_time
   end
