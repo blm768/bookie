@@ -1,13 +1,13 @@
 class WebUser < ActiveRecord::Base
-  attr_accessor :password
-  before_save :set_hashed_password
+  attr_reader :password
 
   #TODO: better email validation?
   validates :email, format: { :with => /@/ }
   validates :email, uniqueness: { message: 'is already in use.' }
   validates :password, confirmation: true
 
-  def set_hashed_password
+  def password=(password)
+    @password ||= password
     if password.blank?
       self.password_salt = nil
       self.password_hash = nil
@@ -17,6 +17,8 @@ class WebUser < ActiveRecord::Base
     end
   end
 
+  ##
+  #Hashes the given password using this user's password salt
   def hash_password(password)
     Digest::SHA512.hexdigest(password + self.password_salt)
   end
@@ -44,7 +46,7 @@ class WebUser < ActiveRecord::Base
 
   def correct_reset_key?(reset_key)
     key_hash = Digest::SHA512.hexdigest(reset_key)
-    self.reset_key_hash != nil && self.reset_key_hash == key_hash
+    self.reset_key_hash == key_hash
   end
 
   def reset_key_expired?

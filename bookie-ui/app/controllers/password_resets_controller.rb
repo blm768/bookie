@@ -9,17 +9,17 @@ class PasswordResetsController < ApplicationController
     @action_name = 'Reset password'
   end
 
+  #TODO: figure out why this is deleting the password hashes.
   def create
-    web_user = WebUser.where(email, params[:email]).first
+    web_user = WebUser.where(email: params[:email]).first
     if web_user
       message_type = if web_user.confirmed? then :reset_password else :confirmation end
       key = web_user.generate_reset_key
       web_user.save!
+      #TODO: use deliver_now or deliver_later.
       WebUserMailer.send(message_type, web_user, key).deliver
     end
-    #TODO: fix this (should at least be in the conditional)
-    message_display_type = if web_user.confirmed? then 'password-reset' else 'confirmation' end
-    flash_msg :notice, "A #{message_display_type} message has been sent to your e-mail address."
+    flash_msg :notice, 'A message has been sent to the provided e-mail address.'
     redirect_to new_session_path
   end
 
@@ -32,8 +32,9 @@ class PasswordResetsController < ApplicationController
       return
     end
     @web_user = WebUser.where(id: id).first
+    #TODO: check errors, provide proper error codes, and so forth.
 
-    return unless validate_reset_key(@web_user, @reset_key)
+    return unless validate_reset_key_and_redirect(@web_user, @reset_key)
 
     @action_name = action_name_for(@web_user)
   end
@@ -45,16 +46,14 @@ class PasswordResetsController < ApplicationController
     @web_user = WebUser.where(id: params[:id]).first
     @reset_key = params[:key]
 
-    return unless validate_reset_key(@web_user, @reset_key)
-
-    @action_name = action_name_for(@web_user)
+    return unless validate_reset_key_and_redirect(@web_user, @reset_key)
 
     @web_user.password = params[:password]
     @web_user.password_confirmation = params[:password_confirmation]
     if @web_user.valid?
       @web_user.clear_reset_key
       @web_user.save!
-      flash_msg :notice, "Password #{@action_name}."
+      flash_msg :notice, 'Password set.'
       redirect_to new_session_path
     else
       render action: 'edit'
@@ -63,15 +62,16 @@ class PasswordResetsController < ApplicationController
 
   private
 
+  #TODO: remove 'password' from string?
   def action_name_for(web_user)
     if web_user.confirmed?
-      'reset'
+      'Reset password'
     else
-      'set'
+      'Set password'
     end
   end
 
-  def validate_reset_key(web_user, reset_key)
+  def validate_reset_key_and_redirect(web_user, reset_key)
     unless web_user && web_user.correct_reset_key?(reset_key)
       flash_msg :error, 'Invalid user or reset key.'
       redirect_to root_path

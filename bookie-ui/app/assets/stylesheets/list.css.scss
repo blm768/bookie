@@ -1,5 +1,5 @@
-table {
-  width: 100%;
+/* TODO: rename this CSS class? */
+table.list {
   border-collapse: collapse;
   margin-bottom: 1.5ex;
   caption {
@@ -8,24 +8,24 @@ table {
     font-size: x-large;
     font-weight: bold;
   }
-}
 
-td, th {
-  border: none;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
+  td, th {
+    border: none;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  tr {
+    &:nth-child(even) {
+      background: #FFFFFF;
+    }
+
+    &:nth-child(odd) {
+      background: #DDDDDD;
+    }
+  }
 }
 
 table#summary th {
   width: 20%;
-}
-
-tr {
-  &:nth-child(even) {
-    background: #FFFFFF;
-  }
-  
-  &:nth-child(odd) {
-    background: #DDDDDD;
-  }
 }

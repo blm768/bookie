@@ -1,37 +1,14 @@
 <% require 'bookie/formatter' %>
 
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag "list", :media => "all" %>
-  <%= stylesheet_link_tag "filter", :media => "all" %>
-<% end %>
-
-<% content_for :scripts do %>
-  <%= javascript_include_tag "filter" %>
-  <%= javascript_include_tag "filter_form" %>
+  <%= stylesheet_link_tag 'list', media: 'all' %>
 <% end %>
 
 <% content_for :heading do %>Systems<% end %>
 
-<% #TODO: integrate this with standard flash messages? %>
-<%= render partial: 'shared/filter_errors', locals: {
-  errors: @filter_errors
-} %>
-
 <div id="main">
   <div id="content">
-    <table id="summary">
-      <caption>Summary</caption>
-      <tr>
-        <th>Available CPU time</th>
-        <td><%= Bookie::Formatter.format_duration(@systems_summary[:avail_cpu_time]) %></td>
-      </tr>
-      <tr>
-        <th>Available memory (average)</th>
-        <td><%= @systems_summary[:avail_memory_avg].round.to_i %> KB</td>
-      </tr>
-    </table>
-    <table id="details">
-      <caption>Details</caption>
+    <table id="systems" class="list">
       <tr>
         <th>Hostname</th>
         <th>Type</th>
@@ -46,9 +23,4 @@
       <% end %>
     </table>
   </div>
-
-  <%= render :partial => 'shared/filters', :locals => {
-    :filter_types => SystemsController::FILTERS,
-    :filter_options => JobsController::filter_options,
-  } %>
 </div>

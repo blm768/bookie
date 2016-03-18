@@ -12,13 +12,14 @@
 
 <% content_for :heading do %>Jobs<% end %>
 
+<% #TODO: integrate this with standard flash messages? %>
 <%= render :partial => 'shared/filter_errors', :locals => {
   :errors => @filter_errors
 } %>
 
 <div id="main">
   <div id="content">
-    <table id="summary">
+    <table id="summary" class="list">
       <caption>Summary</caption>
       <tr>
         <th>Number of jobs</th>
@@ -46,7 +47,7 @@
       </tr>
     </table>
     <% if @show_details %>
-      <table id="details">
+      <table id="details" class="list">
         <caption>Details</caption>
         <tr>
           <th>Command</th>
