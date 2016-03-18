@@ -1,6 +1,6 @@
 {
-  <%= render :partial => 'shared/filter_errors', :locals => {
-    :errors => @filter_errors
+  <%= render partial: 'shared/filter_errors', locals: {
+    errors: @filter_errors
   } %>
   <% if @filter_errors.length == 0 %>
     "Available CPU time": <%= @systems_summary[:avail_cpu_time] %>,

@@ -9,6 +9,6 @@
 * Change units on graphs:
   * All units should be in the form of rates (i.e. jobs/second or jobs/day) or averages.
   * Alternatively, the number of jobs could be measured at individual points rather than over
-   entire days, or we could use a bar-style graph.
+    entire days, or we could use a bar-style graph.
   * A bar-style graph might actually be best.
 

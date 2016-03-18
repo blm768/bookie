@@ -19,6 +19,7 @@
 
 <div id="messages">
   <% flash.each do |category, messages| %>
+    <% logger.debug category %>
     <ul id="flash_<%= category %>">
       <% messages.each do |message| %>
         <li><%= message %></li>

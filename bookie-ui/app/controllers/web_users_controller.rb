@@ -12,10 +12,10 @@ class WebUsersController < ApplicationController
       key = @web_user.generate_reset_key
       @web_user.save!
       WebUserMailer.confirmation(@web_user, key).deliver
-      flash[:notice] = 'User created.'
+      flash_msg :notice, 'User created.'
       redirect_to web_users_path
     else
-      render :action => 'new'
+      render action: 'new'
     end
   end
 
@@ -25,18 +25,18 @@ class WebUsersController < ApplicationController
 
   def destroy
     redirect_to web_users_path
-    web_user = WebUser.where(:id => params[:id]).first
+    web_user = WebUser.where(id: params[:id]).first
     unless web_user
-      flash[:error] = 'Unable to find user.'
+      flash_msg :error, 'Unable to find user.'
       return
     end
 
-    confirmed_web_users = WebUser.where('web_users.password_hash IS NOT NULL')
+    confirmed_web_users = WebUser.where.not(password_hash: nil)
     if confirmed_web_users.count == 1 && web_user.confirmed?
       #Don't delete the last confirmed user.
-      flash[:error] = 'Unable to delete user: there must always be at least one confirmed user.'
+      flash_msg :error, 'Unable to delete user: there must always be at least one confirmed user.'
     else
-      flash[:notice] = 'User deleted.'
+      flash_msg :notice, 'User deleted.'
       web_user.destroy
     end
   end

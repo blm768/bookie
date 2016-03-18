@@ -12,8 +12,9 @@
 
 <% content_for :heading do %>Systems<% end %>
 
-<%= render :partial => 'shared/filter_errors', :locals => {
-  :errors => @filter_errors
+<% #TODO: integrate this with standard flash messages? %>
+<%= render partial: 'shared/filter_errors', locals: {
+  errors: @filter_errors
 } %>
 
 <div id="main">
@@ -34,19 +35,13 @@
       <tr>
         <th>Hostname</th>
         <th>Type</th>
-        <th>Cores</th>
-        <th>Memory</th>
-        <th>Start time</th>
-        <th>End time</th>
+        <th>Active</th>
       </tr>
       <% @systems.each do |system| %>
         <tr>
           <td><%= system.name %></td>
           <td><%= system.system_type.name %></td>
-          <td><%= system.cores %></td>
-          <td><%= system.memory %>kb</td>
-          <td><%= system.start_time.strftime("%Y-%m-%d %H:%M:%S") %></td>
-          <td><%= system.end_time ? system.end_time.strftime("%Y-%m-%d %H:%M:%S") : "None" %></td>
+          <td><%= if system.active? then 'yes' else 'no' end %></td>
         </tr>
       <% end %>
     </table>

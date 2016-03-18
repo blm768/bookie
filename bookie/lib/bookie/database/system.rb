@@ -14,7 +14,7 @@ module Bookie::Database
     #Finds all systems that are active (i.e. all systems with NULL values
     #for the end_time of their last capacity entry)
     def self.active
-      joins(:system_capacities).merge(SystemCapacity.where(end_time: nil))
+      joins(:system_capacities).merge(SystemCapacity.current)
     end
 
     ##
@@ -33,18 +33,12 @@ module Bookie::Database
       system
     end
 
-    #TODO: doc and test if used.
-    #TODO: put a "current" method on the system_capacities relation instead?
-    def current_capacity
-      system_capacities.find_by(end_time: nil)
-    end
-
     ##
     #Returns whether this system is "active" (i.e. it has a current capacity entry)
     #
     #TODO: rename? Allow providing a time range?
     def active?
-      cap = current_capacity
+      cap = capacities.current
       if cap then true else false end
     end
 

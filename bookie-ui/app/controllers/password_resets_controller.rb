@@ -10,15 +10,16 @@ class PasswordResetsController < ApplicationController
   end
 
   def create
-    web_user = WebUser.where(:email => params[:email]).first
+    web_user = WebUser.where(email, params[:email]).first
     if web_user
       message_type = if web_user.confirmed? then :reset_password else :confirmation end
       key = web_user.generate_reset_key
       web_user.save!
       WebUserMailer.send(message_type, web_user, key).deliver
     end
+    #TODO: fix this (should at least be in the conditional)
     message_display_type = if web_user.confirmed? then 'password-reset' else 'confirmation' end
-    flash[:notice] = "A #{message_display_type} message has been sent to your e-mail address."
+    flash_msg :notice, "A #{message_display_type} message has been sent to your e-mail address."
     redirect_to new_session_path
   end
 
@@ -26,11 +27,11 @@ class PasswordResetsController < ApplicationController
     id = params[:id]
     @reset_key = params[:key]
     if @reset_key.blank?
-      flash[:error] = 'No reset key provided'
+      flash_msg :error, 'No reset key provided'
       redirect_to root_path
       return
     end
-    @web_user = WebUser.where(:id => id).first
+    @web_user = WebUser.where(id: id).first
 
     return unless validate_reset_key(@web_user, @reset_key)
 
@@ -41,7 +42,7 @@ class PasswordResetsController < ApplicationController
     #The #find method would raise an exception for invalid user IDs, which
     #provides more information to an attacker than we'd like, even if
     #the exception details aren't displayed.
-    @web_user = WebUser.where(:id => params[:id]).first
+    @web_user = WebUser.where(id: params[:id]).first
     @reset_key = params[:key]
 
     return unless validate_reset_key(@web_user, @reset_key)
@@ -53,10 +54,10 @@ class PasswordResetsController < ApplicationController
     if @web_user.valid?
       @web_user.clear_reset_key
       @web_user.save!
-      flash[:notice] = "Password #{@action_name}."
+      flash_msg :notice, "Password #{@action_name}."
       redirect_to new_session_path
     else
-      render :action => 'edit'
+      render action: 'edit'
     end
   end
 
@@ -72,13 +73,13 @@ class PasswordResetsController < ApplicationController
 
   def validate_reset_key(web_user, reset_key)
     unless web_user && web_user.correct_reset_key?(reset_key)
-      flash[:error] = 'Invalid user or reset key.'
+      flash_msg :error, 'Invalid user or reset key.'
       redirect_to root_path
       return false
     end
 
     if web_user.reset_key_expired?
-      flash[:error] = 'This reset key has expired. Please request a new confirmation/reset key.'
+      flash_msg :error, 'This reset key has expired. Please request a new confirmation/reset key.'
       redirect_to new_password_reset_path
       return false
     end
