@@ -7,20 +7,19 @@
 <% content_for :heading do %>Systems<% end %>
 
 <div id="main">
-  <div id="content">
-    <table id="systems" class="list">
+  <table id="systems" class="list">
+    <tr>
+      <th>Hostname</th>
+      <th>Type</th>
+      <th>Active</th>
+    </tr>
+    <% @systems.each do |system| %>
       <tr>
-        <th>Hostname</th>
-        <th>Type</th>
-        <th>Active</th>
+        <td><%= system.name %></td>
+        <td><%= system.system_type.name %></td>
+        <td><%= if system.active? then 'yes' else 'no' end %></td>
       </tr>
-      <% @systems.each do |system| %>
-        <tr>
-          <td><%= system.name %></td>
-          <td><%= system.system_type.name %></td>
-          <td><%= if system.active? then 'yes' else 'no' end %></td>
-        </tr>
-      <% end %>
-    </table>
-  </div>
+    <% end %>
+  </table>
+  <%= link_to 'New system', controller: 'systems', action: 'new' %>
 </div>

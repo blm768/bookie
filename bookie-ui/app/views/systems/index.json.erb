@@ -1,9 +1,0 @@
-{
-  <%= render partial: 'shared/filter_errors', locals: {
-    errors: @filter_errors
-  } %>
-  <% if @filter_errors.length == 0 %>
-    "Available CPU time": <%= @systems_summary[:avail_cpu_time] %>,
-    "Available memory (average)": <%= @systems_summary[:avail_memory_avg].to_i %>
-  <% end %>
-}

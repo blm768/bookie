@@ -36,6 +36,7 @@ class WebUsersController < ApplicationController
       #Don't delete the last confirmed user.
       flash_msg :error, 'Unable to delete user: there must always be at least one confirmed user.'
     else
+      #TODO: handle self-deletions more gracefully.
       flash_msg :notice, 'User deleted.'
       web_user.destroy
     end

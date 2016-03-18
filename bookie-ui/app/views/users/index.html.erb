@@ -12,16 +12,14 @@
 <% content_for :heading do %>Users<% end %>
 
 <div id="main">
-  <div id="content">
-    <table id="details" class="list">
+  <table id="details" class="list">
+    <tr>
+      <th>Name</th>
+    </tr>
+    <% @users.all.each do |user| %>
       <tr>
-        <th>Name</th>
+        <td><%= user.name %></td>
       </tr>
-      <% @users.all.each do |user| %>
-        <tr>
-          <td><%= user.name %></td>
-        </tr>
-      <% end %>
-    </table>
-  </div>
+    <% end %>
+  </table>
 </div>
