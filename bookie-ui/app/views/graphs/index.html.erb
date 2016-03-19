@@ -1,11 +1,11 @@
 <% content_for :stylesheets do %>
-  <%= stylesheet_link_tag "filter", :media => "all" %>
-  <%= stylesheet_link_tag "graphs", :media => "all" %>
+  <%= stylesheet_link_tag 'filter', media: 'all' %>
+  <%= stylesheet_link_tag 'graphs', media: 'all' %>
 <% end %>
 
 <% content_for :scripts do %>
-  <%= javascript_include_tag "filter" %>
-  <%= javascript_include_tag "graph" %>
+  <%= javascript_include_tag 'filter' %>
+  <%= javascript_include_tag 'graph' %>
 <% end %>
 
 <% content_for :heading do %>Jobs<% end %>
@@ -16,7 +16,7 @@
     <div id="date_range">
       <% ['start', 'end'].each do |bound| %>
         <input type="text" id="date_<%= bound %>"></input>
-        <%= "to" if bound == 'start' %>
+        <%= 'to' if bound == 'start' %>
       <% end %>
       <select id="graph_time_zone">
         <option value="utc">UTC</option>
@@ -25,9 +25,9 @@
       <button id="do_graph" type="button">Graph</button>
     </div>
   </div>
-  
-  <%= render :partial => 'shared/filters', :locals => {
-    :filter_types => GraphsController::FILTERS,
-    :filter_options => JobsController::filter_options,
+
+  <%= render partial: 'shared/filters', locals: {
+    filter_types: GraphsController::FILTERS,
+    filter_options: JobsController::filter_options,
   } %>
 </div>

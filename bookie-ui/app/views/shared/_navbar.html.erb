@@ -1,25 +1,25 @@
 <div id="navigation">
   <ul>
-    <li><a href="/jobs">Jobs</a>
+    <li><%= link_to 'Jobs', jobs_path %>
       <ul>
-        <li><%= link_to 'Summary', '/jobs' %></li>
-        <li><%= link_to 'Graphs', '/graphs' %></li>
+        <li><%= link_to 'Summary', jobs_path %></li>
+        <li><%= link_to 'Graphs', graphs_path %></li>
       </ul>
     </li>
-    <li><a href="/systems">Systems</a></li>
-    <li><a href="/users">Users</a></li>
-    <li><a href="/web_users">Web users</a></li>
+    <li><%= link_to 'Systems', systems_path %></li>
+    <li><%= link_to 'Users', users_path %></li>
+    <li><%= link_to 'Web users', web_users_path %></li>
   </ul>
   <ul id="account_tools">
     <li>
       <% if current_web_user %>
         <%= current_web_user.email %>
         <ul>
-          <li><%= link_to 'Log out', '/log_out' %></li>
+          <li><%= link_to 'Log out', session_path, method: :delete %></li>
           <li><%= link_to 'Change password', edit_web_user_path(current_web_user) %></li>
         </ul>
       <% else %>
-        <%= link_to 'Log in', '/log_in' %>
+        <%= link_to 'Log in', new_session_path %>
       <% end%>
     </li>
   </div>

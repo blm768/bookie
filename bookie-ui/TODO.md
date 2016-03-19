@@ -12,4 +12,5 @@
     entire days, or we could use a bar-style graph.
   * A bar-style graph might actually be best.
 * Document mailer setup (at least source address needs to be configured.)
+* Use #require instead of #permit on param hashes?
 

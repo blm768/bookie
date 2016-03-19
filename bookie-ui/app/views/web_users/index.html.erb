@@ -21,11 +21,11 @@
         <tr>
           <td><%= web_user.email %></td>
           <td><%= if web_user.confirmed? then 'Yes' else 'No' end %></td>
-          <td><%= link_to 'Delete', web_user_path(web_user.id), :method => :delete %></td>
+          <td><%= link_to 'Delete', web_user_path(web_user.id), method: :delete %></td>
         </tr>
       <% end %>
     </table>
-    <%= link_to 'New user', controller: 'web_users', action: 'new' %>
+    <%= link_to 'New user', new_web_user_path %>
   </div>
 </div>
 

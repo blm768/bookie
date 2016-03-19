@@ -47,7 +47,7 @@
     li {
       display: block;
     }
-    
+
     ul {
       display: none;
 
@@ -74,13 +74,9 @@
   #account_tools {
     float: right;
 
+    /* TODO: make sure the list doesn't go off-screen to the right. */
     ul {
       width: 100%;
     }
   }
-
 }
-
-/* vim: ts=2:sw=2:et
- */
-
