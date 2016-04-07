@@ -18,7 +18,6 @@ module Bookie::Database
     end
 
     #TODO: doc and unit test.
-    #TODO: remove?
     def self.current
       self.where(end_time: nil)
     end

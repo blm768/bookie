@@ -11,7 +11,7 @@ module Bookie::Formatters
     end
 
     def do_print_summary(field_values)
-      Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
+      Bookie::Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
         @io.printf("%-30.30s%s\n", "#{label}:", value)
       end
     end
@@ -19,7 +19,7 @@ module Bookie::Formatters
     def do_print_jobs(jobs)
       #TODO: optimize by moving out of the function?
       format_string = "%-15.15s %-20.20s %-26.26s %-26.26s %-30.30s %-30.30s %-20.20s %-20.20s %-11.11s"
-      heading = sprintf(format_string, *Formatter::DETAILS_FIELD_LABELS)
+      heading = sprintf(format_string, *Bookie::Formatter::DETAILS_FIELD_LABELS)
       @io.puts heading.rstrip
       @io.puts '-' * (heading.length)
       fields_for_each_job(jobs) do |fields|
