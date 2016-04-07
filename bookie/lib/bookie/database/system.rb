@@ -51,6 +51,10 @@ module Bookie::Database
       cap.save!
     end
 
+    def current_capacity
+      system_capacities.current.first
+    end
+    
     validates_presence_of :name, :system_type
   end
 end

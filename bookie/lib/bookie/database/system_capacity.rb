@@ -107,9 +107,5 @@ module Bookie::Database
         avail_memory_avg: if time_span == 0 then 0.0 else Float(avail_memory_time) / time_span end,
       }
     end
-
-    def current_capacity
-      system_capacities.current.first
-    end
   end
 end
