@@ -69,7 +69,7 @@ module Helpers
 
     #Give the first system two capacity entries.
     systems[0].decommission!(systems[1].current_capacity.start_time)
-    capacity = systems[2].current_capacity.dup
+    capacity = systems[2].system_capacities.current.first.dup
     capacity.system = systems[0]
     capacity.save!
 

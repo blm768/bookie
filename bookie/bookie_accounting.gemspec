@@ -18,6 +18,5 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency('activerecord', '~> 4.2')
   gem.add_dependency('json', '~> 1.8')
-  gem.add_dependency('pacct', '>= 0.8.4')
+  gem.add_dependency('pacct', '~> 0.8.4')
 end
-
