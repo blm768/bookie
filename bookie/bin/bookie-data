@@ -155,5 +155,3 @@ if include_details
   end
   formatter.print_jobs(jobs.all_with_associations)
 end
-
-formatter.flush
