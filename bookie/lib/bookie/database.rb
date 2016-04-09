@@ -72,7 +72,7 @@ module Bookie::Database
     #TODO: remove the model_class hack. (Needed for migrations)
     def connect(model_class = Model)
       #To consider: disable colorized logging?
-      #To consider: create config option for this?
+      #TODO: create config option for this?
       #ActiveRecord::Base.logger = Logger.new(STDERR)
       #ActiveRecord::Base.logger.level = Logger::WARN
       model_class.time_zone_aware_attributes = true

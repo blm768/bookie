@@ -27,15 +27,16 @@ Cleanup:
 - Replace <tt> tags in docs with <code>?
 - Rename "snapshot" directory?
 - Ensure that RSpec tests use "::method" for class methods.
+- Determine whether printing job details is still necessary.
 
 Expansion:
 - Use concurrency control?
 
-Validate uniqueness?
-Unit test uniqueness constraints?
-Make units more independent.
-Make unit test success more independent.
-Set up guard-rspec gem for testing?
+Testing:
+- Validate uniqueness?
+- Unit test uniqueness constraints?
+- Make units more independent.
+- Set up guard-rspec gem for testing?
 
 Data consistency considerations:
 If a user is deleted, how to we handle that? Mark the user's processes with an "unknown" UID?

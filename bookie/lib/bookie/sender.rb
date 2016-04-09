@@ -1,6 +1,8 @@
-require 'bookie/database'
-
 require 'date'
+
+require 'active_support/inflector/methods'
+
+require 'bookie/database'
 
 module Bookie
   ##
@@ -51,6 +53,7 @@ module Bookie
       #Include the correct plugin module.
       sys_type = config.system_type
       require "bookie/senders/#{sys_type}"
+      #TODO: just create an instance variable instead of extending?
       extend Bookie::Senders.const_get(sys_type.camelize)
     end
 
