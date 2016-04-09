@@ -54,7 +54,7 @@ module Bookie
       sys_type = config.system_type
       require "bookie/senders/#{sys_type}"
       #TODO: just create an instance variable instead of extending?
-      extend Bookie::Senders.const_get(sys_type.camelize)
+      extend Bookie::Senders.const_get(ActiveSupport::Inflector.camelize(sys_type))
     end
 
     ##
