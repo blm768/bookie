@@ -3,28 +3,24 @@ require 'formatter_helper'
 
 require 'bookie/formatters/comma_dump'
 
-include Bookie
-include Bookie::Database
-
 include FormatterHelpers
 
-describe Bookie::Formatters::CommaDump do
+describe Bookie::Formatters::CommaDumpFormatter do
   let(:io_mock) { IOMock.new }
-  let(:formatter) { Bookie::Formatter.new(:comma_dump, 'test.csv') }
+  let(:formatter) { Bookie::Formatters::CommaDumpFormatter.new('test.csv') }
 
   before(:each) do
     File.stubs(:open).returns(io_mock)
   end
 
-  #TODO: remove this test?
   it "correctly opens files" do
     File.expects(:open).with('test.csv')
-    Bookie::Formatter.new(:comma_dump, 'test.csv')
+    formatter
   end
 
   it "correctly formats jobs" do
     with_utc do
-      formatter.print_jobs(Job.order(:start_time).limit(2))
+      formatter.print_jobs(Bookie::Database::Job.order(:start_time).limit(2))
       expect(io_mock.buf).to eql <<-eos
 User, System, Start time, End time, Wall time, CPU time, Memory usage, Command, Exit code
 "root", "test1", "2012-01-01 00:00:00", "2012-01-01 01:00:00", "0 weeks, 0 days, 01:00:00", "0 weeks, 0 days, 00:01:40", "200kb (avg)", "vi", "0"
@@ -47,7 +43,7 @@ eos
   end
 
   it "correctly quotes values" do
-    quote = Formatters::CommaDump.method(:quote)
+    quote = Bookie::Formatters::CommaDumpFormatter.method(:quote)
     expect(quote.call("test")).to eql '"test"'
     expect(quote.call('"test"')).to eql '"""test"""'
     expect(quote.call(0)).to eql '"0"'

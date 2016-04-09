@@ -1,6 +1,5 @@
 First priority:
-- Filter out 0-time jobs (use Ruby config w/ block?)
-  - Update docs?
+- Update docs.
 - Update executables.
 
 Later:
@@ -13,7 +12,7 @@ Testing:
 
 Optimization:
 - Use bulk inserts?
-- Wrap send/summarize operations in a transaction?
+- Wrap send/summarize operations in a transaction
 
 Cleanup:
 - Remove find_or_create methods.
@@ -27,6 +26,7 @@ Cleanup:
 - Fix memory specification issue
 - Replace <tt> tags in docs with <code>?
 - Rename "snapshot" directory?
+- Ensure that RSpec tests use "::method" for class methods.
 
 Expansion:
 - Use concurrency control?
@@ -39,4 +39,3 @@ Set up guard-rspec gem for testing?
 
 Data consistency considerations:
 If a user is deleted, how to we handle that? Mark the user's processes with an "unknown" UID?
-

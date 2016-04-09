@@ -1,8 +1,13 @@
 module Bookie::Formatters
   ##
   #Formats data in a human-readable text format intended to be send to standard output
-  module Stdout
-    def open(filename)
+  class StdoutFormatter
+    FORMATTER_TYPE = :stdout
+    include Bookie::Formatter
+
+    def initialize(filename = nil)
+      #TODO: manage file handles better.
+      #(Leaving then to the GC is sub-optimal.)
       if filename
         @io = File.open(filename)
       else
@@ -10,13 +15,14 @@ module Bookie::Formatters
       end
     end
 
-    def do_print_summary(field_values)
+    def print_summary(job_summary, system_capacity_summary)
+      field_values = summary_field_values(job_summary, system_capacity_summary)
       Bookie::Formatter::SUMMARY_FIELD_LABELS.zip(field_values) do |label, value|
         @io.printf("%-30.30s%s\n", "#{label}:", value)
       end
     end
 
-    def do_print_jobs(jobs)
+    def print_jobs(jobs)
       #TODO: optimize by moving out of the function?
       format_string = "%-15.15s %-20.20s %-26.26s %-26.26s %-30.30s %-30.30s %-20.20s %-20.20s %-11.11s"
       heading = sprintf(format_string, *Bookie::Formatter::DETAILS_FIELD_LABELS)

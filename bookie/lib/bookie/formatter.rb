@@ -5,49 +5,50 @@ require 'date'
 module Bookie
   ##
   #Takes jobs from the database and creates summaries and tables in various output formats.
-  class Formatter
+  module Formatter
     ##
-    #Creates a new Formatter object
+    #Gets the Formatter class corresponding to <tt>type</tt>
     #
     #<tt>type</tt> should be a symbol that maps to one of the files in <tt>bookie/formatters</tt>.
-    #TODO: just subclass Formatter and be done with it.
     #
     #===Examples
     #  #Uses the formatter from 'bookie/formatters/csv'
-    #  formatter = Bookie::Formatter::Formatter.new(:csv, 'test.csv')
-    def initialize(type, filename = nil)
-      #Needed for symbol arguments
+    #  formatter = Bookie::Formatter.for_type(:csv).new('test.csv')
+    def self.for_type(type)
+      @formatter_classes ||= {}
       type = type.to_s
       require "bookie/formatters/#{type}"
-      extend Bookie::Formatters.const_get(type.camelize)
-      self.open(filename)
+      @formatter_classes[type]
+    end
+
+    def self.included(klass)
+      @formatter_classes ||= {}
+      @formatter_classes[klass.const_get(:FORMATTER_TYPE)] = klass
     end
 
     ##
     #An array containing the labels for each field in a summary
     SUMMARY_FIELD_LABELS = [
-        "Number of jobs",
-        "Total CPU time",
-        "Successful",
-        "Available CPU time",
-        "CPU time used",
-        "Available memory (average)",
-        "Memory used (average)",
-      ]
-
-      ##
-      #An array containing the labels for each field in a details table
-      #TODO: remove some fields?
-      DETAILS_FIELD_LABELS = [
-        'User', 'System', 'Start time', 'End time', 'Wall time',
-        'CPU time', 'Memory usage', 'Command', 'Exit code'
-      ]
+      'Number of jobs',
+      'Total CPU time',
+      'Successful',
+      'Available CPU time',
+      'CPU time used',
+      'Available memory (average)',
+      'Memory used (average)',
+    ]
 
     ##
-    #Prints info from the summary results <code>job_summary</code> and <code>system_capacity_summary</code>
-    #
-    #TODO: refactor!
-    def print_summary(job_summary, system_capacity_summary)
+    #An array containing the labels for each field in a details table
+    #TODO: remove some fields?
+    DETAILS_FIELD_LABELS = [
+      'User', 'System', 'Start time', 'End time', 'Wall time',
+      'CPU time', 'Memory usage', 'Command', 'Exit code'
+    ]
+
+    ##
+    #Returns an array containing the values corresponding to the labels in SUMMARY_FIELD_LABELS
+    def summary_field_values(job_summary, system_capacity_summary)
       num_jobs = job_summary[:num_jobs]
       cpu_time = job_summary[:cpu_time]
       avail_cpu_time = system_capacity_summary[:avail_cpu_time]
@@ -55,7 +56,7 @@ module Bookie
       avail_memory_time = system_capacity_summary[:avail_memory_time]
       successful = (num_jobs == 0) ? 0.0 : Float(job_summary[:successful]) / num_jobs
 
-      field_values = [
+      [
         num_jobs,
         Formatter.format_duration(cpu_time),
         '%.4f%%' % (successful * 100),
@@ -64,26 +65,6 @@ module Bookie
         "#{Integer(system_capacity_summary[:avail_memory_avg])} kb",
         if avail_memory_time == 0 then '0.0000%' else '%.4f%%' % (Float(memory_time) / avail_memory_time * 100) end
       ]
-
-      do_print_summary(field_values)
-    end
-
-    ##
-    #Prints a table containing all details of <tt>jobs</tt>
-    #
-    #<tt>jobs</tt> should be an ActiveRecord model or relation.
-    #
-    #To consider: allow any Enumerable?
-    def print_jobs(jobs)
-      do_print_jobs(jobs)
-    end
-
-    ##
-    #Flushes all output
-    #
-    #Should always be called after the desired information has been written
-    def flush()
-      do_flush() if self.respond_to?(:do_flush)
     end
 
     ##
@@ -92,11 +73,9 @@ module Bookie
     #call-seq:
     #  fields_for_each_job(jobs) { |fields| ... }
     #
-    #<code>jobs</code> should be an ActiveRecord model or relation.
-    #
     #===Examples
     #  formatter.fields_for_each_job(jobs) do |fields|
-    #    Bookie::Formatter::Formatter::DETAILS_FIELD_LABELS.zip(fields) do |label, field|
+    #    Bookie::Formatter::DETAILS_FIELD_LABELS.zip(fields) do |label, field|
     #      puts "#{label}: #{field}"
     #    end
     #  end

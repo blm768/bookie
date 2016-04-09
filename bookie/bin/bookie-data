@@ -136,7 +136,7 @@ end
 jobs_summary = job_summaries.summary(jobs, time_min, time_max)
 systems_summary = system_capacities.summary(time_min, time_max)
 
-formatter = Bookie::Formatter.new(output_type, filename)
+formatter = Bookie::Formatter.for_type(output_type).new(filename)
 formatter.print_summary(jobs_summary, systems_summary)
 
 if include_details
@@ -157,4 +157,3 @@ if include_details
 end
 
 formatter.flush
-

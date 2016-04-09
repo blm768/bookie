@@ -3,31 +3,27 @@ require 'formatter_helper'
 
 require 'bookie/formatters/stdout'
 
-include Bookie
-include Bookie::Database
-
 include FormatterHelpers
 
-describe Bookie::Formatters::Stdout do
+describe Bookie::Formatters::StdoutFormatter do
   let(:io_mock) { IOMock.new }
-  let(:formatter) { Formatter.new(:stdout, 'mock.out') }
+  let(:formatter) { Bookie::Formatters::StdoutFormatter.new('mock.out') }
 
   before(:each) do
     File.stubs(:open).returns(io_mock)
   end
 
-  #TODO: remove this test?
   it "correctly opens files" do
-    f = Bookie::Formatter.new(:stdout)
-    expect(f.instance_variable_get(:'@io')).to eql STDOUT
     File.expects(:open).with('mock.out')
-    Bookie::Formatter.new(:stdout, 'mock.out')
+    formatter
+    other_formatter = Bookie::Formatters::StdoutFormatter.new
+    expect(other_formatter.instance_variable_get(:'@io')).to eql STDOUT
   end
 
   it "correctly formats jobs" do
     with_utc do
-      formatter.print_jobs(Job.order(:start_time).limit(2))
-      formatter.flush
+      #TODO: stub out the database access here?
+      formatter.print_jobs(Bookie::Database::Job.order(:start_time).limit(2))
       expect(io_mock.buf).to eql <<-eos
 User            System               Start time                 End time                   Wall time                      CPU time                       Memory usage         Command              Exit code
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -37,10 +33,8 @@ eos
     end
   end
 
-  #TODO: stub out the database and summarization stuff.
   it "correctly formats summaries" do
     formatter.print_summary(FormatterHelpers::JOB_SUMMARY, FormatterHelpers::SYSTEM_CAPACITY_SUMMARY)
-    formatter.flush
     expect(io_mock.buf).to eql <<-eos
 Number of jobs:               40
 Total CPU time:               0 weeks, 0 days, 01:06:40
