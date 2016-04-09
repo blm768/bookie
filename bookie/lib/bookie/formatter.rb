@@ -16,14 +16,14 @@ module Bookie
     #  formatter = Bookie::Formatter.for_type(:csv).new('test.csv')
     def self.for_type(type)
       @formatter_classes ||= {}
-      type = type.to_s
       require "bookie/formatters/#{type}"
       @formatter_classes[type]
     end
 
     def self.included(klass)
       @formatter_classes ||= {}
-      @formatter_classes[klass.const_get(:FORMATTER_TYPE)] = klass
+      type_name = klass.const_get(:FORMATTER_TYPE)
+      @formatter_classes[type_name] = klass
     end
 
     ##

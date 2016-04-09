@@ -5,10 +5,6 @@ require 'formatter_helper'
 class MockFormatter
   FORMATTER_TYPE = :mock
   include Bookie::Formatter
-  attr_reader :mock_field_values
-  def print_summary(job_summary, system_capacity_summary)
-    @mock_field_values = summary_field_values(job_summary, system_capacity_summary)
-  end
 end
 
 include Bookie
@@ -24,9 +20,13 @@ describe Bookie::Formatter do
   let(:capacities) { Database::SystemCapacity }
 
   describe "::for_type" do
-    it "loads the formatter code" do
+    it "loads the correct formatter" do
       Formatter.expects(:require).with('bookie/formatters/mock')
-      Formatter.for_type(:mock)
+      expect(Formatter.for_type(:mock)).to eql MockFormatter
+    end
+
+    it "requires the formatter to report its type" do
+      expect{ Class.new { include Bookie::Formatter } }.to raise_error(NameError)
     end
   end
 
