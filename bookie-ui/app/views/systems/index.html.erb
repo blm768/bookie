@@ -1,5 +1,3 @@
-<% require 'bookie/formatter' %>
-
 <% content_for :stylesheets do %>
   <%= stylesheet_link_tag 'list', media: 'all' %>
 <% end %>
@@ -15,7 +13,7 @@
     </tr>
     <% @systems.each do |system| %>
       <tr>
-        <td><%= system.name %></td>
+        <td><%= link_to system.name, @system %></td>
         <td><%= system.system_type.name %></td>
         <td><%= if system.active? then 'yes' else 'no' end %></td>
       </tr>
