@@ -1,7 +1,7 @@
 <div id="controls">
   <h2>Filters</h2>
   <% displayed_filters = Set.new %>
-  <%= form_tag("", :method => "get", :id => "filter_form") do %>
+  <%= form_tag("", method: 'get', id: 'filter_form') do %>
     <span id="filters">
       <% if @prev_filters %>
         <% @prev_filters.each do |name, values| %>
@@ -32,4 +32,3 @@
     <% end %>
   </div>
 </div>
-

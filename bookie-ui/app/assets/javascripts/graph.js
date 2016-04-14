@@ -1,4 +1,6 @@
-// vim: ts=2:sw=2:et
+//= require flot/jquery.flot
+//= require flot/jquery.flot.time
+//= require flot/jquery.flot.resize
 
 //TODO: rename to 'graphs.js'?
 
@@ -313,18 +315,10 @@ function onFilterChange(evt) {
 }
 
 $(document).ready(function() {
-  //To consider: use JQuery Deferred objects instead of plain callbacks?
-  $.getScript('assets/flot/jquery.flot.js', function() {
-    $.getScript('assets/flot/jquery.flot.time.js', function() {
-      $.getScript('assets/flot/jquery.flot.resize.js', function() {
-        initFilters()
-        initControls()
-        resetPoints()
-        for(var type in plots) {
-          addPlot(type)
-        }
-      })
-    })
-  })
+  initFilters()
+  initControls()
+  resetPoints()
+  for(var type in plots) {
+    addPlot(type)
+  }
 })
-

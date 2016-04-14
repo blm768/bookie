@@ -1,6 +1,6 @@
 <div id="filter_prototype_<%= name %>">
-  <%= render :partial => "shared/filter_inputs/#{filter_type}", :locals => {
-    :name => name,
-    :values => []
+  <%= render partial: "shared/filter_inputs/#{filter_type}", locals: {
+    name: name,
+    values: []
   } %>
 </div>

@@ -1,8 +1,8 @@
 <div class="filter">
   <span class="filter_type"><%= name.to_s.humanize %></span>
   <div class="filter_remover"></div>
-  <%= render :partial => "shared/filter_inputs/#{filter_type}", :locals => {
-    :name => name,
-    :values => values
+  <%= render partial: "shared/filter_inputs/#{filter_type}", locals: {
+    name: name,
+    values: values
   } %>
 </div>

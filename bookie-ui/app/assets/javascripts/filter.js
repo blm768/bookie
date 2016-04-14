@@ -1,9 +1,7 @@
-// vim: ts=2:sw=2:et
-
 function initFilters() {
   var addFilterSelect = $('#add_filter')
   addFilterSelect.change(addFilter)
-  
+
   //If filters already exist, tie events to them.
   $('.filter_remover').click(function() { removeFilter($(this).parent()) })
   $('.filter').children('input[type=text]').change(function() {
@@ -29,7 +27,7 @@ function addFilter() {
   opt.prop('disabled', true)
   //Reset the displayed option to the default.
   select.val('')
-  
+
   var filters = $('#filters')
   var filter = $('<div/>')
   filter.addClass('filter')
@@ -84,4 +82,3 @@ function submitFilters() {
     }
   }
 }
-
