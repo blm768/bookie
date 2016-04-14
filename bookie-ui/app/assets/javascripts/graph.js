@@ -99,7 +99,9 @@ function initControls() {
 
   //Prepare callbacks:
   $('#do_graph').click(onFilterChange)
-  $('#filter_form').submit(onFilterChange)
+  var filterForm = $('#filter_form')
+  filterForm.off("submit")
+  filterForm.submit(onFilterChange)
 }
 
 function addPlot(type) {
@@ -312,7 +314,7 @@ function onFilterChange(evt) {
   getSummary(time_range, new Date(time_range.start), time_step, requestParams)
 }
 
-$(document).ready(function() {
+$(document).one("ready", function() {
   initControls()
   resetPoints()
   for(var type in plots) {

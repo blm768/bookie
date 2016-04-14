@@ -63,7 +63,7 @@ function submitFilters() {
   }
 }
 
-$(document).ready(function() {
+$(document).one("ready", function() {
 	var filterForm = $('#filter_form')
 	filterForm.submit(submitFilters)
 
