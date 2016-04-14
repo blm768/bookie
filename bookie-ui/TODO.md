@@ -1,5 +1,4 @@
 * Unit testing
-* Update Flot library
 * Document Git submodules
 * Change (and don't release!) the session secret key before deployment.
 * Respond with 404 on invalid deletes (and some other operations?)
@@ -13,4 +12,3 @@
   * A bar-style graph might actually be best.
 * Document mailer setup (at least source address needs to be configured.)
 * Use #require instead of #permit on param hashes?
-
