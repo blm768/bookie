@@ -1,5 +1,4 @@
 * Unit testing
-* Document Git submodules
 * Document multi-database setup.
 * Change (and don't release!) the session secret key before deployment.
 * Respond with 404 on invalid deletes (and some other operations?)

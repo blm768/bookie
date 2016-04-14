@@ -2,8 +2,6 @@
 //= require flot/jquery.flot.time
 //= require flot/jquery.flot.resize
 
-//TODO: rename to 'graphs.js'?
-
 //TODO: try to align data points on UTC date boundaries to make the queries faster?
 
 "use strict";
@@ -315,7 +313,6 @@ function onFilterChange(evt) {
 }
 
 $(document).ready(function() {
-  initFilters()
   initControls()
   resetPoints()
   for(var type in plots) {

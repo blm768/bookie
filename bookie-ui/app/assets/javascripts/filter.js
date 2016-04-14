@@ -1,23 +1,3 @@
-function initFilters() {
-  var addFilterSelect = $('#add_filter')
-  addFilterSelect.change(addFilter)
-
-  //If filters already exist, tie events to them.
-  $('.filter_remover').click(function() { removeFilter($(this).parent()) })
-  $('.filter').children('input[type=text]').change(function() {
-    //Used when the filter form's submit event is cancelled (such as on the Graphs page)
-    this.blur()
-  })
-
-  //If there's a page selector, set it up.
-  var pageSelect = $('#select_page')
-  if(pageSelect) {
-    pageSelect.change(function() {
-      $('#filter_form').submit()
-    })
-  }
-}
-
 function addFilter() {
   var select = $('#add_filter')
   if(select.val() == '') {
@@ -82,3 +62,26 @@ function submitFilters() {
     }
   }
 }
+
+$(document).ready(function() {
+	var filterForm = $('#filter_form')
+	filterForm.submit(submitFilters)
+
+  $('#add_filter').change(addFilter)
+
+  //If filters already exist, tie events to them.
+  //TODO: factor this out into a common function.
+  $('.filter_remover').click(function() { removeFilter($(this).parent()) })
+  $('.filter').children('input[type=text]').change(function() {
+    //Used when the filter form's submit event is cancelled (such as on the Graphs page)
+    this.blur()
+  })
+
+  //If there's a page selector, set it up.
+  var pageSelect = $('#select_page')
+  if(pageSelect) {
+    pageSelect.change(function() {
+      $('#filter_form').submit()
+    })
+  }
+})

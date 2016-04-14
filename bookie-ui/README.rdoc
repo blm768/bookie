@@ -1,6 +1,21 @@
 == README
 
-=== Creating the development database
+=== Setting up for development
+    bundle install
+    git submodule init
+    git submodule update
+    rake db:migrate
+    rake db:seed
+    cd ..
+    bookie-migrate -c misc/db_rails.rb
+
+=== Database organization
+Bookie-UI uses two databases: one for Web interface configuration and one for
+Bookie's process accounting data. The "standard" ActiveRecord connection points
+to the Web interface database. The Bookie database connection can be configured
+in <code>database.yml</code> as <code>bookie_ENVIRONMENT</code>, where
+<code>ENVIRONMENT</code> is the desired Rails environment (development, test,
+production, etc.).
 
 Things to cover:
 

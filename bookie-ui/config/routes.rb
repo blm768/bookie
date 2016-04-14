@@ -8,8 +8,7 @@ BookieUi::Application.routes.draw do
   resources :systems
   resources :users
 
-  #TODO: make this a sub-resource of Jobs? An action on Jobs?
-  resources :graphs
+  resource :graph, only: [:show]
 
   resources :web_users
   resources :password_resets
