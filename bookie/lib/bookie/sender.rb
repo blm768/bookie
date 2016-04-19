@@ -30,12 +30,6 @@ module Bookie
     ##
     #The system's hostname
     property :hostname, type: String
-
-    #TODO: remove these?
-    #The number of cores on the system
-    property :cores, type: Integer
-    #The RAM (in KB) in the system
-    property :memory, type: Integer
   end
 
   ##

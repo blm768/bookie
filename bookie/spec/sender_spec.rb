@@ -23,8 +23,8 @@ describe Bookie::Sender do
       system: sys_1,
       start_time: base_time,
       end_time: base_time + 1000,
-      cores: sender_config.cores,
-      memory: sender_config.memory
+      cores: 4,
+      memory: 4000
     )
     cap_2 = cap_1.dup
     cap_2.start_time = base_time + 1001
@@ -213,4 +213,3 @@ describe Bookie::ModelHelpers do
     expect(job.end_time).to eql job.start_time + job.wall_time
   end
 end
-
