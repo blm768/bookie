@@ -13,12 +13,12 @@ describe Bookie::Database::JobSummary do
         ['vi', 'emacs'].each do |command_name|
           (d ... d + 2).each do |date|
             JobSummary.create!(
-              :user => user,
-              :system => system,
-              :command_name => command_name,
-              :date => date,
-              :cpu_time => 0,
-              :memory_time => 0
+              user: user,
+              system: system,
+              command_name: command_name,
+              date: date,
+              cpu_time: 0,
+              memory_time: 0
             )
           end
         end
@@ -67,7 +67,7 @@ describe Bookie::Database::JobSummary do
       #Check the case where there are no users or no systems:
       JobSummary.delete_all
       [User, System].each do |klass|
-        JobSummary.transaction(:requires_new => true) do
+        JobSummary.transaction(requires_new: true) do
           klass.delete_all
           JobSummary.summarize(d)
           expect(JobSummary.where(date: d).count).to eql 0
@@ -164,12 +164,12 @@ describe Bookie::Database::JobSummary do
 
   it "validates fields" do
     fields = {
-      :user => User.first,
-      :system => System.first,
-      :command_name => '',
-      :date => Date.new(2012),
-      :cpu_time => 100,
-      :memory_time => 1000000,
+      user: User.first,
+      system: System.first,
+      command_name: '',
+      date: Date.new(2012),
+      cpu_time: 100,
+      memory_time: 1000000,
     }
 
     sum = JobSummary.new(fields)
@@ -191,4 +191,3 @@ describe Bookie::Database::JobSummary do
     end
   end
 end
-

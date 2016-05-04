@@ -42,12 +42,12 @@ module Helpers
 
     system_types = [
       Bookie::Database::SystemType.create!(
-        :name => 'Standalone',
-        :memory_stat_type => :avg
+        name: 'Standalone',
+        memory_stat_type: :avg
       ),
       Bookie::Database::SystemType.create!(
-        :name => 'TORQUE cluster',
-        :memory_stat_type => :max
+        name: 'TORQUE cluster',
+        memory_stat_type: :max
       ),
     ]
 

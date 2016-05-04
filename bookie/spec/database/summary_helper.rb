@@ -15,11 +15,11 @@ module SummaryHelpers
 
   def create_summaries(obj)
     {
-      :all => obj.summary(nil, nil),
-      :all_constrained => obj.summary(BASE_START, BASE_END),
-      :wide => obj.summary(BASE_START - WIDE_MARGIN, BASE_END + WIDE_MARGIN),
-      :clipped => obj.summary(BASE_START + CLIP_MARGIN, BASE_END - CLIP_MARGIN),
-      :empty => obj.summary(BASE_START, BASE_START),
+      all: obj.summary(nil, nil),
+      all_constrained: obj.summary(BASE_START, BASE_END),
+      wide: obj.summary(BASE_START - WIDE_MARGIN, BASE_END + WIDE_MARGIN),
+      clipped: obj.summary(BASE_START + CLIP_MARGIN, BASE_END - CLIP_MARGIN),
+      empty: obj.summary(BASE_START, BASE_START),
     }
   end
 end

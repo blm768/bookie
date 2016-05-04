@@ -75,21 +75,23 @@ module Bookie
       return unless time_min
 
       #Send the job data:
-      each_job(filename) do |job|
-        next if filtered?(job)
+      Database::Job.transaction do
+        each_job(filename) do |job|
+          next if filtered?(job)
 
-        model = job.to_record
-        time_min = (model.start_time < time_min) ? model.start_time : time_min
-        time_max = (model.end_time > time_max) ? model.end_time : time_max
+          model = job.to_record
+          time_min = (model.start_time < time_min) ? model.start_time : time_min
+          time_max = (model.end_time > time_max) ? model.end_time : time_max
 
-        model.system = system
+          model.system = system
 
-        #Either find the user or create it.
-        model.user = users_by_id[job.user_id] || begin
-          users_by_id[job.user_id] = Database::User.create!(id: job.user_id, name: job.user_name)
+          #Either find the user or create it.
+          model.user = users_by_id[job.user_id] || begin
+            users_by_id[job.user_id] = Database::User.create!(id: job.user_id, name: job.user_name)
+          end
+
+          model.save!
         end
-
-        model.save!
       end
 
       #Clear out the summaries that would have been affected by the new data:
@@ -113,22 +115,24 @@ module Bookie
 
       return unless time_min
 
-      each_job(filename) do |job|
-        next if filtered?(job)
-        #TODO: optimize this operation?
-        #(It should be possible to delete all of the jobs with end times between those of the first and last jobs
-        #of the file (exclusive), but jobs with end times matching those of the first/last jobs in the file might
-        #be from an earlier or later file, not this one.
-        #This assumes that the files all have jobs sorted by end time.
-        #TODO: note how many jobs were deleted?
-        model = duplicate(job)
-        break unless model
-        time_min = [model.start_time, time_min].min
-        time_max = [model.end_time, time_max].max
-        model.delete
-      end
+      Database::Job.transaction do
+        each_job(filename) do |job|
+          next if filtered?(job)
+          #TODO: optimize this operation?
+          #(It should be possible to delete all of the jobs with end times between those of the first and last jobs
+          #of the file (exclusive), but jobs with end times matching those of the first/last jobs in the file might
+          #be from an earlier or later file, not this one.
+          #This assumes that the files all have jobs sorted by end time.
+          #TODO: note how many jobs were deleted?
+          model = duplicate(job)
+          break unless model
+          time_min = [model.start_time, time_min].min
+          time_max = [model.end_time, time_max].max
+          model.delete
+        end
 
-      clear_summaries(time_min.to_date, time_max.to_date)
+        clear_summaries(time_min.to_date, time_max.to_date)
+      end
     end
 
     ##

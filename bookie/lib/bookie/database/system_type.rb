@@ -10,7 +10,7 @@ module Bookie::Database
 
     ##
     #Maps memory stat type symbols to their enumerated values in the database
-    MEMORY_STAT_TYPE = {:unknown => 0, :avg => 1, :max => 2}
+    MEMORY_STAT_TYPE = {unknown: 0, avg: 1, max: 2}
 
     ##
     #The inverse of MEMORY_STAT_TYPE
@@ -32,10 +32,7 @@ module Bookie::Database
           end
         end
       else
-        sys_type = create!(
-          :name => name,
-          :memory_stat_type => memory_stat_type
-        )
+        sys_type = create!(name: name, memory_stat_type: memory_stat_type)
       end
       sys_type
     end

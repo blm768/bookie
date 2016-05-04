@@ -20,8 +20,8 @@ describe Bookie::Database::System do
   #TODO: re-check all validation tests?
   it "validates fields" do
     fields = {
-      :name => 'test',
-      :system_type => SystemType.first,
+      name: 'test',
+      system_type: SystemType.first,
     }
 
     expect(System.new(fields).valid?).to eql true

@@ -62,7 +62,8 @@ class CreateBasicStructure < Bookie::Database::Migration
       t.date :date, null: false
       t.string :command_name, null: false
       t.integer :cpu_time, null: false
-      t.integer :memory_time, null: false
+      #TODO: store inexact values (i.e. MB*sec or floating-point) to prevent overflow?
+      t.integer :memory_time, null: false, limit: 8
 
       t.index [:date, :user_id, :system_id, :command_name], unique: true, name: 'identity'
       t.index :command_name

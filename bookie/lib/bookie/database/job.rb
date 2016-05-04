@@ -6,7 +6,7 @@ module Bookie::Database
   class Job < Model
     belongs_to :user
     belongs_to :system
-    has_one :system_type, :through => :system
+    has_one :system_type, through: :system
 
     ##
     #The time at which the job ended
@@ -91,7 +91,7 @@ module Bookie::Database
         cpu_time += fields_within.cpu_time
         memory_time += fields_within.memory_time
       end
-      successful += jobs_within.where(:exit_code => 0).count
+      successful += jobs_within.where(exit_code: 0).count
 
       #Any jobs that overlap an one or both edges of the time range
       #must be clipped.
