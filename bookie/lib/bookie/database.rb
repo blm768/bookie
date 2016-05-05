@@ -48,6 +48,8 @@ module Bookie::Database
   ##
   #Contains database-related configuration options
   class Config
+    DEFAULT_PATH = '/etc/bookie/database.rb'
+
     include Bookie::ConfigClass
 
     #The database type

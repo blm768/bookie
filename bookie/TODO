@@ -6,37 +6,37 @@ Later:
 - Optimize summarization stuff.
 - Connect to users DB or LDAP?
 
-Testing:
-- Test executables somehow? (and integrate with Travis CI)!
-- Use FactoryGirl to generate test objects?
-
 Optimization:
 - Use bulk inserts?
-- Wrap send/summarize operations in a transaction
 
 Cleanup:
 - Remove find_or_create methods.
-- Replace by_* methods with a "find_all_by()" method? (or just "where"...)
-- Use "let" in RSpect tests?
-- Replace 3600 with 2.hours, etc.
-- Also clear out other "magic" numbers.
-- Split some tests up.
 - Make sure all source files have the required "require"s
-- Replace Mocha with rspec-mocks?
 - Fix memory specification issue
 - Replace <tt> tags in docs with <code>?
-- Rename "snapshot" directory?
-- Ensure that RSpec tests use "::method" for class methods.
 - Determine whether printing job details is still necessary.
-
-Expansion:
-- Use concurrency control?
 
 Testing:
 - Validate uniqueness?
 - Unit test uniqueness constraints?
-- Make units more independent.
 - Set up guard-rspec gem for testing?
+
+Testing cleanup:
+- Use "let" in RSpect tests?
+- Replace 3600 with 2.hours, etc.
+- Also clear out other "magic" numbers.
+- Replace by_* methods with a "find_all_by()" method? (or just "where"...)
+- Split some tests up.
+- Replace Mocha with rspec-mocks?
+- Rename "snapshot" directory?
+- Ensure that RSpec tests use "::method" for class methods.
+- Make units more independent.
+  - Mock database objects?
+- Test executables somehow? (and integrate with Travis CI)!
+- Use FactoryGirl to generate test objects?
+
+Expansion:
+- Use concurrency control?
 
 Data consistency considerations:
 If a user is deleted, how to we handle that? Mark the user's processes with an "unknown" UID?

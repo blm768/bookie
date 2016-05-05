@@ -6,7 +6,7 @@ require 'bookie/formatter'
 
 DEFAULT_DETAILS_PER_PAGE = 20
 
-config_filename = ENV['BOOKIE_CONFIG'] || '/etc/bookie/config.json'
+config_filename = ENV['BOOKIE_CONFIG'] || Bookie::Database::Config::DEFAULT_PATH
 
 #Data options
 time_min, time_max = nil
@@ -29,7 +29,7 @@ filename = nil
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-data [options]"
 
-  opts.on('-c', '--config FILE', String, "use the given configuration file") do |file|
+  opts.on('-c', '--config FILE', String, "use the given database configuration file") do |file|
     config_filename = file
   end
 
@@ -59,7 +59,7 @@ opts = OptionParser.new do |opts|
     user_filter = name
   end
 
-  opts.on('-m', '--command', "filter by command") do |cmd|
+  opts.on('-m', '--command COMMAND', "filter by command") do |cmd|
     command_filter = cmd
   end
 

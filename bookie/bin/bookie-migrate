@@ -4,7 +4,7 @@ require 'optparse'
 
 require 'bookie/database'
 
-config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/db_config.rb'
+config_file = ENV['BOOKIE_CONFIG'] || Bookie::Database::Config::DEFAULT_PATH
 
 target_version = nil
 

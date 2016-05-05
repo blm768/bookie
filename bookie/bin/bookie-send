@@ -4,14 +4,10 @@ require 'optparse'
 
 require 'bookie/sender'
 
-db_config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/db_config.rb'
-sender_config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/sender_config.rb'
+db_config_file = ENV['BOOKIE_CONFIG'] || Bookie::Database::Config::DEFAULT_PATH
+sender_config_file = ENV['BOOKIE_CONFIG'] || '/etc/bookie/sender.rb'
 will_create = false
-will_decommission = false
 will_undo = false
-system_start_time = nil
-system_hostname = nil
-system_end_time = nil
 
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: bookie-send [data-file] [options]"
@@ -28,18 +24,8 @@ opts = OptionParser.new do |opts|
     will_undo = true
   end
 
-  opts.on("--create [TIME]",
-  "Create an entry for this system, recording the given time as its start time") do |time|
+  opts.on("--create", "Create an entry for this system") do
     will_create = true
-    system_start_time = Time.parse(time) if time
-  end
-
-  opts.on("--decommission [HOSTNAME [TIME]]",
-  String, String,
-  "Decommission the system with the given hostname, recording the given time as its end time") do |hostname, time|
-    will_decommission = true
-    system_hostname = hostname if hostname
-    system_end_time = Time.parse(time) if time
   end
 
   opts.on_tail('-h', '--help', "Show this message") do
@@ -60,51 +46,14 @@ db_config.connect
 sender_config = Bookie::SenderConfig.load(File.open(sender_config_file))
 
 filename = ARGV[0]
-unless filename || will_create || will_decommission
+unless filename || will_create
   STDERR.puts "No operation specified"
   exit 1
 end
 
-if filename
-  sender = Bookie::Sender.new(sender_config)
-  if will_undo
-    sender.undo_send(filename)
-  else
-    sender.send_data(filename)
-  end
-end
-
-if will_decommission
-  system_hostname ||= sender_config.hostname
-  system_end_time ||= Time.now
-  Bookie::Database::Lock[:systems].synchronize do
-    system = Bookie::Database::System.active_systems.where(:name => system_hostname).first
-    if system
-      puts "Note: make sure that all of this system's jobs have been recorded in the database before decommissioning it."
-      STDOUT.write "Decommission this system? "
-      response = nil
-      until response
-        response = STDIN.gets.chomp.downcase
-        case response
-        when "yes"
-          system.decommission(system_end_time)
-        when "no"
-          exit 0
-        else
-          STDOUT.write("Please answer 'yes' or 'no'.")
-          response = nil
-        end
-      end
-    else
-      stderr.puts "No active system with hostname #{system_hostname}"
-      exit 1
-    end
-  end
-end
-
-#TODO: update this code.
 if will_create
-  system_start_time ||= Time.now
+  #TODO: catch duplicate errors instead of using this method; it's prone to race
+  #conditions.
   Bookie::Database::System.transaction do
     system = Bookie::Database::System.active.where(name: sender_config.hostname).first
     if system
@@ -115,12 +64,15 @@ if will_create
       name: sender_config.hostname,
       system_type: Bookie::Sender.new(sender_config).system_type,
     )
-    Bookie::Database::SystemCapacity.create!(
-      system: system,
-      start_time: system_start_time,
-      end_time: nil,
-      cores: sender_config.cores,
-      memory: sender_config.memory
-    )
+    #TODO: create a SystemCapacity object?
+  end
+end
+
+if filename
+  sender = Bookie::Sender.new(sender_config)
+  if will_undo
+    sender.undo_send(filename)
+  else
+    sender.send_data(filename)
   end
 end
