@@ -32,8 +32,12 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-config = Bookie::Database::Config.load(File.open(config_file))
+config = nil
+File.open(config_file) do |file|
+  config = Bookie::Database::Config.load(file)
+end
 #TODO: remove this hack once migrations work on other connections.
+#(Waiting on upstream Rails issue)
 config.connect(ActiveRecord::Base)
 
 target_version ||= Bookie::Database.latest_version

@@ -22,6 +22,7 @@ Testing:
 - Set up guard-rspec gem for testing?
 
 Testing cleanup:
+- Use File.open blocks in config tests to ensure proper file closure.
 - Use "let" in RSpect tests?
 - Replace 3600 with 2.hours, etc.
 - Also clear out other "magic" numbers.

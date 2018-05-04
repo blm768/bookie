@@ -35,6 +35,27 @@ module Bookie
   ##
   #An object that sends data to the database
   class Sender
+    ##
+    # Gets the Sender class corresponding to <tt>type</tt>
+    #
+    # <code>type</code> should be a symbol that maps to one of the files in
+    # <code>bookie/senders</code>.
+    #
+    #===Examples
+    #  # Uses the sender from 'bookie/senders/standalone
+    #  sender = Bookie::Sender.for_type(:standalone).new('pacct_data_file')
+    def self.for_type(type)
+      @sender_classes ||= {}
+      require "bookie/senders/#{type}"
+      @formatter_classes[type]
+    end
+
+    def self.included(klass)
+      @formatter_classes ||= {}
+      type_name = klass.const_get(:FORMATTER_TYPE)
+      @formatter_classes[type_name] = klass
+    end
+
     attr_reader :config
 
     ##
@@ -47,12 +68,13 @@ module Bookie
       #Include the correct plugin module.
       sys_type = config.system_type
       require "bookie/senders/#{sys_type}"
-      #TODO: just create an instance variable instead of extending?
-      extend Bookie::Senders.const_get(ActiveSupport::Inflector.camelize(sys_type))
+      @job_source = Bookie::Senders.const_get(ActiveSupport::Inflector.camelize(sys_type))
     end
 
     ##
     #Sends job data from the given file to the database server
+    #
+    #TODO: rename to send_jobs
     def send_data(filename)
       users_by_id = Hash.new do |h, id|
         h[id] = Database::User.where(id: id).first
@@ -62,9 +84,11 @@ module Bookie
       time_min, time_max = nil
 
       #Check for duplicates.
-      each_job(filename) do |job|
+      @job_source.each_job(filename) do |job|
         next if filtered?(job)
-        raise "Jobs already exist in the database for '#{filename}'." if duplicate(job)
+        if duplicate(job) then
+          raise ActiveRecord::RecordNotUniqueException.new("Jobs already exist in the database for '#{filename}'.")
+        end
         time_min = job.start_time
         time_max = job.end_time
         #Just use the first job in the file.
@@ -104,19 +128,8 @@ module Bookie
     def undo_send(filename)
       time_min, time_max = nil
 
-      #Grab data from the first job:
-      #TODO: don't do this?
-      each_job(filename) do |job|
-        next if filtered?(job)
-        time_min = job.start_time
-        time_max = job.end_time
-        break
-      end
-
-      return unless time_min
-
       Database::Job.transaction do
-        each_job(filename) do |job|
+        @job_source.each_job(filename) do |job|
           next if filtered?(job)
           #TODO: optimize this operation?
           #(It should be possible to delete all of the jobs with end times between those of the first and last jobs
@@ -126,19 +139,22 @@ module Bookie
           #TODO: note how many jobs were deleted?
           model = duplicate(job)
           break unless model
-          time_min = [model.start_time, time_min].min
-          time_max = [model.end_time, time_max].max
+          time_min = [model.start_time, time_min].compact.min
+          time_max = [model.end_time, time_max].compact.max
           model.delete
         end
 
-        clear_summaries(time_min.to_date, time_max.to_date)
+        # If we sent any jobs, clear the relevant cached summaries.
+        if time_min then
+          clear_summaries(time_min.to_date, time_max.to_date)
+        end
       end
     end
 
     ##
     #The name of the Bookie::Database::SystemType that systems using this sender will have
     def system_type
-      @system_type ||= Bookie::Database::SystemType.find_or_create!(system_type_name, memory_stat_type)
+      @system_type ||= Bookie::Database::SystemType.find_or_create!(@job_source.system_type_name, memory_stat_type)
     end
 
     #TODO: doc and test.
@@ -181,6 +197,8 @@ module Bookie
 
   ##
   #This module is mixed into various job classes used internally by senders.
+  #
+  # TODO: move to database.rb?
   module ModelHelpers
     ##
     #Converts the object to a Bookie::Database::Job

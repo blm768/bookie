@@ -41,15 +41,22 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-db_config = Bookie::Database::Config.load(File.open(db_config_file))
+db_config, sender_config = nil
+File.open(db_config_file) do |file|
+  db_config = Bookie::Database::Config.load(file)
+end
 db_config.connect
-sender_config = Bookie::SenderConfig.load(File.open(sender_config_file))
+File.open(sender_config_file) do |file|
+  sender_config = Bookie::SenderConfig.load(file)
+end
 
 filename = ARGV[0]
 unless filename || will_create
   STDERR.puts "No operation specified"
   exit 1
 end
+
+sender = Bookie::Sender.new(sender_config)
 
 if will_create
   #TODO: catch duplicate errors instead of using this method; it's prone to race
@@ -62,14 +69,13 @@ if will_create
     end
     system = Bookie::Database::System.create!(
       name: sender_config.hostname,
-      system_type: Bookie::Sender.new(sender_config).system_type,
+      system_type: sender.system_type,
     )
     #TODO: create a SystemCapacity object?
   end
 end
 
 if filename
-  sender = Bookie::Sender.new(sender_config)
   if will_undo
     sender.undo_send(filename)
   else

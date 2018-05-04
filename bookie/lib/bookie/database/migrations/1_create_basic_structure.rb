@@ -48,7 +48,6 @@ class CreateBasicStructure < Bookie::Database::Migration
       t.integer :memory, null: false
       t.integer :exit_code, null: false
 
-      #TODO: more indices?
       t.index :user_id
       t.index :system_id
       t.index :command_name

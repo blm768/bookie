@@ -3,10 +3,10 @@ require 'pacct'
 
 module Bookie::Senders
   ##
-  #Returns data from a standalone Linux system
-  module Standalone
+  # Returns data from a standalone Linux system
+  class Standalone < Bookie::Sender
     ##
-    #Yields each job in the log
+    # Yields each job in the log
     def each_job(filename)
       file = Pacct::Log.new(filename)
       file.each_entry do |job|
@@ -25,10 +25,10 @@ module Bookie::Senders
 end
 
 ##
-#Originates from the <tt>pacct</tt> gem
+# Originates from the <code>pacct</code> gem
 module Pacct
   ##
-  #Originates from the <tt>pacct</tt> gem; reopened here to include Bookie::Sender::ModelHelpers
+  # Originates from the <code>pacct</code> gem; reopened here to include Bookie::Sender::ModelHelpers
   class Pacct::Entry
     include Bookie::ModelHelpers
   end

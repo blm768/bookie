@@ -28,7 +28,6 @@ describe Bookie::Database do
       Bookie::Database.migrate(0)
     end
 
-    #TODO: remove this functionality?
     it "picks the latest version as the default" do
       ActiveRecord::Migrator.expects(:migrate).with(MIGRATIONS_PATH, latest_version)
       Bookie::Database.migrate

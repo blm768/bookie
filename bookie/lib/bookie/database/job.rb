@@ -139,9 +139,6 @@ module Bookie::Database
 
     validates :command_name, exclusion: { in: [nil] }
 
-    #TODO: validate integral type?
     validates :cpu_time, :wall_time, :memory,  numericality: { greater_than_or_equal_to: 0 }
-
-    #TODO: validate the existence of a system capacity entry covering the job's time interval?
   end
 end
